@@ -1,24 +1,46 @@
-from codemap.graph.models import Edge
-from codemap.parser.python_parser import ParsedPythonModule
+from codemap.graph.models import Edge, ModuleNode
+from codemap.parser.python_parser import ParsedPythonModule, package_from_module_id
 
 
 def build_high_level_edges(
-    parsed_modules: list[ParsedPythonModule], known_module_ids: set[str]
-) -> list[Edge]:
-    edges = []
-    for module in parsed_modules:
-        for imported in module.imports:
-            target = _resolve_local_import(imported, known_module_ids)
-            if target and target != module.module_id:
+    parsed_modules: list[ParsedPythonModule],
+    modules: list[ModuleNode],
+) -> tuple:
+    module_to_package = {module.id: module.package for module in modules}
+    package_ids = sorted({module.package for module in modules if module.package})
+
+    known_module_ids = set(module_to_package.keys())
+    edges: list[Edge] = []
+
+    for parsed in parsed_modules:
+        source_package = module_to_package.get(
+            parsed.module_id, package_from_module_id(parsed.module_id)
+        )
+        if not source_package:
+            continue
+
+        for imported in parsed.imports:
+            target_module = _resolve_local_import(imported, known_module_ids)
+            if not target_module:
+                continue
+
+            target_package = module_to_package.get(
+                target_module, package_from_module_id(target_module)
+            )
+            if not target_package:
+                continue
+
+            if source_package != target_package:
                 edges.append(
                     Edge(
-                        source=module.module_id,
-                        target=target,
+                        source=source_package,
+                        target=target_package,
                         kind="imports",
                         label="imports",
                     )
                 )
-    return _dedupe_edges(edges)
+
+    return package_ids, _dedupe_edges(edges)
 
 
 def _resolve_local_import(import_name: str, known_module_ids: set[str]) -> str | None:

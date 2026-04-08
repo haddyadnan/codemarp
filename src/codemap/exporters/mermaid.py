@@ -1,10 +1,10 @@
-from codemap.graph.models import ControlFlowNode, Edge, FunctionNode, ModuleNode
+from codemap.graph.models import ControlFlowNode, Edge, FunctionNode
 
 
-def export_module_graph(modules: list[ModuleNode], edges: list[Edge]) -> str:
+def export_module_graph(package_ids: list[str], edges: list[Edge]) -> str:
     lines = ["flowchart LR"]
-    for module in modules:
-        lines.append(f'    {_safe_id(module.id)}["{module.id}"]')
+    for package_id in package_ids:
+        lines.append(f'    {_safe_id(package_id)}["{package_id}"]')
     for edge in edges:
         if edge.kind == "imports":
             if edge.label:
