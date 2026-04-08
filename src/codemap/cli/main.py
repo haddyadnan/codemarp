@@ -12,9 +12,12 @@ from codemap.parser.python_parser import (
     package_from_module_id,
     parse_python_file,
 )
+from codemap.views.trace import TraceError, trace_function_view
 
 
-def analyze_command(root: str, out: str) -> None:
+def analyze_command(
+    root: str, out: str, focus: str | None = None, max_depth: int | None = None
+) -> None:
     root_path = Path(root).resolve()
     out_path = Path(out).resolve()
     out_path.mkdir(parents=True, exist_ok=True)
@@ -46,15 +49,27 @@ def analyze_command(root: str, out: str) -> None:
     (out_path / "high_level.mmd").write_text(
         export_module_graph(bundle.modules, bundle.edges), encoding="utf-8"
     )
+
+    mid_view = bundle
+    if focus:
+        mid_view = trace_function_view(bundle, focus, max_depth=max_depth)
+
     (out_path / "mid_level.mmd").write_text(
-        export_function_graph(bundle.functions, bundle.edges), encoding="utf-8"
+        export_function_graph(mid_view.functions, mid_view.edges),
+        encoding="utf-8",
     )
+
+    export_bundle_json(mid_view, out_path / "mid_level.json")
 
     print(f"Parsed {len(parsed_modules)} modules")
     print(f"Discovered {len(bundle.functions)} functions")
+    if focus:
+        print(f"Focused trace from {focus}")
+        print(f"Trace contains {len(mid_view.functions)} functions")
     print(f"Wrote {out_path / 'graph.json'}")
     print(f"Wrote {out_path / 'high_level.mmd'}")
     print(f"Wrote {out_path / 'mid_level.mmd'}")
+    print(f"Wrote {out_path / 'mid_level.json'}")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -64,7 +79,15 @@ def build_parser() -> argparse.ArgumentParser:
     analyze = subparsers.add_parser("analyze", help="Analyze a Python codebase")
     analyze.add_argument("root", help="Path to the repository root")
     analyze.add_argument("--out", default="./codemap_out", help="Output directory")
-
+    analyze.add_argument(
+        "--focus", default=None, help="Entrypoint function id for mid-level trace"
+    )
+    analyze.add_argument(
+        "--max-depth",
+        type=int,
+        default=None,
+        help="Maximum trace depth from the focused function",
+    )
     return parser
 
 
@@ -73,7 +96,12 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "analyze":
-        analyze_command(args.root, args.out)
+        try:
+            analyze_command(
+                args.root, args.out, focus=args.focus, max_depth=args.max_depth
+            )
+        except TraceError as exc:
+            raise SystemExit(str(exc)) from exc
 
 
 if __name__ == "__main__":
