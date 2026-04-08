@@ -37,8 +37,9 @@ def analyze_command(
         )
         builder.add_functions(parsed.functions)
 
-    known_module_ids = {module.module_id for module in parsed_modules}
-    high_edges = build_high_level_edges(parsed_modules, known_module_ids)
+    package_ids, high_edges = build_high_level_edges(
+        parsed_modules, builder.bundle.modules
+    )
     mid_edges = build_mid_level_edges(parsed_modules, builder.bundle.functions)
     builder.add_edges(high_edges)
     builder.add_edges(mid_edges)
@@ -47,7 +48,7 @@ def analyze_command(
 
     export_bundle_json(bundle, out_path / "graph.json")
     (out_path / "high_level.mmd").write_text(
-        export_module_graph(bundle.modules, bundle.edges), encoding="utf-8"
+        export_module_graph(package_ids, high_edges), encoding="utf-8"
     )
 
     mid_view = bundle

@@ -1,0 +1,67 @@
+from codemap.analyzers.high_level import build_high_level_edges
+from codemap.graph.models import ModuleNode
+from codemap.parser.python_parser import ParsedPythonModule
+
+
+def test_high_level_aggregates_to_package_edges() -> None:
+    modules = [
+        ModuleNode(
+            id="codemap.cli.main", path="codemap/cli/main.py", package="codemap.cli"
+        ),
+        ModuleNode(
+            id="codemap.parser.python_parser",
+            path="codemap/parser/python_parser.py",
+            package="codemap.parser",
+        ),
+        ModuleNode(
+            id="codemap.graph.builder",
+            path="codemap/graph/builder.py",
+            package="codemap.graph",
+        ),
+    ]
+
+    parsed_modules = [
+        ParsedPythonModule(
+            module_id="codemap.cli.main",
+            path="codemap/cli/main.py",
+            imports=["codemap.parser.python_parser", "codemap.graph.builder"],
+        ),
+        ParsedPythonModule(
+            module_id="codemap.parser.python_parser",
+            path="codemap/parser/python_parser.py",
+            imports=["codemap.graph.builder"],
+        ),
+    ]
+
+    package_ids, edges = build_high_level_edges(parsed_modules, modules)
+
+    assert package_ids == ["codemap.cli", "codemap.graph", "codemap.parser"]
+    assert {(edge.source, edge.target) for edge in edges} == {
+        ("codemap.cli", "codemap.parser"),
+        ("codemap.cli", "codemap.graph"),
+        ("codemap.parser", "codemap.graph"),
+    }
+
+
+def test_high_level_dedupes_same_package_relationships() -> None:
+    modules = [
+        ModuleNode(id="pkg.a.one", path="pkg/a/one.py", package="pkg.a"),
+        ModuleNode(id="pkg.a.two", path="pkg/a/two.py", package="pkg.a"),
+        ModuleNode(id="pkg.b.core", path="pkg/b/core.py", package="pkg.b"),
+    ]
+
+    parsed_modules = [
+        ParsedPythonModule(
+            module_id="pkg.a.one", path="pkg/a/one.py", imports=["pkg.b.core"]
+        ),
+        ParsedPythonModule(
+            module_id="pkg.a.two", path="pkg/a/two.py", imports=["pkg.b.core"]
+        ),
+    ]
+
+    package_ids, edges = build_high_level_edges(parsed_modules, modules)
+
+    assert package_ids == ["pkg.a", "pkg.b"]
+    assert len(edges) == 1
+    assert edges[0].source == "pkg.a"
+    assert edges[0].target == "pkg.b"
