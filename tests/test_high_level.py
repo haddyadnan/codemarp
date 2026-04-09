@@ -1,6 +1,14 @@
-from codemap.analyzers.high_level import build_high_level_edges
+from codemap.analyzers.high_level import aggregate_module_id, build_high_level_edges
 from codemap.graph.models import ModuleNode
 from codemap.parser.python_parser import ParsedPythonModule
+
+
+def test_aggregate_module_id() -> None:
+    assert aggregate_module_id("codemap.views.trace") == "codemap.views"
+    assert aggregate_module_id("codemap.graph.models.extras") == "codemap.graph"
+    assert aggregate_module_id("codemap.errors") == "codemap.errors"
+    assert aggregate_module_id("codemap.cli") == "codemap.cli"
+    assert aggregate_module_id("mypackage") == "mypackage"
 
 
 def test_high_level_aggregates_to_package_edges() -> None:
@@ -33,9 +41,9 @@ def test_high_level_aggregates_to_package_edges() -> None:
         ),
     ]
 
-    package_ids, edges = build_high_level_edges(parsed_modules, modules)
+    group_ids, edges = build_high_level_edges(parsed_modules, modules)
 
-    assert package_ids == ["codemap.cli", "codemap.graph", "codemap.parser"]
+    assert group_ids == ["codemap.cli", "codemap.graph", "codemap.parser"]
     assert {(edge.source, edge.target) for edge in edges} == {
         ("codemap.cli", "codemap.parser"),
         ("codemap.cli", "codemap.graph"),
@@ -43,7 +51,40 @@ def test_high_level_aggregates_to_package_edges() -> None:
     }
 
 
-def test_high_level_dedupes_same_package_relationships() -> None:
+def test_high_level_keeps_top_level_modules_distinct() -> None:
+    modules = [
+        ModuleNode(
+            id="codemap.cli.main", path="codemap/cli/main.py", package="codemap.cli"
+        ),
+        ModuleNode(id="codemap.errors", path="codemap/errors.py", package="codemap"),
+        ModuleNode(
+            id="codemap.views.trace",
+            path="codemap/views/trace.py",
+            package="codemap.views",
+        ),
+    ]
+
+    parsed_modules = [
+        ParsedPythonModule(
+            module_id="codemap.cli.main",
+            path="codemap/cli/main.py",
+            imports=["codemap.errors", "codemap.views.trace"],
+        ),
+    ]
+
+    group_ids, edges = build_high_level_edges(parsed_modules, modules)
+
+    assert "codemap.errors" in group_ids
+    assert "codemap.views" in group_ids
+    assert "codemap" not in group_ids
+
+    assert {(edge.source, edge.target) for edge in edges} == {
+        ("codemap.cli", "codemap.errors"),
+        ("codemap.cli", "codemap.views"),
+    }
+
+
+def test_high_level_dedupes_same_group_relationships() -> None:
     modules = [
         ModuleNode(id="pkg.a.one", path="pkg/a/one.py", package="pkg.a"),
         ModuleNode(id="pkg.a.two", path="pkg/a/two.py", package="pkg.a"),
@@ -59,9 +100,9 @@ def test_high_level_dedupes_same_package_relationships() -> None:
         ),
     ]
 
-    package_ids, edges = build_high_level_edges(parsed_modules, modules)
+    group_ids, edges = build_high_level_edges(parsed_modules, modules)
 
-    assert package_ids == ["pkg.a", "pkg.b"]
+    assert group_ids == ["pkg.a", "pkg.b"]
     assert len(edges) == 1
     assert edges[0].source == "pkg.a"
     assert edges[0].target == "pkg.b"
