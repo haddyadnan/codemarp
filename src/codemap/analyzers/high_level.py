@@ -1,46 +1,58 @@
 from codemap.graph.models import Edge, ModuleNode
-from codemap.parser.python_parser import ParsedPythonModule, package_from_module_id
+from codemap.parser.python_parser import ParsedPythonModule
 
 
 def build_high_level_edges(
     parsed_modules: list[ParsedPythonModule],
     modules: list[ModuleNode],
 ) -> tuple:
-    module_to_package = {module.id: module.package for module in modules}
-    package_ids = sorted({module.package for module in modules if module.package})
+    module_to_group = {module.id: aggregate_module_id(module.id) for module in modules}
+    group_ids = sorted(set(module_to_group.values()))
 
-    known_module_ids = set(module_to_package.keys())
+    known_module_ids = set(module_to_group.keys())
     edges: list[Edge] = []
 
     for parsed in parsed_modules:
-        source_package = module_to_package.get(
-            parsed.module_id, package_from_module_id(parsed.module_id)
+        source_group = module_to_group.get(
+            parsed.module_id, aggregate_module_id(parsed.module_id)
         )
-        if not source_package:
-            continue
 
         for imported in parsed.imports:
             target_module = _resolve_local_import(imported, known_module_ids)
             if not target_module:
                 continue
 
-            target_package = module_to_package.get(
-                target_module, package_from_module_id(target_module)
+            target_group = module_to_group.get(
+                target_module, aggregate_module_id(target_module)
             )
-            if not target_package:
-                continue
 
-            if source_package != target_package:
+            if source_group != target_group:
                 edges.append(
                     Edge(
-                        source=source_package,
-                        target=target_package,
+                        source=source_group,
+                        target=target_group,
                         kind="imports",
                         label="imports",
                     )
                 )
 
-    return package_ids, _dedupe_edges(edges)
+    return group_ids, _dedupe_edges(edges)
+
+
+def aggregate_module_id(module_id: str) -> str:
+    """
+    Collapse deep module paths for the high-level graph.
+
+    - 3+ segments collapse to the first 2 segments:
+      codemap.views.trace -> codemap.views
+    - 1–2 segments stay as-is:
+      codemap.errors -> codemap.errors
+      codemap.cli -> codemap.cli
+    """
+    segments = module_id.split(".")
+    if len(segments) >= 3:
+        return ".".join(segments[:2])
+    return module_id
 
 
 def _resolve_local_import(import_name: str, known_module_ids: set[str]) -> str | None:
