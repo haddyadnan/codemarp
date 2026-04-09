@@ -1,76 +1,46 @@
 import argparse
-from pathlib import Path
 
-from codemap.analyzers.high_level import build_high_level_edges
-from codemap.analyzers.mid_level import build_mid_level_edges
-from codemap.exporters.json_exporter import export_bundle_json
-from codemap.exporters.mermaid import export_function_graph, export_module_graph
-from codemap.graph.builder import GraphBuilder
-from codemap.graph.models import ModuleNode
-from codemap.parser.python_parser import (
-    discover_python_files,
-    package_from_module_id,
-    parse_python_file,
-)
-from codemap.views.trace import TraceError, trace_function_view
+from codemap.errors import CodemapError
+from codemap.pipeline.apply_view import ViewType, apply_view
+from codemap.pipeline.build_bundle import build_bundle
+from codemap.pipeline.export_all import export_all
 
 
 def analyze_command(
-    root: str, out: str, focus: str | None = None, max_depth: int | None = None
+    root: str,
+    out: str,
+    *,
+    view: ViewType,
+    focus: str | None = None,
+    module: str | None = None,
+    max_depth: int | None = None,
 ) -> None:
-    root_path = Path(root).resolve()
-    out_path = Path(out).resolve()
-    out_path.mkdir(parents=True, exist_ok=True)
-
-    parsed_modules = []
-    builder = GraphBuilder()
-
-    for file_path in discover_python_files(root_path):
-        parsed = parse_python_file(root_path, file_path)
-        parsed_modules.append(parsed)
-        builder.add_module(
-            ModuleNode(
-                id=parsed.module_id,
-                path=parsed.path,
-                package=package_from_module_id(parsed.module_id),
-            )
-        )
-        builder.add_functions(parsed.functions)
-
-    package_ids, high_edges = build_high_level_edges(
-        parsed_modules, builder.bundle.modules
+    build_result = build_bundle(root)
+    graph_view = apply_view(
+        build_result.bundle,
+        view=view,
+        focus=focus,
+        module=module,
+        max_depth=max_depth,
     )
-    mid_edges = build_mid_level_edges(parsed_modules, builder.bundle.functions)
-    builder.add_edges(high_edges)
-    builder.add_edges(mid_edges)
+    export_all(build_result=build_result, view=graph_view, out_dir=out)
 
-    bundle = builder.build()
-
-    export_bundle_json(bundle, out_path / "graph.json")
-    (out_path / "high_level.mmd").write_text(
-        export_module_graph(package_ids, high_edges), encoding="utf-8"
-    )
-
-    mid_view = bundle
-    if focus:
-        mid_view = trace_function_view(bundle, focus, max_depth=max_depth)
-
-    (out_path / "mid_level.mmd").write_text(
-        export_function_graph(mid_view.functions, mid_view.edges),
-        encoding="utf-8",
-    )
-
-    export_bundle_json(mid_view, out_path / "mid_level.json")
-
-    print(f"Parsed {len(parsed_modules)} modules")
-    print(f"Discovered {len(bundle.functions)} functions")
-    if focus:
+    print(f"Parsed {len(build_result.parsed_modules)} modules")
+    print(f"Discovered {len(build_result.bundle.functions)} functions")
+    print(f"View type: {view.value}")
+    if view is ViewType.TRACE:
         print(f"Focused trace from {focus}")
-        print(f"Trace contains {len(mid_view.functions)} functions")
-    print(f"Wrote {out_path / 'graph.json'}")
-    print(f"Wrote {out_path / 'high_level.mmd'}")
-    print(f"Wrote {out_path / 'mid_level.mmd'}")
-    print(f"Wrote {out_path / 'mid_level.json'}")
+        print(f"Trace contains {len(graph_view.functions)} functions")
+    if view is ViewType.MODULE:
+        print(f"Module view for {module}")
+        print(f"Module view contains {len(graph_view.functions)} functions")
+    if view is ViewType.REVERSE:
+        print(f"Reverse trace from {focus}")
+        print(f"Reverse trace contains {len(graph_view.functions)} functions")
+    print("Wrote graph.json")
+    print("Wrote high_level.mmd")
+    print("Wrote mid_level.mmd")
+    print("Wrote mid_level.json")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -81,7 +51,20 @@ def build_parser() -> argparse.ArgumentParser:
     analyze.add_argument("root", help="Path to the repository root")
     analyze.add_argument("--out", default="./codemap_out", help="Output directory")
     analyze.add_argument(
-        "--focus", default=None, help="Entrypoint function id for mid-level trace"
+        "--view",
+        choices=[view.value for view in ViewType],
+        default=ViewType.FULL.value,
+        help="Graph view to export",
+    )
+    analyze.add_argument(
+        "--focus",
+        default=None,
+        help="Entrypoint for TRACE/REVERSE view (function id: module:function)",
+    )
+    analyze.add_argument(
+        "--module",
+        default=None,
+        help="Module id for MODULE view",
     )
     analyze.add_argument(
         "--max-depth",
@@ -89,7 +72,42 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Maximum trace depth from the focused function",
     )
+
     return parser
+
+
+def _validate_analyze_args(
+    args: argparse.Namespace, parser: argparse.ArgumentParser
+) -> None:
+    view = ViewType(args.view)
+
+    if view is ViewType.FULL:
+        if args.focus is not None:
+            parser.error("--focus cannot be used with --view full")
+        if args.module is not None:
+            parser.error("--module cannot be used with --view full")
+        if args.max_depth is not None:
+            parser.error("--max-depth cannot be used with --view full")
+
+    if view is ViewType.TRACE:
+        if not args.focus:
+            parser.error("--focus is required with --view trace")
+        if args.module is not None:
+            parser.error("--module cannot be used with --view trace")
+
+    if view is ViewType.MODULE:
+        if not args.module:
+            parser.error("--module is required with --view module")
+        if args.focus is not None:
+            parser.error("--focus cannot be used with --view module")
+        if args.max_depth is not None:
+            parser.error("--max-depth cannot be used with --view module")
+
+    if view is ViewType.REVERSE:
+        if not args.focus:
+            parser.error("--focus is required with --view reverse")
+        if args.module is not None:
+            parser.error("--module cannot be used with --view reverse")
 
 
 def main() -> None:
@@ -97,11 +115,17 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "analyze":
+        _validate_analyze_args(args, parser)
         try:
             analyze_command(
-                args.root, args.out, focus=args.focus, max_depth=args.max_depth
+                args.root,
+                args.out,
+                view=ViewType(args.view),
+                focus=args.focus,
+                module=args.module,
+                max_depth=args.max_depth,
             )
-        except TraceError as exc:
+        except CodemapError as exc:
             raise SystemExit(str(exc)) from exc
 
 
