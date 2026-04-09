@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "Codebase visualization tool"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "pytest>=9.0.3",
+]
 
 [build-system]
 requires = ["setuptools>=61.0"]

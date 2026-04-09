@@ -18,8 +18,11 @@ IGNORED_DIR_NAMES = {
     "node_modules",
     "site-packages",
     "venv",
-    "__init__.py",
     "tests",
+}
+
+IGNORE_FILE_NAMES = {
+    "__init__.py",
 }
 
 
@@ -122,6 +125,8 @@ def discover_python_files(root: Path) -> list[Path]:
     files = []
     for path in root.rglob("*.py"):
         if any(part in IGNORED_DIR_NAMES for part in path.parts):
+            continue
+        if path.name in IGNORE_FILE_NAMES:
             continue
         files.append(path)
     return sorted(files)
