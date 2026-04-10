@@ -16,3 +16,7 @@ class TraceError(ResolutionError):
 
 class ModuleViewError(ResolutionError):
     pass
+
+
+class FocusFormatError(CodemapError):
+    pass

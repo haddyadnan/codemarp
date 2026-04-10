@@ -48,3 +48,29 @@ def export_control_flow(nodes: list[ControlFlowNode], edges: list[Edge]) -> str:
 
 def _safe_id(value: str) -> str:
     return "".join(ch if ch.isalnum() else "_" for ch in value)
+
+
+def _shape_for_kind(kind: str) -> tuple[str, str]:
+    if kind == "decision":
+        return "{", "}"
+    if kind in {"start", "end", "terminal"}:
+        return "([", "])"
+    return "[", "]"
+
+
+def export_low_level_graph(nodes: list[ControlFlowNode], edges: list[Edge]) -> str:
+    lines = ["flowchart TD"]
+    for node in nodes:
+        left, right = _shape_for_kind(node.kind)
+        label = node.label.replace('"', "'")
+        lines.append(f'    {_safe_id(node.id)}{left}"{label}"{right}')
+    for edge in edges:
+        if edge.kind != "control_flow":
+            continue
+        if edge.label:
+            lines.append(
+                f"    {_safe_id(edge.source)} -->|{edge.label}| {_safe_id(edge.target)}"
+            )
+        else:
+            lines.append(f"    {_safe_id(edge.source)} --> {_safe_id(edge.target)}")
+    return "\n".join(lines)
