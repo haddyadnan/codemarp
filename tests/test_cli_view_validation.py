@@ -132,3 +132,28 @@ def test_reverse_view_accepts_focus_and_depth() -> None:
         ]
     )
     _validate_analyze_args(args, parser)
+
+
+def test_low_view_requires_focus() -> None:
+    parser, args = _parse(["analyze", "src", "--view", "low"])
+    with pytest.raises(SystemExit):
+        _validate_analyze_args(args, parser)
+
+
+def test_low_view_rejects_module_and_max_depth() -> None:
+    parser, args = _parse(
+        [
+            "analyze",
+            "src",
+            "--view",
+            "low",
+            "--focus",
+            "x:y",
+            "--module",
+            "pkg.mod",
+            "--max-depth",
+            "2",
+        ]
+    )
+    with pytest.raises(SystemExit):
+        _validate_analyze_args(args, parser)
