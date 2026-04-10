@@ -1,9 +1,10 @@
 import argparse
 
+from codemap.analyzers.low_level import build_low_level_view
 from codemap.errors import CodemapError
 from codemap.pipeline.apply_view import ViewType, apply_view
 from codemap.pipeline.build_bundle import build_bundle
-from codemap.pipeline.export_all import export_all
+from codemap.pipeline.export_all import export_all, export_low_level
 
 
 def analyze_command(
@@ -16,6 +17,23 @@ def analyze_command(
     max_depth: int | None = None,
 ) -> None:
     build_result = build_bundle(root)
+
+    if view is ViewType.LOW:
+        assert focus is not None
+        low_view = build_low_level_view(root, focus)
+        export_low_level(build_result=build_result, low_view=low_view, out_dir=out)
+
+        print(f"Parsed {len(build_result.parsed_modules)} modules")
+        print(f"Discovered {len(build_result.bundle.functions)} functions")
+        print(f"View type: {view.value}")
+        print(f"Low-level view for {focus}")
+        print(f"Low-level view contains {len(low_view.nodes)} nodes")
+        print("Wrote graph.json")
+        print("Wrote high_level.mmd")
+        print("Wrote low_level.mmd")
+        print("Wrote low_level.json")
+        return
+
     graph_view = apply_view(
         build_result.bundle,
         view=view,
@@ -108,6 +126,14 @@ def _validate_analyze_args(
             parser.error("--focus is required with --view reverse")
         if args.module is not None:
             parser.error("--module cannot be used with --view reverse")
+
+    if view is ViewType.LOW:
+        if not args.focus:
+            parser.error("--focus is required with --view low")
+        if args.module is not None:
+            parser.error("--module cannot be used with --view low")
+        if args.max_depth is not None:
+            parser.error("--max-depth cannot be used with --view low")
 
 
 def main() -> None:
