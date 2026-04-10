@@ -38,7 +38,7 @@ def test_low_level_builds_if_flow(tmp_path: Path) -> None:
     assert "flag" in labels
     assert "Then" in labels
     assert "Else" in labels
-    assert "Merge" in labels
+    assert "Merge" not in labels
     assert "Return" in labels
 
 

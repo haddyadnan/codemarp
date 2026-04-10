@@ -1,9 +1,8 @@
 from pathlib import Path
 
-from src.codemap.parser.python_parser import (
+from codemap.parser.python_parser import (
     discover_python_files,
     module_id_from_path,
-    package_from_module_id,
 )
 
 
@@ -11,11 +10,6 @@ def test_module_id_from_path() -> None:
     root = Path("repo")
     path = root / "pkg" / "subpkg" / "file.py"
     assert module_id_from_path(root, path) == "pkg.subpkg.file"
-
-
-def test_package_from_module_id() -> None:
-    assert package_from_module_id("pkg.subpkg.file") == "pkg.subpkg"
-    assert package_from_module_id("main") == ""
 
 
 def test_discover_python_files_ignores_virtualenv(tmp_path: Path) -> None:
