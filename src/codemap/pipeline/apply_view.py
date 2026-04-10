@@ -10,6 +10,7 @@ class ViewType(str, Enum):
     TRACE = "trace"
     MODULE = "module"
     REVERSE = "reverse"
+    LOW = "low"
 
 
 def apply_view(
