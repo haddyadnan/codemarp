@@ -28,10 +28,25 @@ IGNORE_FILE_NAMES = {
 
 
 @dataclass(slots=True)
+class ImportedModule:
+    module: str
+    alias: str | None = None
+
+
+@dataclass(slots=True)
+class ImportedSymbol:
+    module: str
+    name: str
+    alias: str | None = None
+
+
+@dataclass(slots=True)
 class ParsedPythonModule:
     module_id: str
     path: str
     imports: list[str] = field(default_factory=list)
+    imported_modules: list[ImportedModule] = field(default_factory=list)
+    imported_symbols: list[ImportedSymbol] = field(default_factory=list)
     functions: list[FunctionNode] = field(default_factory=list)
     calls: list = field(default_factory=list)
 
@@ -40,6 +55,8 @@ class PythonParser(ast.NodeVisitor):
     def __init__(self, module_id: str) -> None:
         self.module_id = module_id
         self.imports = []
+        self.imported_modules = []
+        self.imported_symbols = []
         self.functions = []
         self.calls = []
         self._function_stack = []
@@ -55,6 +72,8 @@ class PythonParser(ast.NodeVisitor):
             module_id=self.module_id,
             path=filepath,
             imports=self.imports,
+            imported_modules=self.imported_modules,
+            imported_symbols=self.imported_symbols,
             functions=self.functions,
             calls=self.calls,
         )
@@ -62,11 +81,25 @@ class PythonParser(ast.NodeVisitor):
     def visit_Import(self, node: ast.Import) -> None:
         for alias in node.names:
             self.imports.append(alias.name)
+            self.imported_modules.append(
+                ImportedModule(
+                    module=alias.name,
+                    alias=alias.asname,
+                )
+            )
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
         if node.module:
             self.imports.append(node.module)
+            for alias in node.names:
+                self.imported_symbols.append(
+                    ImportedSymbol(
+                        module=node.module,
+                        name=alias.name,
+                        alias=alias.asname,
+                    )
+                )
         self.generic_visit(node)
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
