@@ -1,4 +1,5 @@
 from codemap.analyzers.high_level import aggregate_module_id, build_high_level_edges
+from codemap.exporters.mermaid import export_module_graph
 from codemap.graph.models import ModuleNode
 from codemap.parser.python_parser import ParsedPythonModule
 
@@ -11,7 +12,7 @@ def test_aggregate_module_id() -> None:
     assert aggregate_module_id("mypackage") == "mypackage"
 
 
-def test_high_level_aggregates_to_package_edges() -> None:
+def test_high_level_aggregates_to_group_edges() -> None:
     modules = [
         ModuleNode(
             id="codemap.cli.main", path="codemap/cli/main.py", package="codemap.cli"
@@ -106,3 +107,32 @@ def test_high_level_dedupes_same_group_relationships() -> None:
     assert len(edges) == 1
     assert edges[0].source == "pkg.a"
     assert edges[0].target == "pkg.b"
+
+
+def test_export_module_graph_renders_groups_and_top_level_modules_differently() -> None:
+    modules = [
+        ModuleNode(
+            id="codemap.cli.main", path="codemap/cli/main.py", package="codemap.cli"
+        ),
+        ModuleNode(id="codemap.errors", path="codemap/errors.py", package="codemap"),
+        ModuleNode(
+            id="codemap.views.trace",
+            path="codemap/views/trace.py",
+            package="codemap.views",
+        ),
+    ]
+
+    parsed_modules = [
+        ParsedPythonModule(
+            module_id="codemap.cli.main",
+            path="codemap/cli/main.py",
+            imports=["codemap.errors", "codemap.views.trace"],
+        ),
+    ]
+
+    group_ids, edges = build_high_level_edges(parsed_modules, modules)
+    mermaid = export_module_graph(group_ids, edges, modules)
+
+    assert 'codemap_views["codemap.views"]' in mermaid
+    assert 'codemap_errors(["codemap.errors"])' in mermaid
+    assert "codemap -->" not in mermaid

@@ -31,6 +31,7 @@ def export_all(
         export_module_graph(
             build_result.high_level_package_ids,
             build_result.high_level_edges,
+            build_result.bundle.modules,
         ),
         encoding="utf-8",
     )
@@ -57,6 +58,7 @@ def export_low_level(
         export_module_graph(
             build_result.high_level_package_ids,
             build_result.high_level_edges,
+            build_result.bundle.modules,
         ),
         encoding="utf-8",
     )
