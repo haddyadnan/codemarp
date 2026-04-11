@@ -1,5 +1,5 @@
-from codemap.analyzers.mid_level import build_mid_level_edges
-from codemap.parser.python_parser import PythonParser
+from codemarp.analyzers.mid_level import build_mid_level_edges
+from codemarp.parser.python_parser import PythonParser
 
 
 def test_parser_tracks_imported_symbol() -> None:

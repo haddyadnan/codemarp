@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from codemap.parser.python_parser import (
+from codemarp.parser.python_parser import (
     discover_python_files,
     module_id_from_path,
 )

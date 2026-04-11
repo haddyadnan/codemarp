@@ -2,8 +2,8 @@ import ast
 from dataclasses import dataclass
 from pathlib import Path
 
-from codemap.graph.models import ControlFlowNode, Edge
-from codemap.parser.python_parser import find_function_node
+from codemarp.graph.models import ControlFlowNode, Edge
+from codemarp.parser.python_parser import find_function_node
 
 
 @dataclass(slots=True)

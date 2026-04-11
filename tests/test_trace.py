@@ -1,5 +1,5 @@
-from codemap.graph.models import Edge, FunctionNode, GraphBundle, ModuleNode
-from codemap.views.trace import TraceError, trace_function_view, trace_functions_forward
+from codemarp.graph.models import Edge, FunctionNode, GraphBundle, ModuleNode
+from codemarp.views.trace import TraceError, trace_function_view, trace_functions_forward
 
 
 def _bundle() -> GraphBundle:

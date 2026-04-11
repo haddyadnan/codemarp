@@ -1,5 +1,5 @@
-from codemap.graph.models import Edge, FunctionNode
-from codemap.parser.python_parser import ParsedPythonModule
+from codemarp.graph.models import Edge, FunctionNode
+from codemarp.parser.python_parser import ParsedPythonModule
 
 
 def build_mid_level_edges(

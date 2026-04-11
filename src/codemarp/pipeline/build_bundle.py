@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from codemap.analyzers.high_level import build_high_level_edges
-from codemap.analyzers.mid_level import build_mid_level_edges
-from codemap.graph.builder import GraphBuilder
-from codemap.graph.models import Edge, GraphBundle, ModuleNode
-from codemap.parser.python_parser import (
+from codemarp.analyzers.high_level import build_high_level_edges
+from codemarp.analyzers.mid_level import build_mid_level_edges
+from codemarp.graph.builder import GraphBuilder
+from codemarp.graph.models import Edge, GraphBundle, ModuleNode
+from codemarp.parser.python_parser import (
     ParsedPythonModule,
     discover_python_files,
     package_from_module_id,

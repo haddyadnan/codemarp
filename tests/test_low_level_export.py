@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from codemap.analyzers.low_level import build_low_level_view
-from codemap.pipeline.build_bundle import build_bundle
-from codemap.pipeline.export_all import export_low_level
+from codemarp.analyzers.low_level import build_low_level_view
+from codemarp.pipeline.build_bundle import build_bundle
+from codemarp.pipeline.export_all import export_low_level
 
 
 def test_export_low_level_writes_expected_files(tmp_path: Path) -> None:

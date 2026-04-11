@@ -1,7 +1,7 @@
 import pytest
 
-from codemap.graph.models import Edge, FunctionNode, GraphBundle, ModuleNode
-from codemap.views.trace import (
+from codemarp.graph.models import Edge, FunctionNode, GraphBundle, ModuleNode
+from codemarp.views.trace import (
     TraceError,
     reverse_trace_function_view,
     trace_functions_reverse,

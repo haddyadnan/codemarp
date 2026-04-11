@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from codemap.analyzers.low_level import build_low_level_view
+from codemarp.analyzers.low_level import build_low_level_view
 
 
 def test_low_level_builds_linear_flow(tmp_path: Path) -> None:

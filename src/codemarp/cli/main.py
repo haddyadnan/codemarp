@@ -1,10 +1,10 @@
 import argparse
 
-from codemap.analyzers.low_level import build_low_level_view
-from codemap.errors import CodemapError
-from codemap.pipeline.apply_view import ViewType, apply_view
-from codemap.pipeline.build_bundle import build_bundle
-from codemap.pipeline.export_all import export_all, export_low_level
+from codemarp.analyzers.low_level import build_low_level_view
+from codemarp.errors import codemarpError
+from codemarp.pipeline.apply_view import ViewType, apply_view
+from codemarp.pipeline.build_bundle import build_bundle
+from codemarp.pipeline.export_all import export_all, export_low_level
 
 
 def analyze_command(
@@ -62,12 +62,12 @@ def analyze_command(
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="codemap", description="3-level code mapper")
+    parser = argparse.ArgumentParser(prog="codemarp", description="3-level code mapper")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     analyze = subparsers.add_parser("analyze", help="Analyze a Python codebase")
     analyze.add_argument("root", help="Path to the repository root")
-    analyze.add_argument("--out", default="./codemap_out", help="Output directory")
+    analyze.add_argument("--out", default="./codemarp_out", help="Output directory")
     analyze.add_argument(
         "--view",
         choices=[view.value for view in ViewType],
@@ -151,7 +151,7 @@ def main() -> None:
                 module=args.module,
                 max_depth=args.max_depth,
             )
-        except CodemapError as exc:
+        except codemarpError as exc:
             raise SystemExit(str(exc)) from exc
 
 

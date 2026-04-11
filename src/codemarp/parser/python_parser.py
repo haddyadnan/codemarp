@@ -2,8 +2,8 @@ import ast
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from codemap.errors import FocusFormatError, ResolutionError
-from codemap.graph.models import FunctionNode
+from codemarp.errors import FocusFormatError, ResolutionError
+from codemarp.graph.models import FunctionNode
 
 IGNORED_DIR_NAMES = {
     ".git",

@@ -1,6 +1,6 @@
-from codemap.errors import ModuleViewError
-from codemap.graph.models import GraphBundle
-from codemap.views.subgraph import build_function_subgraph
+from codemarp.errors import ModuleViewError
+from codemarp.graph.models import GraphBundle
+from codemarp.views.subgraph import build_function_subgraph
 
 
 def module_function_view(bundle: GraphBundle, module_id: str) -> GraphBundle:

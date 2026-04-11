@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from codemap.pipeline.apply_view import ViewType, apply_view
-from codemap.pipeline.build_bundle import build_bundle
-from codemap.pipeline.export_all import export_all
+from codemarp.pipeline.apply_view import ViewType, apply_view
+from codemarp.pipeline.build_bundle import build_bundle
+from codemarp.pipeline.export_all import export_all
 
 
 def test_build_bundle_returns_full_graph_result(tmp_path: Path) -> None:
