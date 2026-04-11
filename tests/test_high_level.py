@@ -1,87 +1,87 @@
-from codemap.analyzers.high_level import aggregate_module_id, build_high_level_edges
-from codemap.exporters.mermaid import export_module_graph
-from codemap.graph.models import ModuleNode
-from codemap.parser.python_parser import ParsedPythonModule
+from codemarp.analyzers.high_level import aggregate_module_id, build_high_level_edges
+from codemarp.exporters.mermaid import export_module_graph
+from codemarp.graph.models import ModuleNode
+from codemarp.parser.python_parser import ParsedPythonModule
 
 
 def test_aggregate_module_id() -> None:
-    assert aggregate_module_id("codemap.views.trace") == "codemap.views"
-    assert aggregate_module_id("codemap.graph.models.extras") == "codemap.graph"
-    assert aggregate_module_id("codemap.errors") == "codemap.errors"
-    assert aggregate_module_id("codemap.cli") == "codemap.cli"
+    assert aggregate_module_id("codemarp.views.trace") == "codemarp.views"
+    assert aggregate_module_id("codemarp.graph.models.extras") == "codemarp.graph"
+    assert aggregate_module_id("codemarp.errors") == "codemarp.errors"
+    assert aggregate_module_id("codemarp.cli") == "codemarp.cli"
     assert aggregate_module_id("mypackage") == "mypackage"
 
 
 def test_high_level_aggregates_to_group_edges() -> None:
     modules = [
         ModuleNode(
-            id="codemap.cli.main", path="codemap/cli/main.py", package="codemap.cli"
+            id="codemarp.cli.main", path="codemarp/cli/main.py", package="codemarp.cli"
         ),
         ModuleNode(
-            id="codemap.parser.python_parser",
-            path="codemap/parser/python_parser.py",
-            package="codemap.parser",
+            id="codemarp.parser.python_parser",
+            path="codemarp/parser/python_parser.py",
+            package="codemarp.parser",
         ),
         ModuleNode(
-            id="codemap.graph.builder",
-            path="codemap/graph/builder.py",
-            package="codemap.graph",
+            id="codemarp.graph.builder",
+            path="codemarp/graph/builder.py",
+            package="codemarp.graph",
         ),
     ]
 
     parsed_modules = [
         ParsedPythonModule(
-            module_id="codemap.cli.main",
-            path="codemap/cli/main.py",
-            imports=["codemap.parser.python_parser", "codemap.graph.builder"],
+            module_id="codemarp.cli.main",
+            path="codemarp/cli/main.py",
+            imports=["codemarp.parser.python_parser", "codemarp.graph.builder"],
         ),
         ParsedPythonModule(
-            module_id="codemap.parser.python_parser",
-            path="codemap/parser/python_parser.py",
-            imports=["codemap.graph.builder"],
+            module_id="codemarp.parser.python_parser",
+            path="codemarp/parser/python_parser.py",
+            imports=["codemarp.graph.builder"],
         ),
     ]
 
     group_ids, edges = build_high_level_edges(parsed_modules, modules)
 
-    assert group_ids == ["codemap.cli", "codemap.graph", "codemap.parser"]
+    assert group_ids == ["codemarp.cli", "codemarp.graph", "codemarp.parser"]
     assert {(edge.source, edge.target) for edge in edges} == {
-        ("codemap.cli", "codemap.parser"),
-        ("codemap.cli", "codemap.graph"),
-        ("codemap.parser", "codemap.graph"),
+        ("codemarp.cli", "codemarp.parser"),
+        ("codemarp.cli", "codemarp.graph"),
+        ("codemarp.parser", "codemarp.graph"),
     }
 
 
 def test_high_level_keeps_top_level_modules_distinct() -> None:
     modules = [
         ModuleNode(
-            id="codemap.cli.main", path="codemap/cli/main.py", package="codemap.cli"
+            id="codemarp.cli.main", path="codemarp/cli/main.py", package="codemarp.cli"
         ),
-        ModuleNode(id="codemap.errors", path="codemap/errors.py", package="codemap"),
+        ModuleNode(id="codemarp.errors", path="codemarp/errors.py", package="codemarp"),
         ModuleNode(
-            id="codemap.views.trace",
-            path="codemap/views/trace.py",
-            package="codemap.views",
+            id="codemarp.views.trace",
+            path="codemarp/views/trace.py",
+            package="codemarp.views",
         ),
     ]
 
     parsed_modules = [
         ParsedPythonModule(
-            module_id="codemap.cli.main",
-            path="codemap/cli/main.py",
-            imports=["codemap.errors", "codemap.views.trace"],
+            module_id="codemarp.cli.main",
+            path="codemarp/cli/main.py",
+            imports=["codemarp.errors", "codemarp.views.trace"],
         ),
     ]
 
     group_ids, edges = build_high_level_edges(parsed_modules, modules)
 
-    assert "codemap.errors" in group_ids
-    assert "codemap.views" in group_ids
-    assert "codemap" not in group_ids
+    assert "codemarp.errors" in group_ids
+    assert "codemarp.views" in group_ids
+    assert "codemarp" not in group_ids
 
     assert {(edge.source, edge.target) for edge in edges} == {
-        ("codemap.cli", "codemap.errors"),
-        ("codemap.cli", "codemap.views"),
+        ("codemarp.cli", "codemarp.errors"),
+        ("codemarp.cli", "codemarp.views"),
     }
 
 
@@ -112,27 +112,27 @@ def test_high_level_dedupes_same_group_relationships() -> None:
 def test_export_module_graph_renders_groups_and_top_level_modules_differently() -> None:
     modules = [
         ModuleNode(
-            id="codemap.cli.main", path="codemap/cli/main.py", package="codemap.cli"
+            id="codemarp.cli.main", path="codemarp/cli/main.py", package="codemarp.cli"
         ),
-        ModuleNode(id="codemap.errors", path="codemap/errors.py", package="codemap"),
+        ModuleNode(id="codemarp.errors", path="codemarp/errors.py", package="codemarp"),
         ModuleNode(
-            id="codemap.views.trace",
-            path="codemap/views/trace.py",
-            package="codemap.views",
+            id="codemarp.views.trace",
+            path="codemarp/views/trace.py",
+            package="codemarp.views",
         ),
     ]
 
     parsed_modules = [
         ParsedPythonModule(
-            module_id="codemap.cli.main",
-            path="codemap/cli/main.py",
-            imports=["codemap.errors", "codemap.views.trace"],
+            module_id="codemarp.cli.main",
+            path="codemarp/cli/main.py",
+            imports=["codemarp.errors", "codemarp.views.trace"],
         ),
     ]
 
     group_ids, edges = build_high_level_edges(parsed_modules, modules)
     mermaid = export_module_graph(group_ids, edges, modules)
 
-    assert 'codemap_views["codemap.views"]' in mermaid
-    assert 'codemap_errors(["codemap.errors"])' in mermaid
-    assert "codemap -->" not in mermaid
+    assert 'codemarp_views["codemarp.views"]' in mermaid
+    assert 'codemarp_errors(["codemarp.errors"])' in mermaid
+    assert "codemarp -->" not in mermaid

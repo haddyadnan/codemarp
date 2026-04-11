@@ -1,244 +1,220 @@
-```markdown
-# Codemap
+# CodeMarp
 
-Codemap is a tool for exploring Python codebases at three levels:
+**Multi-level code architecture and relationship mapping**
 
-- **High level** → how modules/packages interact  
-- **Mid level** → how functions call each other  
-- **Low level** → how control flows inside a function  
-
-It helps you answer:
-
-- *“How is this codebase structured?”*
-- *“What calls this function?”*
-- *“What actually happens inside this function?”*
+> Understand a codebase like a map — zoom in, zoom out, follow the flow.
 
 ---
 
-## Why Codemap?
+## The problem
 
-Understanding unfamiliar code is hard because information is scattered:
+Large codebases are hard to navigate. You open a file and you're already lost. You don't know what calls what, where things live, or what actually happens inside a function.
 
-- architecture lives across files
-- function relationships are implicit
-- control flow is hidden in code
+Documentation is outdated. Diagrams don't exist. The only way to understand the code is to read all of it.
 
-Codemap turns that into **visual graphs**.
+CodeMarp is a different approach.
 
 ---
 
-## The 3 Levels
+## What CodeMarp does
 
-### High Level — Architecture
+Given a Python repository, CodeMarp gives you three zoom levels:
 
-Shows how modules/packages depend on each other.
+| Level | What you see |
+|-------|-------------|
+| **High** | Module and package architecture — how things are organised |
+| **Mid** | Function relationships — who calls what |
+| **Low** | Control flow inside a function — what actually happens |
 
-```
+Think of it as **Google Maps for your codebase**.
 
-codemap.cli → codemap.pipeline → codemap.views
-
-```
-
-Use this to understand structure and layering.
-
----
-
-### Mid Level — Function Graph
-
-Shows how functions call each other.
-
-```
-
-main.run → worker.process → db.save
-
-````
-
-Use this to trace behavior across the codebase.
-
----
-
-### Low Level — Control Flow
-
-Shows what happens *inside* a function.
-
-- branches
-- loops
-- returns
-- execution paths
-
-Use this to understand logic in detail.
-
----
-
-## Installation
-
-```bash
-uv venv
-uv pip install -e .
-````
-
----
-
-## Usage
-
-### Analyze a codebase
-
-```bash
-codemap analyze src
-```
-
----
-
-### View types
-
-#### Full (default)
-
-```bash
-codemap analyze src --view full
-```
-
-Outputs:
-
-* full graph
-* high-level + mid-level views
-
----
-
-#### Trace (forward)
-
-```bash
-codemap analyze src --view trace --focus module:function
-```
-
-Example:
-
-```bash
-codemap analyze src --view trace --focus codemap.cli.main:analyze_command
-```
-
----
-
-#### Reverse (callers)
-
-```bash
-codemap analyze src --view reverse --focus module:function
-```
-
----
-
-#### Module view
-
-```bash
-codemap analyze src --view module --module module_id
-```
-
----
-
-#### Low-level (control flow)
-
-```bash
-codemap analyze src --view low --focus module:function
-```
-
-Example:
-
-```bash
-codemap analyze src --view low --focus codemap.cli.main:analyze_command
-```
+Zoom out to see the city. Zoom in to see the streets. Zoom in further to see the building layout.
 
 ---
 
 ## Output
 
-Codemap writes to `./codemap_out` by default:
+Every analysis produces:
 
-* `graph.json` — full graph data
-* `high_level.mmd` — architecture view
-* `mid_level.mmd` — function graph
-* `low_level.mmd` — control flow (when using `--view low`)
+```
+out/
+  high_level.mmd    # architecture graph
+  mid_level.mmd     # function call graph
+  low_level.mmd     # control flow (when using --view low)
+  graph.json        # full graph data for tooling
+```
 
-You can view `.mmd` files using:
-
-* Mermaid preview tools
-* editors like Zed / VSCode with Mermaid support
+- **Mermaid** (`.mmd`) — renders in GitHub, VS Code, Mermaid Live Editor
+- **JSON** — for tooling, integrations, and future UI
 
 ---
 
-## Focus format
+## Install
 
-Low-level and trace views require a focus:
-
-```
-module:function_name
-module:ClassName.method_name
+```bash
+pip install codemarp
 ```
 
-Examples:
+Or for development:
 
-```
-app.main:run
-app.service:Service.process
+```bash
+pip install -e .
 ```
 
 ---
 
-## Limitations
+## Usage
 
-Codemap is **not a full semantic analyzer**.
+### Analyse a repo
 
-It uses static heuristics, which means:
+```bash
+codemarp analyze path/to/repo --out out
+```
 
-### Mid-level limitations
+Point at the folder that **contains your top-level package**:
 
-* cannot fully resolve:
+```bash
+# flat layout: mypackage/ is at root
+codemarp analyze .
 
-  * `obj.method()` when type is unknown
-  * dynamic dispatch
-  * runtime-generated calls
-
-### Low-level limitations
-
-* only supports functions and methods
-* does not support:
-
-  * module-level executable code
-  * full `try/except` control flow
-  * `break` / `continue` / `match`
-
-### General
-
-* resolution is best-effort, not guaranteed exact
+# src layout: mypackage/ is inside src/
+codemarp analyze src
+```
 
 ---
 
-## Design philosophy
+### Views
 
-Codemap is built to be:
+#### Full (default)
+See the entire graph — architecture + all function relationships.
 
-* **Useful** → gives real insight into code structure
-* **Simple** → avoids unnecessary complexity
-* **Honest** → does not pretend to fully understand runtime behavior
+```bash
+codemarp analyze path/to/repo --view full --out out
+```
+
+#### Trace — what does this function call?
+Follow a function forward through the call graph.
+
+```bash
+codemarp analyze path/to/repo \
+  --view trace \
+  --focus package.module:function_name \
+  --max-depth 3 \
+  --out out
+```
+
+#### Reverse — what calls this function?
+Find every path that leads to a function.
+
+```bash
+codemarp analyze path/to/repo \
+  --view reverse \
+  --focus package.module:function_name \
+  --out out
+```
+
+#### Module — what lives in this module?
+Scope the graph to a single module.
+
+```bash
+codemarp analyze path/to/repo \
+  --view module \
+  --module package.module \
+  --out out
+```
+
+#### Low — what happens inside this function?
+Render the control flow graph for a single function.
+
+```bash
+codemarp analyze path/to/repo \
+  --view low \
+  --focus package.module:function_name \
+  --out out
+```
+
+---
+
+## Typical workflow
+
+```
+1. codemarp analyze src --view full
+   → understand the overall structure
+
+2. codemarp analyze src --view module --module mypackage.core
+   → inspect one area
+
+3. codemarp analyze src --view trace --focus mypackage.core:run --max-depth 3
+   → follow a specific entrypoint
+
+4. codemarp analyze src --view low --focus mypackage.core:run
+   → zoom into the logic
+```
+
+---
+
+## Viewing the output
+
+Mermaid files render automatically in:
+
+- **GitHub** — paste into any `.md` file inside a ` ```mermaid ` block
+- **[Mermaid Live Editor](https://mermaid.live)** — paste and share
+- **VS Code** — with the Mermaid Preview extension
+
+---
+
+## Known limitations
+
+CodeMarp is static analysis — it reads your code without running it.
+
+| Limitation | Workaround |
+|-----------|------------|
+| Relative imports may produce sparse high-level graphs | Use `--view module` or `--view trace` instead |
+| Method calls (`self.method()`) are best-effort resolved | False positive edges are possible |
+| Dynamic dispatch is not tracked | Results reflect static structure only |
+| Large full graphs can be hard to read | Use focused views — `trace`, `module`, `reverse` |
+
+These are honest limitations, not bugs. Focused views exist precisely because full graphs on real codebases get noisy.
 
 ---
 
 ## Roadmap
 
-Current focus:
+- Better call resolution (method dispatch, aliases)
+- Graph filtering and noise reduction
+- Tree-sitter migration → multi-language support
+- JavaScript / TypeScript support
+- Interactive web UI
 
-* improving visualization and readability
-* better documentation
-* real-world validation
+---
 
-Future directions:
+## Philosophy
 
-* richer resolution
-* UI / interactive exploration
-* support for other languages
+**Useful before perfect.**
+CodeMarp v0.1 is not exhaustive. It is correct for common cases and honest about where it isn't.
+
+**Readable before complete.**
+A graph you can understand is more valuable than a graph that shows everything.
+
+**Static first.**
+No runtime instrumentation. No code execution. Analysis runs anywhere.
 
 ---
 
 ## Status
 
-Early-stage but functional.
+- Python only (AST-based)
+- CLI-first
+- v0.1.0 — early but usable on real codebases
 
-Feedback and experimentation encouraged.
+---
+
+## Name
+
+**CodeMarp** — sounds like "code map", because that's what it produces.
+
+Expanded if you need it: *Code Mapping, Architecture, Relationships, and Paths*
+
+---
+
+*Built to answer the question every developer asks when they open an unfamiliar codebase: where do I even start?*codemarpcodemarpcodemarpcodemarp

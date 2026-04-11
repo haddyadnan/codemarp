@@ -1,4 +1,4 @@
-from codemap.graph.models import Edge, FunctionNode, GraphBundle, ModuleNode
+from codemarp.graph.models import Edge, FunctionNode, GraphBundle, ModuleNode
 
 
 def build_function_subgraph(bundle: GraphBundle, function_ids: set[str]) -> GraphBundle:

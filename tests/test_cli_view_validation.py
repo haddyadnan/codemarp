@@ -2,7 +2,7 @@ import argparse
 
 import pytest
 
-from codemap.cli.main import _validate_analyze_args, build_parser
+from codemarp.cli.main import _validate_analyze_args, build_parser
 
 
 def _parse(argv: list[str]) -> tuple[argparse.ArgumentParser, argparse.Namespace]:
@@ -51,7 +51,7 @@ def test_trace_view_accepts_focus_and_depth() -> None:
             "--view",
             "trace",
             "--focus",
-            "codemap.cli.main:analyze_command",
+            "codemarp.cli.main:analyze_command",
             "--max-depth",
             "3",
         ]
@@ -98,7 +98,7 @@ def test_module_view_accepts_module() -> None:
             "--view",
             "module",
             "--module",
-            "codemap.parser.python_parser",
+            "codemarp.parser.python_parser",
         ]
     )
     _validate_analyze_args(args, parser)
@@ -126,7 +126,7 @@ def test_reverse_view_accepts_focus_and_depth() -> None:
             "--view",
             "reverse",
             "--focus",
-            "codemap.views.trace:trace_function_view",
+            "codemarp.views.trace:trace_function_view",
             "--max-depth",
             "2",
         ]

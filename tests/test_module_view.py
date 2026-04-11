@@ -1,7 +1,7 @@
 import pytest
 
-from codemap.graph.models import Edge, FunctionNode, GraphBundle, ModuleNode
-from codemap.views.module_view import ModuleViewError, module_function_view
+from codemarp.graph.models import Edge, FunctionNode, GraphBundle, ModuleNode
+from codemarp.views.module_view import ModuleViewError, module_function_view
 
 
 def _bundle() -> GraphBundle:

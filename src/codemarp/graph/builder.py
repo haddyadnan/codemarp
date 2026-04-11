@@ -1,4 +1,4 @@
-from codemap.graph.models import (
+from codemarp.graph.models import (
     ControlFlowNode,
     Edge,
     FunctionNode,

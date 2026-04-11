@@ -1,5 +1,5 @@
-from codemap.graph.models import Edge, ModuleNode
-from codemap.parser.python_parser import ParsedPythonModule
+from codemarp.graph.models import Edge, ModuleNode
+from codemarp.parser.python_parser import ParsedPythonModule
 
 
 def build_high_level_edges(
@@ -44,10 +44,10 @@ def aggregate_module_id(module_id: str) -> str:
     Collapse deep module paths for the high-level graph.
 
     - 3+ segments collapse to the first 2 segments:
-      codemap.views.trace -> codemap.views
+      codemarp.views.trace -> codemarp.views
     - 1–2 segments stay as-is:
-      codemap.errors -> codemap.errors
-      codemap.cli -> codemap.cli
+      codemarp.errors -> codemarp.errors
+      codemarp.cli -> codemarp.cli
     """
     segments = module_id.split(".")
     if len(segments) >= 3:

@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from codemap.graph.models import GraphBundle
+from codemarp.graph.models import GraphBundle
 
 
 def export_bundle_json(bundle: GraphBundle, out_path: str | Path) -> None:

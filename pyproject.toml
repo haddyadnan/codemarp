@@ -1,5 +1,5 @@
 [project]
-name = "codemap"
+name = "codemarp"
 version = "0.1.0"
 description = "Codebase visualization tool"
 readme = "README.md"
@@ -19,4 +19,4 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [project.scripts]
-codemap = "codemap.cli.main:main"
+codemarp = "codemarp.cli.main:main"

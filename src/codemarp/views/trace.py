@@ -1,8 +1,8 @@
 from collections import deque
 
-from codemap.errors import TraceError
-from codemap.graph.models import GraphBundle
-from codemap.views.subgraph import build_function_subgraph
+from codemarp.errors import TraceError
+from codemarp.graph.models import GraphBundle
+from codemarp.views.subgraph import build_function_subgraph
 
 
 def _build_call_adjacency(bundle: GraphBundle) -> dict[str, set[str]]:

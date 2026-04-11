@@ -1,5 +1,5 @@
-from codemap.analyzers.high_level import aggregate_module_id
-from codemap.graph.models import ControlFlowNode, Edge, FunctionNode, ModuleNode
+from codemarp.analyzers.high_level import aggregate_module_id
+from codemarp.graph.models import ControlFlowNode, Edge, FunctionNode, ModuleNode
 
 
 def export_module_graph(

@@ -3,17 +3,17 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from codemap.exporters.json_exporter import export_bundle_json
-from codemap.exporters.mermaid import (
+from codemarp.exporters.json_exporter import export_bundle_json
+from codemarp.exporters.mermaid import (
     export_function_graph,
     export_low_level_graph,
     export_module_graph,
 )
-from codemap.graph.models import GraphBundle
-from codemap.pipeline.build_bundle import BuildResult
+from codemarp.graph.models import GraphBundle
+from codemarp.pipeline.build_bundle import BuildResult
 
 if TYPE_CHECKING:
-    from codemap.analyzers.low_level import LowLevelResult
+    from codemarp.analyzers.low_level import LowLevelResult
 
 
 def export_all(

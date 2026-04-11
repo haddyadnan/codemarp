@@ -1,8 +1,8 @@
 from enum import Enum
 
-from codemap.graph.models import GraphBundle
-from codemap.views.module_view import module_function_view
-from codemap.views.trace import reverse_trace_function_view, trace_function_view
+from codemarp.graph.models import GraphBundle
+from codemarp.views.module_view import module_function_view
+from codemarp.views.trace import reverse_trace_function_view, trace_function_view
 
 
 class ViewType(str, Enum):

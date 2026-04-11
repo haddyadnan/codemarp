@@ -1,5 +1,5 @@
 def main():
-    print("Hello from codemap!")
+    print("Hello from codemarp!")
 
 
 if __name__ == "__main__":
