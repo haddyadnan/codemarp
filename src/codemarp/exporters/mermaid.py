@@ -82,7 +82,8 @@ def export_low_level_graph(nodes: list[ControlFlowNode], edges: list[Edge]) -> s
     for node in nodes:
         left, right = _shape_for_kind(node.kind)
         label = node.label.replace('"', "'")
-        lines.append(f'    {_safe_id(node.id)}{left}"{label}"{right}')
+        css_class = _low_level_class_for_kind(node.kind)
+        lines.append(f'    {_safe_id(node.id)}{left}"{label}"{right}:::{css_class}')
     for edge in edges:
         if edge.kind != "control_flow":
             continue
@@ -92,4 +93,24 @@ def export_low_level_graph(nodes: list[ControlFlowNode], edges: list[Edge]) -> s
             )
         else:
             lines.append(f"    {_safe_id(edge.source)} --> {_safe_id(edge.target)}")
+    lines.extend(
+        [
+            "",
+            "    classDef decision fill:#fff3cd,stroke:#d4a017,color:#000;",  # amber — decisions stand out
+            "    classDef statement fill:#f0f0f0,stroke:#aaa,color:#333;",  # neutral grey — background noise
+            "    classDef terminal fill:#fde8e8,stroke:#c0392b,color:#000;",  # red — stop/end is clear
+            "    classDef merge fill:#eef2ff,stroke:#7c8fdb,color:#000;",  # soft indigo — structural
+            "    classDef start fill:#e8f5e9,stroke:#2e7d32,color:#000;",  # green — start is good
+        ]
+    )
     return "\n".join(lines)
+
+
+def _low_level_class_for_kind(kind: str) -> str:
+    if kind == "decision":
+        return "decision"
+    if kind == "merge":
+        return "merge"
+    if kind in {"start", "end", "terminal"}:
+        return "terminal"
+    return "statement"
