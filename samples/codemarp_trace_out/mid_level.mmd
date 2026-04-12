@@ -1,0 +1,17 @@
+flowchart LR
+    codemarp_graph_models_GraphBundle_function_by_id["codemarp.graph.models:GraphBundle.function_by_id"]
+    codemarp_views_subgraph_build_function_subgraph["codemarp.views.subgraph:build_function_subgraph"]
+    codemarp_views_subgraph__filter_edges_for_nodes["codemarp.views.subgraph:_filter_edges_for_nodes"]
+    codemarp_views_subgraph__modules_for_functions["codemarp.views.subgraph:_modules_for_functions"]
+    codemarp_views_trace__build_call_adjacency["codemarp.views.trace:_build_call_adjacency"]
+    codemarp_views_trace_trace_functions_forward["codemarp.views.trace:trace_functions_forward"]
+    codemarp_views_trace_trace_function_view["codemarp.views.trace:trace_function_view"]
+    codemarp_views_trace__validate_entrypoint["codemarp.views.trace:_validate_entrypoint"]
+    codemarp_views_subgraph_build_function_subgraph -->|calls| codemarp_views_subgraph__modules_for_functions
+    codemarp_views_subgraph_build_function_subgraph -->|calls| codemarp_views_subgraph__filter_edges_for_nodes
+    codemarp_views_trace_trace_functions_forward -->|calls| codemarp_views_trace__validate_entrypoint
+    codemarp_views_trace_trace_functions_forward -->|calls| codemarp_views_trace__build_call_adjacency
+    codemarp_views_trace_trace_function_view -->|calls| codemarp_views_trace__validate_entrypoint
+    codemarp_views_trace_trace_function_view -->|calls| codemarp_views_trace_trace_functions_forward
+    codemarp_views_trace_trace_function_view -->|calls| codemarp_views_subgraph_build_function_subgraph
+    codemarp_views_trace__validate_entrypoint -->|calls| codemarp_graph_models_GraphBundle_function_by_id

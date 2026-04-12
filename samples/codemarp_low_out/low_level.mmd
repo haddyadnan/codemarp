@@ -1,0 +1,26 @@
+flowchart TD
+    n1(["Start"]):::terminal
+    n2{"encoding is None"}:::decision
+    n3["get_best_encoding(...)"]:::statement
+    n4["Merge"]:::merge
+    n5{"errors is None"}:::decision
+    n6["Assign"]:::statement
+    n7["Merge"]:::merge
+    n8(["Return"]):::terminal
+    n9(["End"]):::terminal
+    n1 --> n2
+    n2 -->|True| n3
+    n3 --> n4
+    n2 -->|False| n4
+    n4 --> n5
+    n5 -->|True| n6
+    n6 --> n7
+    n5 -->|False| n7
+    n7 --> n8
+    n8 --> n9
+
+    classDef decision fill:#fff3cd,stroke:#d4a017,color:#000;
+    classDef statement fill:#f0f0f0,stroke:#aaa,color:#333;
+    classDef terminal fill:#fde8e8,stroke:#c0392b,color:#000;
+    classDef merge fill:#eef2ff,stroke:#7c8fdb,color:#000;
+    classDef start fill:#e8f5e9,stroke:#2e7d32,color:#000;

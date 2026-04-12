@@ -1,10 +1,13 @@
 [project]
 name = "codemarp"
 version = "0.1.0"
-description = "Codebase visualization tool"
+description = "Multi-level code architecture and relationship mapping"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = [
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
     "pytest>=9.0.3",
 ]
 

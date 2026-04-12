@@ -12,7 +12,7 @@ Large codebases are hard to navigate. You open a file and you're already lost. Y
 
 Documentation is outdated. Diagrams don't exist. The only way to understand the code is to read all of it.
 
-CodeMarp is a different approach, it builds the map for you.
+CodeMarp takes a different approach: it builds the map for you.
 ---
 
 ## What CodeMarp does
@@ -50,14 +50,22 @@ out/
 
 ## Install
 
+For local development in this repo:
+
 ```bash
-pip install codemarp
+uv sync --extra dev
 ```
 
-Or for development:
+To install in a project environment:
 
 ```bash
-pip install -e .
+uv pip install codemarp
+```
+
+Or with pip:
+
+```bash
+pip install codemarp
 ```
 
 ---
@@ -109,21 +117,22 @@ Find every path that leads to a function.
 codemarp analyze path/to/repo \
   --view reverse \
   --focus package.module:function_name \
+  --max-depth 3 \
   --out out
 ```
 
-#### Module — what lives in this module?
-Scope the graph to a single module.
+#### Module — zoom into one module
+Show the functions and internal relationships for a single module.
 
 ```bash
 codemarp analyze path/to/repo \
   --view module \
-  --module package.module \
+  --module package.module_name \
   --out out
 ```
 
 #### Low — what happens inside this function?
-Render the control flow graph for a single function.
+Build a control-flow graph for one function.
 
 ```bash
 codemarp analyze path/to/repo \
@@ -156,9 +165,130 @@ codemarp analyze path/to/repo \
 
 Mermaid files render automatically in:
 
-- **GitHub** — paste into any `.md` file inside a ` ```mermaid ` block
+- **GitHub** — renders Mermaid blocks directly in Markdown files
 - **[Mermaid Live Editor](https://mermaid.live)** — paste and share
 - **VS Code** — with the Mermaid Preview extension
+
+Yes, GitHub renders Mermaid blocks directly in Markdown, so the sample diagrams below should display in the repo README.
+
+---
+
+## Sample output
+
+These examples were generated from the CodeMarp codebase itself.
+
+### High-level architecture
+
+Command:
+
+```bash
+codemarp analyze src --view full --out samples/codemarp_full_out
+```
+
+Excerpt from [`samples/codemarp_full_out/high_level.mmd`](samples/codemarp_full_out/high_level.mmd):
+
+```mermaid
+flowchart LR
+    codemarp_analyzers["codemarp.analyzers"]
+    codemarp_cli["codemarp.cli"]
+    codemarp_errors(["codemarp.errors"])
+    codemarp_exporters["codemarp.exporters"]
+    codemarp_graph["codemarp.graph"]
+    codemarp_parser["codemarp.parser"]
+    codemarp_pipeline["codemarp.pipeline"]
+    codemarp_views["codemarp.views"]
+    codemarp_analyzers -->|imports| codemarp_graph
+    codemarp_analyzers -->|imports| codemarp_parser
+    codemarp_cli -->|imports| codemarp_analyzers
+    codemarp_cli -->|imports| codemarp_errors
+    codemarp_cli -->|imports| codemarp_pipeline
+    codemarp_exporters -->|imports| codemarp_graph
+    codemarp_exporters -->|imports| codemarp_analyzers
+    codemarp_parser -->|imports| codemarp_errors
+    codemarp_parser -->|imports| codemarp_graph
+    codemarp_pipeline -->|imports| codemarp_graph
+    codemarp_pipeline -->|imports| codemarp_views
+    codemarp_pipeline -->|imports| codemarp_analyzers
+    codemarp_pipeline -->|imports| codemarp_parser
+    codemarp_pipeline -->|imports| codemarp_exporters
+    codemarp_views -->|imports| codemarp_errors
+    codemarp_views -->|imports| codemarp_graph
+```
+
+This is the zoomed-out package view: which parts of the project depend on which others.
+
+### Focused function trace
+
+Command:
+
+```bash
+codemarp analyze src --focus codemarp.cli.main:analyze_command --out out
+```
+
+Excerpt from [`samples/codemarp_trace_out/mid_level.mmd`](samples/codemarp_trace_out/mid_level.mmd):
+
+```mermaid
+flowchart LR
+    codemarp_graph_models_GraphBundle_function_by_id["codemarp.graph.models:GraphBundle.function_by_id"]
+    codemarp_views_subgraph_build_function_subgraph["codemarp.views.subgraph:build_function_subgraph"]
+    codemarp_views_subgraph__filter_edges_for_nodes["codemarp.views.subgraph:_filter_edges_for_nodes"]
+    codemarp_views_subgraph__modules_for_functions["codemarp.views.subgraph:_modules_for_functions"]
+    codemarp_views_trace__build_call_adjacency["codemarp.views.trace:_build_call_adjacency"]
+    codemarp_views_trace_trace_functions_forward["codemarp.views.trace:trace_functions_forward"]
+    codemarp_views_trace_trace_function_view["codemarp.views.trace:trace_function_view"]
+    codemarp_views_trace__validate_entrypoint["codemarp.views.trace:_validate_entrypoint"]
+    codemarp_views_subgraph_build_function_subgraph -->|calls| codemarp_views_subgraph__modules_for_functions
+    codemarp_views_subgraph_build_function_subgraph -->|calls| codemarp_views_subgraph__filter_edges_for_nodes
+    codemarp_views_trace_trace_functions_forward -->|calls| codemarp_views_trace__validate_entrypoint
+    codemarp_views_trace_trace_functions_forward -->|calls| codemarp_views_trace__build_call_adjacency
+    codemarp_views_trace_trace_function_view -->|calls| codemarp_views_trace__validate_entrypoint
+    codemarp_views_trace_trace_function_view -->|calls| codemarp_views_trace_trace_functions_forward
+    codemarp_views_trace_trace_function_view -->|calls| codemarp_views_subgraph_build_function_subgraph
+    codemarp_views_trace__validate_entrypoint -->|calls| codemarp_graph_models_GraphBundle_function_by_id
+```
+
+This is the focused mid-level view: starting from one function, you can follow the call chain it reaches.
+
+### Low-level control flow
+
+Command:
+
+```bash
+codemarp analyze src --view low --focus codemarp.parser.python_parser:get_source --out out
+```
+
+Excerpt from [`samples/codemarp_low_out/low_level.mmd`](samples/codemarp_low_out/low_level.mmd):
+
+```mermaid
+flowchart TD
+    n1(["Start"]):::terminal
+    n2{"encoding is None"}:::decision
+    n3["get_best_encoding(...)"]:::statement
+    n4["Merge"]:::merge
+    n5{"errors is None"}:::decision
+    n6["Assign"]:::statement
+    n7["Merge"]:::merge
+    n8(["Return"]):::terminal
+    n9(["End"]):::terminal
+    n1 --> n2
+    n2 -->|True| n3
+    n3 --> n4
+    n2 -->|False| n4
+    n4 --> n5
+    n5 -->|True| n6
+    n6 --> n7
+    n5 -->|False| n7
+    n7 --> n8
+    n8 --> n9
+
+    classDef decision fill:#fff3cd,stroke:#d4a017,color:#000;
+    classDef statement fill:#f0f0f0,stroke:#aaa,color:#333;
+    classDef terminal fill:#fde8e8,stroke:#c0392b,color:#000;
+    classDef merge fill:#eef2ff,stroke:#7c8fdb,color:#000;
+    classDef start fill:#e8f5e9,stroke:#2e7d32,color:#000;
+```
+
+This is the zoomed-in function view: branches, merges, and return flow inside a single function.
 
 ---
 
@@ -212,8 +342,8 @@ No runtime instrumentation. No code execution. Analysis runs anywhere.
 
 **CodeMarp** — sounds like "code map", because that's what it produces.
 
-Expanded if you need it: *Code Mapping, Architecture, Relationships, and Paths*
+If you want an expansion: *Code Mapping, Architecture, Relationships, and Paths*
 
 ---
 
-*Built to answer the question every developer asks when they open an unfamiliar codebase: where do I even start?*codemarpcodemarpcodemarpcodemarp
+*Built to answer the question every developer asks when they open an unfamiliar codebase: where do I even start?*
