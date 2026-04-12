@@ -79,18 +79,12 @@ def _resolve_callee(
 
 
 def _resolve_same_module_call(
+    *,
     caller_module_id: str,
     callee_name: str,
-    by_module_and_name: dict,
+    by_module_and_name: dict[tuple[str, str], FunctionNode],
 ) -> FunctionNode | None:
-    if (caller_module_id, callee_name) in by_module_and_name:
-        return by_module_and_name[(caller_module_id, callee_name)]
-
-    if "." in callee_name:
-        short_name = callee_name.split(".")[-1]
-        return by_module_and_name.get((caller_module_id, short_name))
-
-    return None
+    return by_module_and_name.get((caller_module_id, callee_name))
 
 
 def _resolve_imported_symbol_call(
@@ -139,17 +133,22 @@ def _resolve_imported_module_call(
 
 
 def _resolve_unique_global_call(
+    *,
     callee_name: str,
-    by_name: dict,
+    by_name: dict[str, list[FunctionNode]],
 ) -> FunctionNode | None:
-    matches = by_name.get(callee_name, [])
-    if not matches and "." in callee_name:
-        matches = by_name.get(callee_name.split(".")[-1], [])
+    if _is_dotted_call(callee_name):
+        return None
 
+    matches = by_name.get(callee_name, [])
     unique = list({fn.id: fn for fn in matches}.values())
     if len(unique) == 1:
         return unique[0]
     return None
+
+
+def _is_dotted_call(callee_name: str) -> bool:
+    return "." in callee_name
 
 
 def _dedupe_edges(edges: list[Edge]) -> list[Edge]:
