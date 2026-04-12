@@ -31,6 +31,31 @@ Zoom out to see the city. Zoom in to see the streets. Zoom in further to see the
 
 ---
 
+## Quickstart
+
+Run CodeMarp on a Python repository:
+
+```bash
+codemarp analyze src --out out
+```
+
+This generates:
+
+```text
+out/
+  high_level.mmd
+  mid_level.mmd
+  graph.json
+```
+
+To zoom into one function:
+
+```bash
+codemarp analyze src --view low --focus codemarp.cli.main:analyze_command --out out
+```
+
+---
+
 ## Output
 
 Every analysis produces:
