@@ -12,8 +12,7 @@ Large codebases are hard to navigate. You open a file and you're already lost. Y
 
 Documentation is outdated. Diagrams don't exist. The only way to understand the code is to read all of it.
 
-CodeMarp is a different approach.
-
+CodeMarp is a different approach, it builds the map for you.
 ---
 
 ## What CodeMarp does
@@ -26,7 +25,7 @@ Given a Python repository, CodeMarp gives you three zoom levels:
 | **Mid** | Function relationships — who calls what |
 | **Low** | Control flow inside a function — what actually happens |
 
-Think of it as **Google Maps for your codebase**.
+Think of it as **Google Maps for your codebase**. Built entirely from static analysis — no runtime, no instrumentation.
 
 Zoom out to see the city. Zoom in to see the streets. Zoom in further to see the building layout.
 
@@ -170,7 +169,7 @@ CodeMarp is static analysis — it reads your code without running it.
 | Limitation | Workaround |
 |-----------|------------|
 | Relative imports may produce sparse high-level graphs | Use `--view module` or `--view trace` instead |
-| Method calls (`self.method()`) are best-effort resolved | False positive edges are possible |
+| Method calls (`self.method()`) are conservatively handled | Some valid edges may be missing, but false positives are reduced |
 | Dynamic dispatch is not tracked | Results reflect static structure only |
 | Large full graphs can be hard to read | Use focused views — `trace`, `module`, `reverse` |
 
@@ -203,7 +202,7 @@ No runtime instrumentation. No code execution. Analysis runs anywhere.
 
 ## Status
 
-- Python only (AST-based)
+- Python only (AST-based, tree-sitter planned)
 - CLI-first
 - v0.1.0 — early but usable on real codebases
 
