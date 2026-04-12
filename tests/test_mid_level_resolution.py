@@ -129,3 +129,36 @@ def test_mid_level_leaves_ambiguous_global_call_unresolved() -> None:
     edges = build_mid_level_edges([main, mod_a, mod_b], functions)
 
     assert edges == []
+
+
+def test_mid_level_does_not_resolve_self_method_call_by_short_name_fallback() -> None:
+    main_parser = PythonParser("app.main")
+    main = main_parser.parse_code(
+        "class Service:\n"
+        "    def run(self):\n"
+        "        self.save()\n"
+        "\n"
+        "def save():\n"
+        "    return 1\n"
+    )
+
+    edges = build_mid_level_edges([main], main.functions)
+
+    assert {(edge.source, edge.target) for edge in edges} == set()
+
+
+def test_mid_level_still_resolves_imported_module_alias_call() -> None:
+    main_parser = PythonParser("app.main")
+    main = main_parser.parse_code(
+        "import app.worker as w\n\ndef run():\n    w.work()\n"
+    )
+
+    worker_parser = PythonParser("app.worker")
+    worker = worker_parser.parse_code("def work():\n    return 1\n")
+
+    functions = main.functions + worker.functions
+    edges = build_mid_level_edges([main, worker], functions)
+
+    assert {(edge.source, edge.target) for edge in edges} == {
+        ("app.main:run", "app.worker:work")
+    }
