@@ -143,15 +143,29 @@ class PythonParser(ast.NodeVisitor):
     def _resolve_call_name(self, node: ast.AST) -> str | None:
         if isinstance(node, ast.Name):
             return node.id
+
         if isinstance(node, ast.Attribute):
-            parts = []
-            current = node
-            while isinstance(current, ast.Attribute):
-                parts.append(current.attr)
-                current = current.value
-            if isinstance(current, ast.Name):
-                parts.append(current.id)
-            return ".".join(reversed(parts))
+            parts: list[str] = [node.attr]
+            value = node.value
+
+            while isinstance(value, ast.Attribute):
+                parts.append(value.attr)
+                value = value.value
+
+            if isinstance(value, ast.Name):
+                parts.append(value.id)
+                return ".".join(reversed(parts))
+
+            if (
+                isinstance(value, ast.Call)
+                and isinstance(value.func, ast.Name)
+                and value.func.id == "super"
+            ):
+                parts.append("super")
+                return ".".join(reversed(parts))
+
+            return node.attr
+
         return None
 
 
