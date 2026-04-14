@@ -1,15 +1,31 @@
+from pathlib import Path
+
 from codemarp.analyzers.high_level import aggregate_module_id, build_high_level_edges
 from codemarp.exporters.mermaid import export_module_graph
 from codemarp.graph.models import ModuleNode
-from codemarp.parser.python_parser import ParsedPythonModule
+from codemarp.parser.contracts import ImportFact, ParsedModule
 
 
-def test_aggregate_module_id() -> None:
-    assert aggregate_module_id("codemarp.views.trace") == "codemarp.views"
-    assert aggregate_module_id("codemarp.graph.models.extras") == "codemarp.graph"
-    assert aggregate_module_id("codemarp.errors") == "codemarp.errors"
-    assert aggregate_module_id("codemarp.cli") == "codemarp.cli"
-    assert aggregate_module_id("mypackage") == "mypackage"
+def _parsed_module(module_id: str, path: str, imports: list[str]) -> ParsedModule:
+    return ParsedModule(
+        module_id=module_id,
+        file_path=Path(path),
+        language="python",
+        imports=[
+            ImportFact(
+                raw_module=import_name,
+                imported_name=None,
+                alias=None,
+                is_from_import=False,
+                relative_level=0,
+                lineno=1,
+            )
+            for import_name in imports
+        ],
+        functions=[],
+        calls=[],
+        control_flow_roots=[],
+    )
 
 
 def test_high_level_aggregates_to_group_edges() -> None:
@@ -30,15 +46,15 @@ def test_high_level_aggregates_to_group_edges() -> None:
     ]
 
     parsed_modules = [
-        ParsedPythonModule(
-            module_id="codemarp.cli.main",
-            path="codemarp/cli/main.py",
-            imports=["codemarp.parser.python_parser", "codemarp.graph.builder"],
+        _parsed_module(
+            "codemarp.cli.main",
+            "codemarp/cli/main.py",
+            ["codemarp.parser.python_parser", "codemarp.graph.builder"],
         ),
-        ParsedPythonModule(
-            module_id="codemarp.parser.python_parser",
-            path="codemarp/parser/python_parser.py",
-            imports=["codemarp.graph.builder"],
+        _parsed_module(
+            "codemarp.parser.python_parser",
+            "codemarp/parser/python_parser.py",
+            ["codemarp.graph.builder"],
         ),
     ]
 
@@ -66,19 +82,18 @@ def test_high_level_keeps_top_level_modules_distinct() -> None:
     ]
 
     parsed_modules = [
-        ParsedPythonModule(
-            module_id="codemarp.cli.main",
-            path="codemarp/cli/main.py",
-            imports=["codemarp.errors", "codemarp.views.trace"],
+        _parsed_module(
+            "codemarp.cli.main",
+            "codemarp/cli/main.py",
+            ["codemarp.errors", "codemarp.views.trace"],
         ),
     ]
 
     group_ids, edges = build_high_level_edges(parsed_modules, modules)
 
     assert "codemarp.errors" in group_ids
+    assert "codemarp.cli" in group_ids
     assert "codemarp.views" in group_ids
-    assert "codemarp" not in group_ids
-
     assert {(edge.source, edge.target) for edge in edges} == {
         ("codemarp.cli", "codemarp.errors"),
         ("codemarp.cli", "codemarp.views"),
@@ -93,12 +108,8 @@ def test_high_level_dedupes_same_group_relationships() -> None:
     ]
 
     parsed_modules = [
-        ParsedPythonModule(
-            module_id="pkg.a.one", path="pkg/a/one.py", imports=["pkg.b.core"]
-        ),
-        ParsedPythonModule(
-            module_id="pkg.a.two", path="pkg/a/two.py", imports=["pkg.b.core"]
-        ),
+        _parsed_module("pkg.a.one", "pkg/a/one.py", ["pkg.b.core"]),
+        _parsed_module("pkg.a.two", "pkg/a/two.py", ["pkg.b.core"]),
     ]
 
     group_ids, edges = build_high_level_edges(parsed_modules, modules)
@@ -123,16 +134,24 @@ def test_export_module_graph_renders_groups_and_top_level_modules_differently() 
     ]
 
     parsed_modules = [
-        ParsedPythonModule(
-            module_id="codemarp.cli.main",
-            path="codemarp/cli/main.py",
-            imports=["codemarp.errors", "codemarp.views.trace"],
+        _parsed_module(
+            "codemarp.cli.main",
+            "codemarp/cli/main.py",
+            ["codemarp.errors", "codemarp.views.trace"],
         ),
     ]
 
     group_ids, edges = build_high_level_edges(parsed_modules, modules)
     mermaid = export_module_graph(group_ids, edges, modules)
 
-    assert 'codemarp_views["codemarp.views"]' in mermaid
+    assert 'codemarp_cli["codemarp.cli"]' in mermaid
     assert 'codemarp_errors(["codemarp.errors"])' in mermaid
-    assert "codemarp -->" not in mermaid
+    assert "codemarp_cli -->|imports| codemarp_errors" in mermaid
+    assert "codemarp_cli -->|imports| codemarp_views" in mermaid
+
+
+def test_aggregate_module_id_collapses_only_deep_modules() -> None:
+    assert aggregate_module_id("codemarp.views.trace") == "codemarp.views"
+    assert aggregate_module_id("codemarp.cli.main") == "codemarp.cli"
+    assert aggregate_module_id("codemarp.errors") == "codemarp.errors"
+    assert aggregate_module_id("codemarp") == "codemarp"

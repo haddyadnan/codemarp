@@ -333,11 +333,11 @@ def package_from_module_id(module_id: str) -> str:
     return module_id.rsplit(".", 1)[0]
 
 
-def parse_python_file(root: Path, path: Path) -> ParsedPythonModule:
+def parse_python_file(root: Path, path: Path) -> ParsedModule:
     module_id = module_id_from_path(root, path)
     parser = PythonParser(module_id)
     code = path.read_text(encoding="utf-8")
-    return parser.parse_code(code, filepath=str(path.relative_to(root)))
+    return parser.parse_code_to_facts(code, filepath=str(path.relative_to(root)))
 
 
 def parse_low_level_focus(focus: str) -> tuple[str, str]:

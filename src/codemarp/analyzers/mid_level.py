@@ -1,9 +1,9 @@
 from codemarp.graph.models import Edge, FunctionNode
-from codemarp.parser.python_parser import ParsedPythonModule
+from codemarp.parser.contracts import ParsedModule
 
 
 def build_mid_level_edges(
-    parsed_modules: list[ParsedPythonModule], functions: list[FunctionNode]
+    parsed_modules: list[ParsedModule], functions: list[FunctionNode]
 ) -> list[Edge]:
     edges = []
     by_name = {}
@@ -19,10 +19,13 @@ def build_mid_level_edges(
     parsed_by_module = {parsed.module_id: parsed for parsed in parsed_modules}
 
     for module in parsed_modules:
-        for caller_id, callee_name in module.calls:
+        for call in module.calls:
+            if call.receiver in {"self", "cls", "super"}:
+                continue
+
             target = _resolve_callee(
                 caller_module_id=module.module_id,
-                callee_name=callee_name,
+                callee_name=call.leaf_name,
                 parsed_by_module=parsed_by_module,
                 by_module_and_name=by_module_and_name,
                 by_name=by_name,
@@ -31,7 +34,10 @@ def build_mid_level_edges(
             if target:
                 edges.append(
                     Edge(
-                        source=caller_id, target=target.id, kind="calls", label="calls"
+                        source=call.caller_id,
+                        target=target.id,
+                        kind="calls",
+                        label="calls",
                     )
                 )
     return _dedupe_edges(edges)
@@ -88,7 +94,7 @@ def _resolve_same_module_call(
 
 
 def _resolve_imported_symbol_call(
-    parsed_module: ParsedPythonModule,
+    parsed_module: ParsedModule,
     callee_name: str,
     by_id: dict,
     by_module_and_name: dict,
@@ -96,16 +102,21 @@ def _resolve_imported_symbol_call(
     if "." in callee_name:
         return None
 
-    for imported in parsed_module.imported_symbols:
-        visible_name = imported.alias or imported.name
+    for imported in parsed_module.imports:
+        if not imported.is_from_import or imported.imported_name is None:
+            continue
+
+        visible_name = imported.alias or imported.imported_name
         if visible_name != callee_name:
             continue
 
-        direct_id = f"{imported.module}:{imported.name}"
+        direct_id = f"{imported.raw_module}:{imported.imported_name}"
         if direct_id in by_id:
             return by_id[direct_id]
 
-        candidate = by_module_and_name.get((imported.module, imported.name))
+        candidate = by_module_and_name.get(
+            (imported.raw_module, imported.imported_name)
+        )
         if candidate:
             return candidate
 
@@ -113,7 +124,7 @@ def _resolve_imported_symbol_call(
 
 
 def _resolve_imported_module_call(
-    parsed_module: ParsedPythonModule,
+    parsed_module: ParsedModule,
     callee_name: str,
     by_module_and_name: dict,
 ) -> FunctionNode | None:
@@ -122,12 +133,15 @@ def _resolve_imported_module_call(
 
     prefix, member = callee_name.split(".", 1)
 
-    for imported in parsed_module.imported_modules:
-        visible_name = imported.alias or imported.module.split(".")[-1]
+    for imported in parsed_module.imports:
+        if imported.is_from_import or imported.raw_module is None:
+            continue
+
+        visible_name = imported.alias or imported.raw_module.split(".")[-1]
         if visible_name != prefix:
             continue
 
-        return by_module_and_name.get((imported.module, member))
+        return by_module_and_name.get((imported.raw_module, member))
 
     return None
 
