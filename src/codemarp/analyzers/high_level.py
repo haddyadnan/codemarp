@@ -1,9 +1,9 @@
 from codemarp.graph.models import Edge, ModuleNode
-from codemarp.parser.python_parser import ParsedPythonModule
+from codemarp.parser.contracts import ImportFact, ParsedModule
 
 
 def build_high_level_edges(
-    parsed_modules: list[ParsedPythonModule],
+    parsed_modules: list[ParsedModule],
     modules: list[ModuleNode],
 ) -> tuple:
     module_to_group = {module.id: aggregate_module_id(module.id) for module in modules}
@@ -55,9 +55,20 @@ def aggregate_module_id(module_id: str) -> str:
     return module_id
 
 
-def _resolve_local_import(import_name: str, known_module_ids: set[str]) -> str | None:
+def _resolve_local_import(
+    imported: ImportFact, known_module_ids: set[str]
+) -> str | None:
+    if imported.relative_level != 0:
+        return None
+
+    import_name = imported.raw_module
+
+    if import_name is None:
+        return None
+
     if import_name in known_module_ids:
         return import_name
+
     for module_id in sorted(known_module_ids, key=len, reverse=True):
         if import_name.startswith(module_id + "."):
             return module_id

@@ -4,9 +4,9 @@ from pathlib import Path
 from codemarp.analyzers.high_level import build_high_level_edges
 from codemarp.analyzers.mid_level import build_mid_level_edges
 from codemarp.graph.builder import GraphBuilder
-from codemarp.graph.models import Edge, GraphBundle, ModuleNode
+from codemarp.graph.models import Edge, FunctionNode, GraphBundle, ModuleNode
+from codemarp.parser.contracts import ParsedModule
 from codemarp.parser.python_parser import (
-    ParsedPythonModule,
     discover_python_files,
     package_from_module_id,
     parse_python_file,
@@ -16,7 +16,7 @@ from codemarp.parser.python_parser import (
 @dataclass(slots=True)
 class BuildResult:
     bundle: GraphBundle
-    parsed_modules: list[ParsedPythonModule]
+    parsed_modules: list[ParsedModule]
     high_level_package_ids: list[str]
     high_level_edges: list[Edge]
 
@@ -24,7 +24,7 @@ class BuildResult:
 def build_bundle(repo_path: str | Path) -> BuildResult:
     root_path = Path(repo_path).resolve()
 
-    parsed_modules: list[ParsedPythonModule] = []
+    parsed_modules = []
     builder = GraphBuilder()
 
     for file_path in discover_python_files(root_path):
@@ -33,11 +33,23 @@ def build_bundle(repo_path: str | Path) -> BuildResult:
         builder.add_module(
             ModuleNode(
                 id=parsed.module_id,
-                path=parsed.path,
+                path=parsed.file_path,
                 package=package_from_module_id(parsed.module_id),
             )
         )
-        builder.add_functions(parsed.functions)
+        builder.add_functions(
+            [
+                FunctionNode(
+                    id=fn.function_id,
+                    name=fn.qualname,
+                    module_id=fn.module_id,
+                    lineno=fn.lineno,
+                    end_lineno=fn.end_lineno or fn.lineno,
+                    class_name=fn.class_name,
+                )
+                for fn in parsed.functions
+            ]
+        )
 
     package_ids, high_level_edges = build_high_level_edges(
         parsed_modules, builder.bundle.modules
