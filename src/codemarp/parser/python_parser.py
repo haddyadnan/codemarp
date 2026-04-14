@@ -81,6 +81,9 @@ class PythonParser(ast.NodeVisitor):
     def parse_code(
         self, code: str, *, filepath: str = "<memory>"
     ) -> ParsedPythonModule:
+        # Legacy parser output retained temporarily for compatibility tests.
+        # New analyzer/pipeline code should use parse_code_to_facts().
+
         self._reset_state()
         tree = ast.parse(code, filename=filepath)
         self.visit(tree)
