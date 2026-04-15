@@ -1,6 +1,7 @@
+import ast
 from pathlib import Path
 
-from codemarp.analyzers.low_level import build_low_level_view
+from codemarp.analyzers.low_level import ControlFlowBuilder, build_low_level_view
 
 
 def test_low_level_builds_linear_flow(tmp_path: Path) -> None:
@@ -17,7 +18,7 @@ def test_low_level_builds_linear_flow(tmp_path: Path) -> None:
 
     labels = [node.label for node in result.nodes]
     assert labels[0] == "Start"
-    assert "Assign" in labels
+    assert "x = 1" in labels
     assert "Return" in labels
     assert labels[-1] == "End"
 
@@ -150,5 +151,17 @@ def test_low_level_simplifies_assignment_call_labels(tmp_path: Path) -> None:
     result = build_low_level_view(repo, "app.main:run")
 
     labels = {node.label for node in result.nodes}
-    assert "make_value(...)" in labels
+    assert "value = make_value(...)" in labels
     assert "Assign" not in labels
+
+
+def test_low_level_compacts_long_call_labels() -> None:
+    builder = ControlFlowBuilder()
+    expr = ast.parse(
+        "print('this is a very long message that should be compacted')"
+    ).body[0]
+
+    label = builder._statement_label(expr)
+
+    assert label.startswith("print(")
+    assert "..." in label
