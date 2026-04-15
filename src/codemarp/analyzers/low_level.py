@@ -182,28 +182,34 @@ class ControlFlowBuilder:
 
     def _statement_label(self, statement: ast.stmt) -> str:
         if isinstance(statement, ast.Assign):
-            if isinstance(statement.value, ast.Call):  # simplify calls
-                return self._call_label(statement.value)
-            return "Assign"
+            targets = ", ".join(ast.unparse(t) for t in statement.targets)
+            if isinstance(statement.value, ast.Call):
+                value = self._call_label(statement.value)
+            else:
+                value = self._expr_label(statement.value)
+            return self._compact_text(f"{targets} = {value}")
 
         if isinstance(statement, ast.AnnAssign):
+            target = ast.unparse(statement.target)
             if isinstance(statement.value, ast.Call):
-                return self._call_label(statement.value)
-            return "AnnAssign"
+                value = self._call_label(statement.value)
+            elif statement.value is not None:
+                value = self._expr_label(statement.value)
+            else:
+                value = "..."
+            return self._compact_text(f"{target} = {value}")
 
         if isinstance(statement, ast.AugAssign):
-            return "AugAssign"
+            return self._compact_text(ast.unparse(statement))
 
         if isinstance(statement, ast.Expr):
-            if isinstance(statement.value, ast.Call):
-                return self._call_label(statement.value)
             return self._expr_label(statement.value)
 
         if isinstance(statement, ast.Pass):
-            return "Pass"
+            return "pass"
 
         try:
-            return ast.unparse(statement)
+            return self._compact_text(ast.unparse(statement))
         except Exception:
             return type(statement).__name__
 
@@ -211,36 +217,60 @@ class ControlFlowBuilder:
         if isinstance(expr, ast.Call):
             return self._call_label(expr)
 
+        if isinstance(expr, ast.Name):
+            return expr.id
+
+        if isinstance(expr, ast.Attribute):
+            return self._callable_name(expr)
+
+        if isinstance(expr, ast.Constant):
+            if isinstance(expr.value, str):
+                return repr(self._compact_text(expr.value, max_len=24))
+            return repr(expr.value)
+
         try:
-            return ast.unparse(expr)
+            return self._compact_text(ast.unparse(expr))
         except Exception:
             return type(expr).__name__
 
     def _call_label(self, call: ast.Call) -> str:
         callee = self._callable_name(call.func)
+
+        if not call.args and not call.keywords:
+            return f"{callee}()"
+
+        if len(call.args) == 1 and not call.keywords:
+            first = self._compact_arg_label(call.args[0])
+            return f"{callee}({first})"
         return f"{callee}(...)"
 
-    def _callable_name(self, node: ast.AST) -> str:
-        if isinstance(node, ast.Name):
-            return node.id
+    def _callable_name(self, call: ast.AST) -> str:
+        if isinstance(call, ast.Name):
+            return call.id
 
-        if isinstance(node, ast.Attribute):
-            parts: list[str] = []
-            current: ast.AST = node
+        if isinstance(call, ast.Attribute):
+            parts: list[str] = [call.attr]
+            value = call.value
 
-            while isinstance(current, ast.Attribute):
-                parts.append(current.attr)
-                current = current.value
+            while isinstance(value, ast.Attribute):
+                parts.append(value.attr)
+                value = value.value
 
-            if isinstance(current, ast.Name):
-                parts.append(current.id)
+            if isinstance(value, ast.Name):
+                parts.append(value.id)
+                return ".".join(reversed(parts))
 
-            return ".".join(reversed(parts))
+            if (
+                isinstance(value, ast.Call)
+                and isinstance(value.func, ast.Name)
+                and value.func.id == "super"
+            ):
+                parts.append("super")
+                return ".".join(reversed(parts))
 
-        try:
-            return ast.unparse(node)
-        except Exception:
-            return type(node).__name__
+            return call.attr
+
+        return "call"
 
     def _new_node(self, label: str, kind: str, *, lineno: int | None = None) -> str:
         self._counter += 1
@@ -270,3 +300,23 @@ class ControlFlowBuilder:
             if node.id == node_id:
                 return node.kind
         raise KeyError(f"Unknown control-flow node id: {node_id}")
+
+    def _compact_text(self, text: str, *, max_len: int = 36) -> str:
+        text = " ".join(text.split())
+        if len(text) <= max_len:
+            return text
+        return text[: max_len - 3].rstrip() + "..."
+
+    def _compact_arg_label(self, node: ast.AST) -> str:
+        if isinstance(node, ast.Constant):
+            if isinstance(node.value, str):
+                return repr(self._compact_text(node.value, max_len=18))
+            return repr(node.value)
+
+        if isinstance(node, ast.Name):
+            return node.id
+
+        if isinstance(node, ast.Attribute):
+            return self._callable_name(node)
+
+        return "..."
