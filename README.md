@@ -367,8 +367,6 @@ No runtime instrumentation. No code execution. Analysis runs anywhere.
 
 **CodeMarp** — sounds like "code map", because that's what it produces.
 
-If you want an expansion: *Code Mapping, Architecture, Relationships, and Paths*
-
 ---
 
 *Built to answer the question every developer asks when they open an unfamiliar codebase: where do I even start?*
