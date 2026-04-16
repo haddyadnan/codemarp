@@ -359,7 +359,7 @@ No runtime instrumentation. No code execution. Analysis runs anywhere.
 
 - Python only (AST-based, tree-sitter planned)
 - CLI-first
-- v0.1.0 — early but usable on real codebases
+- v0.1.x — early but usable on real codebases
 
 ---
 
