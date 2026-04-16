@@ -1,5 +1,5 @@
 from codemarp.graph.models import Edge, FunctionNode
-from codemarp.parser.contracts import ParsedModule
+from codemarp.parser.contracts import CallFact, ParsedModule
 
 
 def build_mid_level_edges(
@@ -20,12 +20,9 @@ def build_mid_level_edges(
 
     for module in parsed_modules:
         for call in module.calls:
-            if call.receiver in {"self", "cls", "super"}:
-                continue
-
             target = _resolve_callee(
                 caller_module_id=module.module_id,
-                callee_name=call.leaf_name,
+                call=call,
                 parsed_by_module=parsed_by_module,
                 by_module_and_name=by_module_and_name,
                 by_name=by_name,
@@ -45,7 +42,7 @@ def build_mid_level_edges(
 
 def _resolve_callee(
     caller_module_id: str,
-    callee_name: str,
+    call: CallFact,
     parsed_by_module: dict,
     by_module_and_name: dict,
     by_name: dict,
@@ -53,18 +50,19 @@ def _resolve_callee(
 ) -> FunctionNode | None:
     parsed_module = parsed_by_module[caller_module_id]
 
-    same_module = _resolve_same_module_call(
-        caller_module_id=caller_module_id,
-        callee_name=callee_name,
-        by_module_and_name=by_module_and_name,
-    )
+    if call.kind == "bare":
+        same_module = _resolve_same_module_call(
+            caller_module_id=caller_module_id,
+            callee_name=call.leaf_name,
+            by_module_and_name=by_module_and_name,
+        )
 
-    if same_module:
-        return same_module
+        if same_module:
+            return same_module
 
     imported_symbol = _resolve_imported_symbol_call(
         parsed_module=parsed_module,
-        callee_name=callee_name,
+        callee_name=call.leaf_name,
         by_id=by_id,
         by_module_and_name=by_module_and_name,
     )
@@ -74,14 +72,17 @@ def _resolve_callee(
 
     imported_module = _resolve_imported_module_call(
         parsed_module=parsed_module,
-        callee_name=callee_name,
+        callee_name=call.raw,
         by_module_and_name=by_module_and_name,
     )
 
     if imported_module:
         return imported_module
 
-    return _resolve_unique_global_call(callee_name=callee_name, by_name=by_name)
+    if call.kind != "bare":
+        return None
+
+    return _resolve_unique_global_call(callee_name=call.leaf_name, by_name=by_name)
 
 
 def _resolve_same_module_call(
@@ -155,9 +156,11 @@ def _resolve_unique_global_call(
         return None
 
     matches = by_name.get(callee_name, [])
-    unique = list({fn.id: fn for fn in matches}.values())
+    unique = {fn.id: fn for fn in matches if fn.class_name is None}
+
     if len(unique) == 1:
-        return unique[0]
+        return next(iter(unique.values()))
+
     return None
 
 
