@@ -166,6 +166,22 @@ codemarp analyze path/to/repo \
   --out out
 ```
 
+### Debug call resolution
+
+Use `--debug-resolution` to print why mid-level call edges were resolved. This is useful when checking whether a call edge came from an imported symbol, a local function, or another resolver path.
+
+```bash
+codemarp analyze path/to/repo --out out --debug-resolution
+```
+
+The debug output is printed to stdout, so you can pipe it into a file:
+
+```bash
+codemarp analyze path/to/repo --out out --debug-resolution > debug.txt
+```
+
+The generated graph files are still written to the directory passed with `--out`.
+
 ---
 
 ## Typical workflow
