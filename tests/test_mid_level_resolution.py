@@ -1,4 +1,5 @@
 from codemarp.analyzers.mid_level import build_mid_level_edges
+from codemarp.contracts import ResolutionReason
 from codemarp.graph.models import FunctionNode
 from codemarp.parser.python_parser import PythonParser
 
@@ -76,9 +77,10 @@ def test_mid_level_resolves_imported_symbol() -> None:
     functions = _function_nodes(main, worker)
     edges = build_mid_level_edges([main, worker], functions)
 
-    assert {(edge.source, edge.target) for edge in edges} == {
-        ("app.main:run", "app.worker:work")
-    }
+    assert len(edges) == 1
+    edge = edges[0]
+    assert (edge.source, edge.target) == ("app.main:run", "app.worker:work")
+    assert edge.reason == ResolutionReason.IMPORTED_SYMBOL
 
 
 def test_mid_level_resolves_imported_symbol_alias() -> None:
@@ -93,9 +95,10 @@ def test_mid_level_resolves_imported_symbol_alias() -> None:
     functions = _function_nodes(main, worker)
     edges = build_mid_level_edges([main, worker], functions)
 
-    assert {(edge.source, edge.target) for edge in edges} == {
-        ("app.main:run", "app.worker:work")
-    }
+    assert len(edges) == 1
+    edge = edges[0]
+    assert (edge.source, edge.target) == ("app.main:run", "app.worker:work")
+    assert edge.reason == ResolutionReason.IMPORTED_SYMBOL
 
 
 def test_mid_level_resolves_imported_module_alias() -> None:
@@ -110,9 +113,10 @@ def test_mid_level_resolves_imported_module_alias() -> None:
     functions = _function_nodes(main, worker)
     edges = build_mid_level_edges([main, worker], functions)
 
-    assert {(edge.source, edge.target) for edge in edges} == {
-        ("app.main:run", "app.worker:work")
-    }
+    assert len(edges) == 1
+    edge = edges[0]
+    assert (edge.source, edge.target) == ("app.main:run", "app.worker:work")
+    assert edge.reason == ResolutionReason.IMPORTED_MODULE
 
 
 def test_mid_level_prefers_imported_symbol_over_ambiguous_global_name() -> None:
@@ -130,9 +134,10 @@ def test_mid_level_prefers_imported_symbol_over_ambiguous_global_name() -> None:
     functions = _function_nodes(main, mod_a, mod_b)
     edges = build_mid_level_edges([main, mod_a, mod_b], functions)
 
-    assert {(edge.source, edge.target) for edge in edges} == {
-        ("app.main:start", "app.a:run")
-    }
+    assert len(edges) == 1
+    edge = edges[0]
+    assert (edge.source, edge.target) == ("app.main:start", "app.a:run")
+    assert edge.reason == ResolutionReason.IMPORTED_SYMBOL
 
 
 def test_mid_level_leaves_ambiguous_global_call_unresolved() -> None:
@@ -180,6 +185,22 @@ def test_mid_level_still_resolves_imported_module_alias_call() -> None:
     functions = _function_nodes(main, worker)
     edges = build_mid_level_edges([main, worker], functions)
 
-    assert {(edge.source, edge.target) for edge in edges} == {
-        ("app.main:run", "app.worker:work")
-    }
+    assert len(edges) == 1
+    edge = edges[0]
+    assert (edge.source, edge.target) == ("app.main:run", "app.worker:work")
+    assert edge.reason == ResolutionReason.IMPORTED_MODULE
+
+
+def test_mid_level_resolves_same_module_call() -> None:
+    parser = PythonParser("app.main")
+    main = parser.parse_code_to_facts(
+        "def helper():\n    return 1\n\ndef run():\n    helper()\n"
+    )
+
+    functions = _function_nodes(main)
+    edges = build_mid_level_edges([main], functions)
+
+    assert len(edges) == 1
+    edge = edges[0]
+    assert (edge.source, edge.target) == ("app.main:run", "app.main:helper")
+    assert edge.reason == ResolutionReason.SAME_MODULE

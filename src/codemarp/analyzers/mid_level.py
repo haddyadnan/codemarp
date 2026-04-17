@@ -1,3 +1,4 @@
+from codemarp.contracts import ResolutionReason
 from codemarp.graph.models import Edge, FunctionNode
 from codemarp.parser.contracts import CallFact, ParsedModule
 
@@ -20,7 +21,7 @@ def build_mid_level_edges(
 
     for module in parsed_modules:
         for call in module.calls:
-            target = _resolve_callee(
+            target, reason = _resolve_callee(
                 caller_module_id=module.module_id,
                 call=call,
                 parsed_by_module=parsed_by_module,
@@ -35,6 +36,7 @@ def build_mid_level_edges(
                         target=target.id,
                         kind="calls",
                         label="calls",
+                        reason=reason,
                     )
                 )
     return _dedupe_edges(edges)
@@ -47,7 +49,7 @@ def _resolve_callee(
     by_module_and_name: dict,
     by_name: dict,
     by_id: dict,
-) -> FunctionNode | None:
+) -> tuple[FunctionNode | None, ResolutionReason | None]:
     parsed_module = parsed_by_module[caller_module_id]
 
     if call.kind == "bare":
@@ -58,7 +60,7 @@ def _resolve_callee(
         )
 
         if same_module:
-            return same_module
+            return same_module, ResolutionReason.SAME_MODULE
 
     imported_symbol = _resolve_imported_symbol_call(
         parsed_module=parsed_module,
@@ -68,7 +70,7 @@ def _resolve_callee(
     )
 
     if imported_symbol:
-        return imported_symbol
+        return imported_symbol, ResolutionReason.IMPORTED_SYMBOL
 
     imported_module = _resolve_imported_module_call(
         parsed_module=parsed_module,
@@ -77,12 +79,17 @@ def _resolve_callee(
     )
 
     if imported_module:
-        return imported_module
+        return imported_module, ResolutionReason.IMPORTED_MODULE
 
     if call.kind != "bare":
-        return None
+        return None, None
 
-    return _resolve_unique_global_call(callee_name=call.leaf_name, by_name=by_name)
+    unique = _resolve_unique_global_call(callee_name=call.leaf_name, by_name=by_name)
+
+    if unique:
+        return unique, ResolutionReason.UNIQUE_GLOBAL
+
+    return None, None
 
 
 def _resolve_same_module_call(
