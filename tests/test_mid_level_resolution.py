@@ -1,6 +1,7 @@
 from codemarp.analyzers.mid_level import build_mid_level_edges
 from codemarp.contracts import ResolutionReason
-from codemarp.graph.models import FunctionNode
+from codemarp.exporters.mermaid import export_function_graph
+from codemarp.graph.models import FunctionNode, GraphBundle
 from codemarp.parser.python_parser import PythonParser
 
 
@@ -204,3 +205,37 @@ def test_mid_level_resolves_same_module_call() -> None:
     edge = edges[0]
     assert (edge.source, edge.target) == ("app.main:run", "app.main:helper")
     assert edge.reason == ResolutionReason.SAME_MODULE
+
+
+def test_export_function_graph_dedupes_function_nodes() -> None:
+    fn = FunctionNode(
+        id="app.main:run",
+        name="run",
+        module_id="app.main",
+        lineno=1,
+        end_lineno=2,
+        class_name=None,
+    )
+
+    mermaid = export_function_graph(
+        functions=[fn, fn],
+        edges=[],
+    )
+
+    assert mermaid.count('app_main_run["app.main:run"]') == 1
+
+
+def test_graph_bundle_to_dict_dedupes_functions() -> None:
+    fn = FunctionNode(
+        id="app.main:run",
+        name="run",
+        module_id="app.main",
+        lineno=1,
+        end_lineno=1,
+        class_name=None,
+    )
+
+    bundle = GraphBundle(functions=[fn, fn])
+    data = bundle.to_dict()
+
+    assert len(data["functions"]) == 1
