@@ -49,11 +49,19 @@ class GraphBundle:
     edges: List[Edge] = field(default_factory=list)
 
     def to_dict(self) -> dict:
+        unique_modules = {m.id: m for m in self.modules}
+        unique_functions = {f.id: f for f in self.functions}
+        unique_cf_nodes = {n.id: n for n in self.control_flow_nodes}
+
+        sorted_edges = sorted(self.edges, key=lambda e: (e.source, e.target, e.kind))
+
         return {
-            "modules": [asdict(m) for m in self.modules],
-            "functions": [asdict(f) for f in self.functions],
-            "control_flow_nodes": [asdict(n) for n in self.control_flow_nodes],
-            "edges": [asdict(e) for e in self.edges],
+            "modules": [asdict(m) for m in unique_modules.values()],
+            "functions": [
+                asdict(unique_functions[k]) for k in sorted(unique_functions)
+            ],
+            "control_flow_nodes": [asdict(n) for n in unique_cf_nodes.values()],
+            "edges": [asdict(e) for e in sorted_edges],
         }
 
     def functions_in_module(self, module_id: str) -> List[FunctionNode]:
