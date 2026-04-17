@@ -28,9 +28,17 @@ def export_module_graph(
 
 def export_function_graph(functions: list[FunctionNode], edges: list[Edge]) -> str:
     lines = ["flowchart LR"]
+
+    unique_functions = {}
+
     for fn in functions:
+        unique_functions[fn.id] = fn
+
+    for fn_id in sorted(unique_functions):
+        fn = unique_functions[fn_id]
         label = f"{fn.module_id}:{fn.name}"
         lines.append(f'    {_safe_id(fn.id)}["{label}"]')
+
     for edge in edges:
         if edge.kind == "calls":
             if edge.label:
