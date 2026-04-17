@@ -1,11 +1,14 @@
 from dataclasses import asdict, dataclass, field
+from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+from codemarp.contracts import ResolutionReason
 
 
 @dataclass(slots=True)
 class ModuleNode:
     id: str
-    path: str
+    path: Path
     package: str
     language: str = "python"
 
@@ -35,6 +38,7 @@ class Edge:
     kind: str
     metadata: Dict[str, Any] = field(default_factory=dict)
     label: Optional[str] = None
+    reason: ResolutionReason | None = None
 
 
 @dataclass(slots=True)

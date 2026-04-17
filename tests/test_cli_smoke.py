@@ -35,6 +35,7 @@ def _run_analyze_from_args(args) -> None:
         focus=args.focus,
         module=args.module,
         max_depth=args.max_depth,
+        debug_resolution=args.debug_resolution,
     )
 
 
@@ -139,3 +140,26 @@ def test_cli_smoke_module_view_writes_expected_outputs(tmp_path: Path) -> None:
     assert (out_dir / "high_level.mmd").exists()
     assert (out_dir / "mid_level.mmd").exists()
     assert (out_dir / "mid_level.json").exists()
+
+
+def test_cli_smoke_debug_resolution_prints_reasons(tmp_path: Path, capsys) -> None:
+    repo = _make_repo(tmp_path)
+    out_dir = tmp_path / "out"
+
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "analyze",
+            str(repo),
+            "--out",
+            str(out_dir),
+            "--debug-resolution",
+        ]
+    )
+
+    _run_analyze_from_args(args)
+
+    captured = capsys.readouterr()
+
+    assert "app.main:run -> app.worker:work" in captured.out
+    assert "[imported_symbol]" in captured.out

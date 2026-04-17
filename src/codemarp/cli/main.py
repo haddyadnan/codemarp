@@ -1,4 +1,6 @@
 import argparse
+from collections import defaultdict
+from pathlib import Path
 
 from codemarp.analyzers.low_level import build_low_level_view
 from codemarp.errors import codemarpError
@@ -8,15 +10,32 @@ from codemarp.pipeline.export_all import export_all, export_low_level
 
 
 def analyze_command(
-    root: str,
-    out: str,
+    root: Path,
+    out: Path,
     *,
     view: ViewType,
     focus: str | None = None,
     module: str | None = None,
     max_depth: int | None = None,
+    debug_resolution: bool = False,
 ) -> None:
     build_result = build_bundle(root)
+
+    if debug_resolution:
+        grouped = defaultdict(list)
+        for edge in build_result.bundle.edges:
+            if edge.kind != "calls" or edge.reason is None:
+                continue
+            print(f"{edge.source} -> {edge.target}  [{edge.reason.value}]")
+
+            print("\n=== Resolution Debug ===\n")
+
+            for module, edges in sorted(grouped.items()):
+                print(f"{module}:")
+                for edge in edges:
+                    src_fn = edge.source.split(":")[1]
+                    print(f"  {src_fn} -> {edge.target}  [{edge.reason.value}]")
+                print()
 
     if view is ViewType.LOW:
         assert focus is not None
@@ -91,6 +110,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Maximum trace depth from the focused function",
     )
 
+    analyze.add_argument(
+        "--debug-resolution",
+        action="store_true",
+        help="Print why each mid-level call edge was resolved.",
+    )
+
     return parser
 
 
@@ -150,6 +175,7 @@ def main() -> None:
                 focus=args.focus,
                 module=args.module,
                 max_depth=args.max_depth,
+                debug_resolution=args.debug_resolution,
             )
         except codemarpError as exc:
             raise SystemExit(str(exc)) from exc
