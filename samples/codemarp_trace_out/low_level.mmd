@@ -1,0 +1,134 @@
+flowchart TD
+    n1(["Start"]):::terminal
+    n2["build_result = build_bundle(root)"]:::statement
+    n3{"debug_resolution"}:::decision
+    n4["grouped = defaultdict(list)"]:::statement
+    n5["For"]:::statement
+    n6["Loop Body"]:::statement
+    n7{"edge.kind != 'calls' or edge.reas..."}:::decision
+    n8["continue"]:::statement
+    n9["Merge"]:::merge
+    n10["print(...)"]:::statement
+    n11["print('=== Resolution...')"]:::statement
+    n12["For"]:::statement
+    n13["Loop Body"]:::statement
+    n14["print(...)"]:::statement
+    n15["For"]:::statement
+    n16["Loop Body"]:::statement
+    n17["src_fn = edge.source.split(':')[1]"]:::statement
+    n18["print(...)"]:::statement
+    n19["After Loop"]:::merge
+    n20["print()"]:::statement
+    n21["After Loop"]:::merge
+    n22["After Loop"]:::merge
+    n23["Merge"]:::merge
+    n24{"view is ViewType.LOW"}:::decision
+    n25["assert focus is not None"]:::statement
+    n26["low_view = build_low_level_view(...)"]:::statement
+    n27["export_low_level(...)"]:::statement
+    n28["print(...)"]:::statement
+    n29["print(...)"]:::statement
+    n30["print(...)"]:::statement
+    n31["print(...)"]:::statement
+    n32["print(...)"]:::statement
+    n33["print('Wrote graph.json')"]:::statement
+    n34["print('Wrote high_leve...')"]:::statement
+    n35["print('Wrote low_level...')"]:::statement
+    n36["print('Wrote low_level...')"]:::statement
+    n37(["Return"]):::terminal
+    n38["Merge"]:::merge
+    n39["graph_view = apply_view(...)"]:::statement
+    n40["export_all(...)"]:::statement
+    n41["print(...)"]:::statement
+    n42["print(...)"]:::statement
+    n43["print(...)"]:::statement
+    n44{"view is ViewType.TRACE"}:::decision
+    n45["print(...)"]:::statement
+    n46["print(...)"]:::statement
+    n47["Merge"]:::merge
+    n48{"view is ViewType.MODULE"}:::decision
+    n49["print(...)"]:::statement
+    n50["print(...)"]:::statement
+    n51["Merge"]:::merge
+    n52{"view is ViewType.REVERSE"}:::decision
+    n53["print(...)"]:::statement
+    n54["print(...)"]:::statement
+    n55["Merge"]:::merge
+    n56["print('Wrote graph.json')"]:::statement
+    n57["print('Wrote high_leve...')"]:::statement
+    n58["print('Wrote mid_level...')"]:::statement
+    n59["print('Wrote mid_level...')"]:::statement
+    n60(["End"]):::terminal
+    n1 --> n2
+    n2 --> n3
+    n3 -->|True| n4
+    n4 --> n5
+    n5 -->|Iterate| n6
+    n6 --> n7
+    n7 -->|True| n8
+    n8 --> n9
+    n7 -->|False| n9
+    n9 --> n10
+    n10 --> n11
+    n11 --> n12
+    n12 -->|Iterate| n13
+    n13 --> n14
+    n14 --> n15
+    n15 -->|Iterate| n16
+    n16 --> n17
+    n17 --> n18
+    n18 -->|Next| n15
+    n15 -->|Exit| n19
+    n19 --> n20
+    n20 -->|Next| n12
+    n12 -->|Exit| n21
+    n21 -->|Next| n5
+    n5 -->|Exit| n22
+    n22 --> n23
+    n3 -->|False| n23
+    n23 --> n24
+    n24 -->|True| n25
+    n25 --> n26
+    n26 --> n27
+    n27 --> n28
+    n28 --> n29
+    n29 --> n30
+    n30 --> n31
+    n31 --> n32
+    n32 --> n33
+    n33 --> n34
+    n34 --> n35
+    n35 --> n36
+    n36 --> n37
+    n24 -->|False| n38
+    n38 --> n39
+    n39 --> n40
+    n40 --> n41
+    n41 --> n42
+    n42 --> n43
+    n43 --> n44
+    n44 -->|True| n45
+    n45 --> n46
+    n46 --> n47
+    n44 -->|False| n47
+    n47 --> n48
+    n48 -->|True| n49
+    n49 --> n50
+    n50 --> n51
+    n48 -->|False| n51
+    n51 --> n52
+    n52 -->|True| n53
+    n53 --> n54
+    n54 --> n55
+    n52 -->|False| n55
+    n55 --> n56
+    n56 --> n57
+    n57 --> n58
+    n58 --> n59
+    n59 --> n60
+
+    classDef decision fill:#fff3cd,stroke:#d4a017,color:#000;
+    classDef statement fill:#f0f0f0,stroke:#aaa,color:#333;
+    classDef terminal fill:#fde8e8,stroke:#c0392b,color:#000;
+    classDef merge fill:#eef2ff,stroke:#7c8fdb,color:#000;
+    classDef start fill:#e8f5e9,stroke:#2e7d32,color:#000;

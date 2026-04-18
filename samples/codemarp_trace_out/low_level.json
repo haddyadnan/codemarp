@@ -1,0 +1,903 @@
+{
+  "function_id": "codemarp.cli.main:analyze_command",
+  "nodes": [
+    {
+      "id": "n1",
+      "label": "Start",
+      "kind": "start",
+      "lineno": 12
+    },
+    {
+      "id": "n2",
+      "label": "build_result = build_bundle(root)",
+      "kind": "statement",
+      "lineno": 22
+    },
+    {
+      "id": "n3",
+      "label": "debug_resolution",
+      "kind": "decision",
+      "lineno": 24
+    },
+    {
+      "id": "n4",
+      "label": "grouped = defaultdict(list)",
+      "kind": "statement",
+      "lineno": 25
+    },
+    {
+      "id": "n5",
+      "label": "For",
+      "kind": "loop",
+      "lineno": 26
+    },
+    {
+      "id": "n6",
+      "label": "Loop Body",
+      "kind": "branch",
+      "lineno": 26
+    },
+    {
+      "id": "n7",
+      "label": "edge.kind != 'calls' or edge.reas...",
+      "kind": "decision",
+      "lineno": 27
+    },
+    {
+      "id": "n8",
+      "label": "continue",
+      "kind": "statement",
+      "lineno": 28
+    },
+    {
+      "id": "n9",
+      "label": "Merge",
+      "kind": "merge",
+      "lineno": 27
+    },
+    {
+      "id": "n10",
+      "label": "print(...)",
+      "kind": "statement",
+      "lineno": 29
+    },
+    {
+      "id": "n11",
+      "label": "print('=== Resolution...')",
+      "kind": "statement",
+      "lineno": 31
+    },
+    {
+      "id": "n12",
+      "label": "For",
+      "kind": "loop",
+      "lineno": 33
+    },
+    {
+      "id": "n13",
+      "label": "Loop Body",
+      "kind": "branch",
+      "lineno": 33
+    },
+    {
+      "id": "n14",
+      "label": "print(...)",
+      "kind": "statement",
+      "lineno": 34
+    },
+    {
+      "id": "n15",
+      "label": "For",
+      "kind": "loop",
+      "lineno": 35
+    },
+    {
+      "id": "n16",
+      "label": "Loop Body",
+      "kind": "branch",
+      "lineno": 35
+    },
+    {
+      "id": "n17",
+      "label": "src_fn = edge.source.split(':')[1]",
+      "kind": "statement",
+      "lineno": 36
+    },
+    {
+      "id": "n18",
+      "label": "print(...)",
+      "kind": "statement",
+      "lineno": 37
+    },
+    {
+      "id": "n19",
+      "label": "After Loop",
+      "kind": "merge",
+      "lineno": 35
+    },
+    {
+      "id": "n20",
+      "label": "print()",
+      "kind": "statement",
+      "lineno": 38
+    },
+    {
+      "id": "n21",
+      "label": "After Loop",
+      "kind": "merge",
+      "lineno": 33
+    },
+    {
+      "id": "n22",
+      "label": "After Loop",
+      "kind": "merge",
+      "lineno": 26
+    },
+    {
+      "id": "n23",
+      "label": "Merge",
+      "kind": "merge",
+      "lineno": 24
+    },
+    {
+      "id": "n24",
+      "label": "view is ViewType.LOW",
+      "kind": "decision",
+      "lineno": 40
+    },
+    {
+      "id": "n25",
+      "label": "assert focus is not None",
+      "kind": "statement",
+      "lineno": 41
+    },
+    {
+      "id": "n26",
+      "label": "low_view = build_low_level_view(...)",
+      "kind": "statement",
+      "lineno": 42
+    },
+    {
+      "id": "n27",
+      "label": "export_low_level(...)",
+      "kind": "statement",
+      "lineno": 43
+    },
+    {
+      "id": "n28",
+      "label": "print(...)",
+      "kind": "statement",
+      "lineno": 45
+    },
+    {
+      "id": "n29",
+      "label": "print(...)",
+      "kind": "statement",
+      "lineno": 46
+    },
+    {
+      "id": "n30",
+      "label": "print(...)",
+      "kind": "statement",
+      "lineno": 47
+    },
+    {
+      "id": "n31",
+      "label": "print(...)",
+      "kind": "statement",
+      "lineno": 48
+    },
+    {
+      "id": "n32",
+      "label": "print(...)",
+      "kind": "statement",
+      "lineno": 49
+    },
+    {
+      "id": "n33",
+      "label": "print('Wrote graph.json')",
+      "kind": "statement",
+      "lineno": 50
+    },
+    {
+      "id": "n34",
+      "label": "print('Wrote high_leve...')",
+      "kind": "statement",
+      "lineno": 51
+    },
+    {
+      "id": "n35",
+      "label": "print('Wrote low_level...')",
+      "kind": "statement",
+      "lineno": 52
+    },
+    {
+      "id": "n36",
+      "label": "print('Wrote low_level...')",
+      "kind": "statement",
+      "lineno": 53
+    },
+    {
+      "id": "n37",
+      "label": "Return",
+      "kind": "terminal",
+      "lineno": 54
+    },
+    {
+      "id": "n38",
+      "label": "Merge",
+      "kind": "merge",
+      "lineno": 40
+    },
+    {
+      "id": "n39",
+      "label": "graph_view = apply_view(...)",
+      "kind": "statement",
+      "lineno": 56
+    },
+    {
+      "id": "n40",
+      "label": "export_all(...)",
+      "kind": "statement",
+      "lineno": 63
+    },
+    {
+      "id": "n41",
+      "label": "print(...)",
+      "kind": "statement",
+      "lineno": 65
+    },
+    {
+      "id": "n42",
+      "label": "print(...)",
+      "kind": "statement",
+      "lineno": 66
+    },
+    {
+      "id": "n43",
+      "label": "print(...)",
+      "kind": "statement",
+      "lineno": 67
+    },
+    {
+      "id": "n44",
+      "label": "view is ViewType.TRACE",
+      "kind": "decision",
+      "lineno": 68
+    },
+    {
+      "id": "n45",
+      "label": "print(...)",
+      "kind": "statement",
+      "lineno": 69
+    },
+    {
+      "id": "n46",
+      "label": "print(...)",
+      "kind": "statement",
+      "lineno": 70
+    },
+    {
+      "id": "n47",
+      "label": "Merge",
+      "kind": "merge",
+      "lineno": 68
+    },
+    {
+      "id": "n48",
+      "label": "view is ViewType.MODULE",
+      "kind": "decision",
+      "lineno": 71
+    },
+    {
+      "id": "n49",
+      "label": "print(...)",
+      "kind": "statement",
+      "lineno": 72
+    },
+    {
+      "id": "n50",
+      "label": "print(...)",
+      "kind": "statement",
+      "lineno": 73
+    },
+    {
+      "id": "n51",
+      "label": "Merge",
+      "kind": "merge",
+      "lineno": 71
+    },
+    {
+      "id": "n52",
+      "label": "view is ViewType.REVERSE",
+      "kind": "decision",
+      "lineno": 74
+    },
+    {
+      "id": "n53",
+      "label": "print(...)",
+      "kind": "statement",
+      "lineno": 75
+    },
+    {
+      "id": "n54",
+      "label": "print(...)",
+      "kind": "statement",
+      "lineno": 76
+    },
+    {
+      "id": "n55",
+      "label": "Merge",
+      "kind": "merge",
+      "lineno": 74
+    },
+    {
+      "id": "n56",
+      "label": "print('Wrote graph.json')",
+      "kind": "statement",
+      "lineno": 77
+    },
+    {
+      "id": "n57",
+      "label": "print('Wrote high_leve...')",
+      "kind": "statement",
+      "lineno": 78
+    },
+    {
+      "id": "n58",
+      "label": "print('Wrote mid_level...')",
+      "kind": "statement",
+      "lineno": 79
+    },
+    {
+      "id": "n59",
+      "label": "print('Wrote mid_level...')",
+      "kind": "statement",
+      "lineno": 80
+    },
+    {
+      "id": "n60",
+      "label": "End",
+      "kind": "end",
+      "lineno": 80
+    }
+  ],
+  "edges": [
+    {
+      "source": "n1",
+      "target": "n2",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n2",
+      "target": "n3",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n3",
+      "target": "n4",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "True",
+      "reason": null
+    },
+    {
+      "source": "n4",
+      "target": "n5",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n5",
+      "target": "n6",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "Iterate",
+      "reason": null
+    },
+    {
+      "source": "n6",
+      "target": "n7",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n7",
+      "target": "n8",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "True",
+      "reason": null
+    },
+    {
+      "source": "n8",
+      "target": "n9",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n7",
+      "target": "n9",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "False",
+      "reason": null
+    },
+    {
+      "source": "n9",
+      "target": "n10",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n10",
+      "target": "n11",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n11",
+      "target": "n12",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n12",
+      "target": "n13",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "Iterate",
+      "reason": null
+    },
+    {
+      "source": "n13",
+      "target": "n14",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n14",
+      "target": "n15",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n15",
+      "target": "n16",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "Iterate",
+      "reason": null
+    },
+    {
+      "source": "n16",
+      "target": "n17",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n17",
+      "target": "n18",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n18",
+      "target": "n15",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "Next",
+      "reason": null
+    },
+    {
+      "source": "n15",
+      "target": "n19",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "Exit",
+      "reason": null
+    },
+    {
+      "source": "n19",
+      "target": "n20",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n20",
+      "target": "n12",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "Next",
+      "reason": null
+    },
+    {
+      "source": "n12",
+      "target": "n21",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "Exit",
+      "reason": null
+    },
+    {
+      "source": "n21",
+      "target": "n5",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "Next",
+      "reason": null
+    },
+    {
+      "source": "n5",
+      "target": "n22",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "Exit",
+      "reason": null
+    },
+    {
+      "source": "n22",
+      "target": "n23",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n3",
+      "target": "n23",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "False",
+      "reason": null
+    },
+    {
+      "source": "n23",
+      "target": "n24",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n24",
+      "target": "n25",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "True",
+      "reason": null
+    },
+    {
+      "source": "n25",
+      "target": "n26",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n26",
+      "target": "n27",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n27",
+      "target": "n28",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n28",
+      "target": "n29",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n29",
+      "target": "n30",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n30",
+      "target": "n31",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n31",
+      "target": "n32",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n32",
+      "target": "n33",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n33",
+      "target": "n34",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n34",
+      "target": "n35",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n35",
+      "target": "n36",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n36",
+      "target": "n37",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n24",
+      "target": "n38",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "False",
+      "reason": null
+    },
+    {
+      "source": "n38",
+      "target": "n39",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n39",
+      "target": "n40",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n40",
+      "target": "n41",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n41",
+      "target": "n42",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n42",
+      "target": "n43",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n43",
+      "target": "n44",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n44",
+      "target": "n45",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "True",
+      "reason": null
+    },
+    {
+      "source": "n45",
+      "target": "n46",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n46",
+      "target": "n47",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n44",
+      "target": "n47",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "False",
+      "reason": null
+    },
+    {
+      "source": "n47",
+      "target": "n48",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n48",
+      "target": "n49",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "True",
+      "reason": null
+    },
+    {
+      "source": "n49",
+      "target": "n50",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n50",
+      "target": "n51",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n48",
+      "target": "n51",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "False",
+      "reason": null
+    },
+    {
+      "source": "n51",
+      "target": "n52",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n52",
+      "target": "n53",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "True",
+      "reason": null
+    },
+    {
+      "source": "n53",
+      "target": "n54",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n54",
+      "target": "n55",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n52",
+      "target": "n55",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "False",
+      "reason": null
+    },
+    {
+      "source": "n55",
+      "target": "n56",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n56",
+      "target": "n57",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n57",
+      "target": "n58",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n58",
+      "target": "n59",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n59",
+      "target": "n60",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    }
+  ]
+}
