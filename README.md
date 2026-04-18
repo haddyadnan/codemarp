@@ -134,6 +134,25 @@ Or with pip:
 pip install codemarp
 ```
 
+Or with Homebrew:
+
+```bash
+brew tap haddyadnan/forge
+brew install codemarp
+```
+
+To install the CLI directly from source with uv:
+
+```bash
+uv tool install git+https://github.com/haddyadnan/codemarp.git
+```
+
+For a specific release tag:
+
+```bash
+uv tool install git+https://github.com/haddyadnan/codemarp.git@v0.1.3
+```
+
 ---
 
 ## Usage
