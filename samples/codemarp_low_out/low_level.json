@@ -1,0 +1,295 @@
+{
+  "function_id": "codemarp.parser.python_parser:find_function_node",
+  "nodes": [
+    {
+      "id": "n1",
+      "label": "Start",
+      "kind": "start",
+      "lineno": 232
+    },
+    {
+      "id": "n2",
+      "label": "'Resolve a low-level f...'",
+      "kind": "statement",
+      "lineno": 236
+    },
+    {
+      "id": "n3",
+      "label": "(module_id, target_name) = parse_...",
+      "kind": "statement",
+      "lineno": 242
+    },
+    {
+      "id": "n4",
+      "label": "For",
+      "kind": "loop",
+      "lineno": 244
+    },
+    {
+      "id": "n5",
+      "label": "Loop Body",
+      "kind": "branch",
+      "lineno": 244
+    },
+    {
+      "id": "n6",
+      "label": "current_module_id = module_id_fro...",
+      "kind": "statement",
+      "lineno": 245
+    },
+    {
+      "id": "n7",
+      "label": "current_module_id != module_id",
+      "kind": "decision",
+      "lineno": 246
+    },
+    {
+      "id": "n8",
+      "label": "continue",
+      "kind": "statement",
+      "lineno": 247
+    },
+    {
+      "id": "n9",
+      "label": "Merge",
+      "kind": "merge",
+      "lineno": 246
+    },
+    {
+      "id": "n10",
+      "label": "code = file_path.read_text(...)",
+      "kind": "statement",
+      "lineno": 249
+    },
+    {
+      "id": "n11",
+      "label": "tree = ast.parse(...)",
+      "kind": "statement",
+      "lineno": 250
+    },
+    {
+      "id": "n12",
+      "label": "node = _find_function_in_tree(...)",
+      "kind": "statement",
+      "lineno": 251
+    },
+    {
+      "id": "n13",
+      "label": "node is None",
+      "kind": "decision",
+      "lineno": 252
+    },
+    {
+      "id": "n14",
+      "label": "Raise",
+      "kind": "terminal",
+      "lineno": 253
+    },
+    {
+      "id": "n15",
+      "label": "Merge",
+      "kind": "merge",
+      "lineno": 252
+    },
+    {
+      "id": "n16",
+      "label": "normalized_function_id = f'{modul...",
+      "kind": "statement",
+      "lineno": 255
+    },
+    {
+      "id": "n17",
+      "label": "Return",
+      "kind": "terminal",
+      "lineno": 256
+    },
+    {
+      "id": "n18",
+      "label": "After Loop",
+      "kind": "merge",
+      "lineno": 244
+    },
+    {
+      "id": "n19",
+      "label": "Raise",
+      "kind": "terminal",
+      "lineno": 258
+    },
+    {
+      "id": "n20",
+      "label": "End",
+      "kind": "end",
+      "lineno": 258
+    }
+  ],
+  "edges": [
+    {
+      "source": "n1",
+      "target": "n2",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n2",
+      "target": "n3",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n3",
+      "target": "n4",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n4",
+      "target": "n5",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "Iterate",
+      "reason": null
+    },
+    {
+      "source": "n5",
+      "target": "n6",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n6",
+      "target": "n7",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n7",
+      "target": "n8",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "True",
+      "reason": null
+    },
+    {
+      "source": "n8",
+      "target": "n9",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n7",
+      "target": "n9",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "False",
+      "reason": null
+    },
+    {
+      "source": "n9",
+      "target": "n10",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n10",
+      "target": "n11",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n11",
+      "target": "n12",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n12",
+      "target": "n13",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n13",
+      "target": "n14",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "True",
+      "reason": null
+    },
+    {
+      "source": "n13",
+      "target": "n15",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "False",
+      "reason": null
+    },
+    {
+      "source": "n15",
+      "target": "n16",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n16",
+      "target": "n17",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n17",
+      "target": "n4",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "Next",
+      "reason": null
+    },
+    {
+      "source": "n4",
+      "target": "n18",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": "Exit",
+      "reason": null
+    },
+    {
+      "source": "n18",
+      "target": "n19",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    },
+    {
+      "source": "n19",
+      "target": "n20",
+      "kind": "control_flow",
+      "metadata": {},
+      "label": null,
+      "reason": null
+    }
+  ]
+}
