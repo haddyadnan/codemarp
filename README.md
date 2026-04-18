@@ -1,6 +1,6 @@
 # CodeMarp
 
-**Multi-level code architecture and relationship mapping**
+**Multi-level Code Architecture and Relationship Mapping**
 
 > Understand a codebase like a map — zoom in, zoom out, follow the flow.
 
@@ -13,6 +13,7 @@ Large codebases are hard to navigate. You open a file and you're already lost. Y
 Documentation is outdated. Diagrams don't exist. The only way to understand the code is to read all of it.
 
 CodeMarp takes a different approach: it builds the map for you.
+
 ---
 
 ## What CodeMarp does
@@ -28,6 +29,46 @@ Given a Python repository, CodeMarp gives you three zoom levels:
 Think of it as **Google Maps for your codebase**. Built entirely from static analysis — no runtime, no instrumentation.
 
 Zoom out to see the city. Zoom in to see the streets. Zoom in further to see the building layout.
+
+---
+
+## Graph Levels & Guarantees
+
+CodeMarp produces three views of your codebase. Each view has a different goal and level of precision.
+
+### High-level (architecture)
+
+- Shows module and package relationships
+- Built from import statements and grouping
+- Best-effort approximation of architecture
+- May be incomplete or sparse depending on project layout
+
+### Mid-level (function relationships)
+
+- Conservative call graph
+- Resolves calls using:
+  - same-module functions
+  - imported symbols (`from x import y`)
+  - imported modules (`import x; x.y()`)
+  - unique module-level functions
+- Avoids ambiguous resolution paths such as dynamic dispatch and unresolved method calls
+- Prioritises **precision over recall**
+  - fewer false positives
+  - may miss valid edges
+
+Each mid-level call edge includes a resolution reason::
+- `same_module`
+- `imported_symbol`
+- `imported_module`
+- `unique_global`
+
+Use `--debug-resolution` to inspect how edges were resolved.
+
+### Low-level (control flow)
+
+- Function-level control flow graph (CFG)
+- Shows branching, merging, and execution structure
+- Structural only — does not model runtime behaviour
 
 ---
 
