@@ -31,16 +31,18 @@ def _parsed_module(module_id: str, path: str, imports: list[str]) -> ParsedModul
 def test_high_level_aggregates_to_group_edges() -> None:
     modules = [
         ModuleNode(
-            id="codemarp.cli.main", path="codemarp/cli/main.py", package="codemarp.cli"
+            id="codemarp.cli.main",
+            path=Path("codemarp/cli/main.py"),
+            package="codemarp.cli",
         ),
         ModuleNode(
             id="codemarp.parser.python_parser",
-            path="codemarp/parser/python_parser.py",
+            path=Path("codemarp/parser/python_parser.py"),
             package="codemarp.parser",
         ),
         ModuleNode(
             id="codemarp.graph.builder",
-            path="codemarp/graph/builder.py",
+            path=Path("codemarp/graph/builder.py"),
             package="codemarp.graph",
         ),
     ]
@@ -71,12 +73,16 @@ def test_high_level_aggregates_to_group_edges() -> None:
 def test_high_level_keeps_top_level_modules_distinct() -> None:
     modules = [
         ModuleNode(
-            id="codemarp.cli.main", path="codemarp/cli/main.py", package="codemarp.cli"
+            id="codemarp.cli.main",
+            path=Path("codemarp/cli/main.py"),
+            package="codemarp.cli",
         ),
-        ModuleNode(id="codemarp.errors", path="codemarp/errors.py", package="codemarp"),
+        ModuleNode(
+            id="codemarp.errors", path=Path("codemarp/errors.py"), package="codemarp"
+        ),
         ModuleNode(
             id="codemarp.views.trace",
-            path="codemarp/views/trace.py",
+            path=Path("codemarp/views/trace.py"),
             package="codemarp.views",
         ),
     ]
@@ -102,9 +108,9 @@ def test_high_level_keeps_top_level_modules_distinct() -> None:
 
 def test_high_level_dedupes_same_group_relationships() -> None:
     modules = [
-        ModuleNode(id="pkg.a.one", path="pkg/a/one.py", package="pkg.a"),
-        ModuleNode(id="pkg.a.two", path="pkg/a/two.py", package="pkg.a"),
-        ModuleNode(id="pkg.b.core", path="pkg/b/core.py", package="pkg.b"),
+        ModuleNode(id="pkg.a.one", path=Path("pkg/a/one.py"), package="pkg.a"),
+        ModuleNode(id="pkg.a.two", path=Path("pkg/a/two.py"), package="pkg.a"),
+        ModuleNode(id="pkg.b.core", path=Path("pkg/b/core.py"), package="pkg.b"),
     ]
 
     parsed_modules = [
@@ -123,12 +129,16 @@ def test_high_level_dedupes_same_group_relationships() -> None:
 def test_export_module_graph_renders_groups_and_top_level_modules_differently() -> None:
     modules = [
         ModuleNode(
-            id="codemarp.cli.main", path="codemarp/cli/main.py", package="codemarp.cli"
+            id="codemarp.cli.main",
+            path=Path("codemarp/cli/main.py"),
+            package="codemarp.cli",
         ),
-        ModuleNode(id="codemarp.errors", path="codemarp/errors.py", package="codemarp"),
+        ModuleNode(
+            id="codemarp.errors", path=Path("codemarp/errors.py"), package="codemarp"
+        ),
         ModuleNode(
             id="codemarp.views.trace",
-            path="codemarp/views/trace.py",
+            path=Path("codemarp/views/trace.py"),
             package="codemarp.views",
         ),
     ]
