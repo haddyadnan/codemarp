@@ -1,5 +1,5 @@
 from codemarp.parser.base import LanguageParser
-from codemarp.parser.python_parser import PythonParser
+from codemarp.parser.python.ast_parser import PythonParser
 
 
 def get_parser(language: str, module_id: str) -> LanguageParser:
