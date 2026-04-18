@@ -7,10 +7,9 @@ from codemarp.graph.builder import GraphBuilder
 from codemarp.graph.models import Edge, FunctionNode, GraphBundle, ModuleNode
 from codemarp.parser.contracts import ParsedModule
 from codemarp.parser.python_parser import (
-    discover_python_files,
     package_from_module_id,
-    parse_python_file,
 )
+from codemarp.pipeline.parse_repo import parse_repo_files
 
 
 @dataclass(slots=True)
@@ -24,12 +23,12 @@ class BuildResult:
 def build_bundle(repo_path: str | Path) -> BuildResult:
     root_path = Path(repo_path).resolve()
 
-    parsed_modules = []
+    parsed_modules = parse_repo_files(root_path)
     builder = GraphBuilder()
 
-    for file_path in discover_python_files(root_path):
-        parsed = parse_python_file(root_path, file_path)
-        parsed_modules.append(parsed)
+    for parsed in parsed_modules:
+        # parsed_modules = parse_repo_files(root_path)
+        # parsed_modules.append(parsed)
         builder.add_module(
             ModuleNode(
                 id=parsed.module_id,
