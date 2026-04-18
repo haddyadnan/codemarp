@@ -45,10 +45,10 @@ def build_mid_level_edges(
 def _resolve_callee(
     caller_module_id: str,
     call: CallFact,
-    parsed_by_module: dict,
-    by_module_and_name: dict,
-    by_name: dict,
-    by_id: dict,
+    parsed_by_module: dict[str, ParsedModule],
+    by_module_and_name: dict[tuple[str, str], FunctionNode],
+    by_name: dict[str, list[FunctionNode]],
+    by_id: dict[str, FunctionNode],
 ) -> tuple[FunctionNode | None, ResolutionReason | None]:
     parsed_module = parsed_by_module[caller_module_id]
 
