@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 IGNORED_DIR_NAMES = {
@@ -14,7 +15,17 @@ IGNORED_DIR_NAMES = {
     "node_modules",
     "site-packages",
     "venv",
-    "tests",
+    # JS/TS generated or dependency directories
+    ".cache",
+    ".next",
+    ".nuxt",
+    ".output",
+    ".svelte-kit",
+    ".turbo",
+    ".vercel",
+    "coverage",
+    "out",
+    "storybook-static",
 }
 
 IGNORE_FILE_NAMES = {
@@ -22,12 +33,24 @@ IGNORE_FILE_NAMES = {
 }
 
 
-def discover_python_files(root: Path) -> list[Path]:
-    files = []
-    for path in root.rglob("*.py"):
-        if any(part in IGNORED_DIR_NAMES for part in path.parts):
-            continue
-        if path.name in IGNORE_FILE_NAMES:
-            continue
-        files.append(path)
+SUPPORTED_SUFFIXES = {".py", ".ts", ".tsx"}
+
+
+def discover_source_files(root: Path) -> list[Path]:
+    files: list[Path] = []
+
+    for dirpath, dirnames, filenames in os.walk(root):
+        # prune ignored directories in-place
+        dirnames[:] = [d for d in dirnames if d not in IGNORED_DIR_NAMES]
+
+        for filename in filenames:
+            if filename in IGNORE_FILE_NAMES:
+                continue
+
+            suffix = Path(filename).suffix.lower()
+            if suffix not in SUPPORTED_SUFFIXES:
+                continue
+
+            files.append(Path(dirpath) / filename)
+
     return sorted(files)
