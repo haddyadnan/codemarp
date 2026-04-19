@@ -3,7 +3,7 @@
 
 - Arrow functions and function expressions assigned to variables are not yet extracted as FunctionFact.
 - Calls inside such functions are not attributed.
-- Re-export forms such as `export { foo } from "./foo"` and `export * from "./bar"` are not yet normalized as imports.
+- Namespace re-exports such as `export * as name from "./foo"` are not yet fully captured.
 - CommonJS `require()` calls are not yet normalized as imports.
 - Template-literal import sources are not specially handled.
 - Only declarations that normalize cleanly into the shared facts contract are extracted.
