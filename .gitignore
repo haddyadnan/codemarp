@@ -213,3 +213,5 @@ architecture/
 scripts/
 
 PHILOSOPHY.md
+backlog.md
+sample_trace.py
