@@ -1,7 +1,7 @@
 [project]
 name = "codemarp"
 version = "0.2.0"
-description = "Multi-level code architecture and relationship mapping"
+description = "CLI for generating multi-level code architecture graphs"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

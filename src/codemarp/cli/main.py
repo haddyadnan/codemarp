@@ -82,7 +82,10 @@ def analyze_command(
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="codemarp", description="3-level code mapper")
+    parser = argparse.ArgumentParser(
+        prog="codemarp",
+        description="CLI for generating multi-level code architecture graphs",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     analyze = subparsers.add_parser("analyze", help="Analyze a Python codebase")
