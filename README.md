@@ -18,7 +18,7 @@ CodeMarp takes a different approach: it builds the map for you.
 
 ## What CodeMarp does
 
-Given a Python repository, CodeMarp gives you three zoom levels:
+Given a Python or TypeScript repository, CodeMarp maps the codebase at multiple zoom levels:
 
 | Level | What you see |
 |-------|-------------|
@@ -56,7 +56,7 @@ CodeMarp produces three views of your codebase. Each view has a different goal a
   - fewer false positives
   - may miss valid edges
 
-Each mid-level call edge includes a resolution reason::
+Each mid-level call edge includes a resolution reason:
 - `same_module`
 - `imported_symbol`
 - `imported_module`
@@ -69,12 +69,13 @@ Use `--debug-resolution` to inspect how edges were resolved.
 - Function-level control flow graph (CFG)
 - Shows branching, merging, and execution structure
 - Structural only — does not model runtime behaviour
+- Currently Python-only
 
 ---
 
 ## Quickstart
 
-Run CodeMarp on a Python repository:
+Run CodeMarp on a Python or TypeScript repository:
 
 ```bash
 codemarp analyze src --out out
@@ -89,7 +90,7 @@ out/
   graph.json
 ```
 
-To zoom into one function:
+To zoom into one Python function:
 
 ```bash
 codemarp analyze src --view low --focus codemarp.cli.main:analyze_command --out out
@@ -160,12 +161,21 @@ uv tool install git+https://github.com/haddyadnan/codemarp.git
 For a specific release tag:
 
 ```bash
-uv tool install git+https://github.com/haddyadnan/codemarp.git@v0.2.0
+uv tool install git+https://github.com/haddyadnan/codemarp.git@v0.3.0
 ```
 
 ---
 
 ## Usage
+
+### Supported languages
+
+| Language | Support |
+|----------|---------|
+| Python | Tree-sitter parser by default, AST parser available with `--parser-engine ast` |
+| TypeScript | Tree-sitter parser for `.ts` and `.tsx` files |
+
+JavaScript support is planned.
 
 ### Analyse a repo
 
@@ -368,7 +378,7 @@ This is the focused mid-level view: starting from one function, you can follow t
 Command:
 
 ```bash
-codemarp analyze src --view low --focus codemarp.parser.python_parser:find_function_node --out samples/codemarp_low_out
+codemarp analyze src --view low --focus codemarp.parser.python.low_level:find_function_node --out samples/codemarp_low_out
 ```
 
 Excerpt from [`samples/codemarp_low_out/low_level.mmd`](samples/codemarp_low_out/low_level.mmd):
@@ -437,6 +447,8 @@ CodeMarp is static analysis — it reads your code without running it.
 | Relative imports may produce sparse high-level graphs | Use `--view module` or `--view trace` instead |
 | Method calls (`self.method()`) are conservatively handled | Some valid edges may be missing, but false positives are reduced |
 | Dynamic dispatch is not tracked | Results reflect static structure only |
+| TypeScript support is first-pass | Function/import/call facts are extracted, but some language forms are still omitted |
+| Low-level CFG is Python-only | Use high, mid, trace, reverse, or module views for TypeScript |
 | Large full graphs can be hard to read | Use focused views — `trace`, `module`, `reverse` |
 
 These are honest limitations, not bugs. Focused views exist precisely because full graphs on real codebases get noisy.
@@ -447,7 +459,9 @@ These are honest limitations, not bugs. Focused views exist precisely because fu
 
 - Better call resolution (method dispatch, aliases)
 - Graph filtering and noise reduction
-- Multi-language support through tree-sitter
+- JavaScript support through tree-sitter
+- Broader TypeScript coverage
+- Language-neutral low-level CFG
 - Interactive web UI
 
 ---
@@ -467,9 +481,11 @@ No runtime instrumentation. No code execution. Analysis runs anywhere.
 
 ## Status
 
-- Python only (tree-sitter default, ast fallback)
+- Python and TypeScript support
+- Tree-sitter default parser
+- Python AST fallback available with `--parser-engine ast`
 - CLI-first
-- v0.2.x — early but usable on real codebases
+- v0.3.x — early but usable on real codebases
 
 ---
 
