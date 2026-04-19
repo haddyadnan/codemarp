@@ -1,3 +1,12 @@
+"""
+## Known Limitations
+
+- Arrow functions assigned to variables are not yet extracted as FunctionFact.
+- Function expressions assigned to variables are not yet extracted as FunctionFact.
+- Only declarations that normalize cleanly into the shared facts contract are extracted.
+- If a TypeScript construct has no clear equivalent in the shared facts, it is omitted rather than guessed.
+"""
+
 from pathlib import Path
 
 import tree_sitter_typescript as tstypescript
@@ -38,17 +47,22 @@ class TreeSitterTypeScriptParser:
         functions: list[FunctionFact] = []
 
         for child in root_node.children:
-            if child.type == "function_declaration":
-                fn = self._make_function_fact(child, code, class_name=None)
+            target = self._unwrap_definition(child)
+
+            if target is None:
+                continue
+
+            if target.type == "function_declaration":
+                fn = self._make_function_fact(target, code, class_name=None)
                 if fn is not None:
                     functions.append(fn)
 
-            elif child.type == "class_declaration":
-                class_name = self._node_text(child.child_by_field_name("name"), code)
+            elif target.type == "class_declaration":
+                class_name = self._node_text(target.child_by_field_name("name"), code)
                 if class_name is None:
                     continue
 
-                body = child.child_by_field_name("body")
+                body = target.child_by_field_name("body")
                 if body is None:
                     continue
 
@@ -123,3 +137,12 @@ class TreeSitterTypeScriptParser:
             return None
         source = code.encode("utf-8")
         return source[node.start_byte : node.end_byte].decode("utf-8")
+
+    def _unwrap_definition(self, node: Node) -> Node | None:
+        if node.type in {"export_statement", "export_default_declaration"}:
+            for child in node.children:
+                if child.type in {"function_declaration", "class_declaration"}:
+                    return child
+            return None
+
+        return node
