@@ -2,7 +2,7 @@ from codemarp.analyzers.mid_level import build_mid_level_edges
 from codemarp.contracts import ResolutionReason
 from codemarp.exporters.mermaid import export_function_graph
 from codemarp.graph.models import FunctionNode, GraphBundle
-from codemarp.parser.python_parser import PythonParser
+from codemarp.parser.python.ast_parser import PythonParser
 
 
 def _function_nodes(*parsed_modules) -> list[FunctionNode]:
@@ -24,46 +24,50 @@ def _function_nodes(*parsed_modules) -> list[FunctionNode]:
 
 def test_parser_tracks_imported_symbol() -> None:
     parser = PythonParser("app.main")
-    result = parser.parse_code(
+    result = parser.parse_code_to_facts(
         "from app.worker import work\n\ndef run():\n    work()\n"
     )
 
-    assert len(result.imported_symbols) == 1
-    imported = result.imported_symbols[0]
-    assert imported.module == "app.worker"
-    assert imported.name == "work"
+    assert len(result.imports) == 1
+    imported = result.imports[0]
+    assert imported.raw_module == "app.worker"
+    assert imported.imported_name == "work"
     assert imported.alias is None
 
 
 def test_parser_tracks_imported_symbol_alias() -> None:
     parser = PythonParser("app.main")
-    result = parser.parse_code(
+    result = parser.parse_code_to_facts(
         "from app.worker import work as do_work\n\ndef run():\n    do_work()\n"
     )
 
-    assert len(result.imported_symbols) == 1
-    imported = result.imported_symbols[0]
-    assert imported.module == "app.worker"
-    assert imported.name == "work"
+    assert len(result.imports) == 1
+    imported = result.imports[0]
+    assert imported.raw_module == "app.worker"
+    assert imported.imported_name == "work"
     assert imported.alias == "do_work"
 
 
 def test_parser_tracks_imported_module_alias() -> None:
     parser = PythonParser("app.main")
-    result = parser.parse_code("import app.worker as w\n\ndef run():\n    w.work()\n")
+    result = parser.parse_code_to_facts(
+        "import app.worker as w\n\ndef run():\n    w.work()\n"
+    )
 
-    assert len(result.imported_modules) == 1
-    imported = result.imported_modules[0]
-    assert imported.module == "app.worker"
+    assert len(result.imports) == 1
+    imported = result.imports[0]
+    assert imported.raw_module == "app.worker"
     assert imported.alias == "w"
 
 
 def test_parser_keeps_plain_imports_for_high_level_analysis() -> None:
     parser = PythonParser("app.main")
-    result = parser.parse_code("import app.worker\nfrom app.service import run\n")
+    result = parser.parse_code_to_facts(
+        "import app.worker\nfrom app.service import run\n"
+    )
 
-    assert "app.worker" in result.imports
-    assert "app.service" in result.imports
+    assert "app.worker" == result.imports[0].raw_module
+    assert "app.service" == result.imports[1].raw_module
 
 
 def test_mid_level_resolves_imported_symbol() -> None:

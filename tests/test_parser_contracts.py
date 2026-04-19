@@ -1,5 +1,5 @@
 from codemarp.parser.contracts import CallFact, FunctionFact, ImportFact, ParsedModule
-from codemarp.parser.python_parser import PythonParser
+from codemarp.parser.python.ast_parser import PythonParser
 
 
 def test_parse_code_to_facts_returns_parsed_module() -> None:
