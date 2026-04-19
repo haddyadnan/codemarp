@@ -102,7 +102,7 @@ class TreeSitterTypeScriptParser:
             lineno=node.start_point[0] + 1,
             end_lineno=node.end_point[0] + 1,
             is_method=class_name is not None,
-            is_async=False,
+            is_async=any(child.type == "async" for child in node.children),
         )
 
     def _make_method_fact(

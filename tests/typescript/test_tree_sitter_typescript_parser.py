@@ -43,3 +43,21 @@ def test_tree_sitter_typescript_extracts_exported_function_and_class_method() ->
         "app.main:run",
         "app.main:Service.save",
     ]
+
+
+def test_tree_sitter_typescript_extracts_async_function() -> None:
+    code = "export async function run() {\n  return 1;\n}\n"
+
+    parsed = TreeSitterTypeScriptParser("app.main").parse_code_to_facts(code)
+
+    assert [fn.function_id for fn in parsed.functions] == ["app.main:run"]
+    assert [fn.is_async for fn in parsed.functions] == [True]
+
+
+def test_tree_sitter_typescript_extracts_async_method() -> None:
+    code = "class Service {\n  async save() {\n    return 2;\n  }\n}\n"
+
+    parsed = TreeSitterTypeScriptParser("app.main").parse_code_to_facts(code)
+
+    assert [fn.function_id for fn in parsed.functions] == ["app.main:Service.save"]
+    assert [fn.is_async for fn in parsed.functions] == [True]
