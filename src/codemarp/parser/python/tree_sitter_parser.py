@@ -45,27 +45,36 @@ class TreeSitterPythonParser:
         functions: list[FunctionFact] = []
 
         for child in root_node.children:
-            if child.type in {"function_definition", "async_function_definition"}:
-                fn = self._make_function_fact(child, code, class_name=None)
+            target = self._unwrap_definition(child)
+
+            if target is None:
+                continue
+
+            if target.type in {"function_definition", "async_function_definition"}:
+                fn = self._make_function_fact(target, code, class_name=None)
                 if fn is not None:
                     functions.append(fn)
 
-            elif child.type == "class_definition":
-                class_name = self._node_text(child.child_by_field_name("name"), code)
+            elif target.type == "class_definition":
+                class_name = self._node_text(target.child_by_field_name("name"), code)
                 if class_name is None:
                     continue
 
-                body = child.child_by_field_name("body")
+                body = target.child_by_field_name("body")
                 if body is None:
                     continue
 
                 for class_child in body.children:
-                    if class_child.type in {
+                    class_target = self._unwrap_definition(class_child)
+                    if class_target is None:
+                        continue
+
+                    if class_target.type in {
                         "function_definition",
                         "async_function_definition",
                     }:
                         fn = self._make_function_fact(
-                            class_child,
+                            class_target,
                             code,
                             class_name=class_name,
                         )
@@ -203,32 +212,42 @@ class TreeSitterPythonParser:
         calls: list[CallFact] = []
 
         for child in root_node.children:
-            if child.type in {"function_definition", "async_function_definition"}:
+            target = self._unwrap_definition(child)
+
+            if target is None:
+                continue
+
+            if target.type in {"function_definition", "async_function_definition"}:
                 calls.extend(
                     self._extract_calls_for_function(
-                        child,
+                        target,
                         code,
                         class_name=None,
                     )
                 )
 
-            elif child.type == "class_definition":
-                class_name = self._node_text(child.child_by_field_name("name"), code)
+            elif target.type == "class_definition":
+                class_name = self._node_text(target.child_by_field_name("name"), code)
                 if class_name is None:
                     continue
 
-                body = child.child_by_field_name("body")
+                body = target.child_by_field_name("body")
                 if body is None:
                     continue
 
                 for class_child in body.children:
-                    if class_child.type in {
+                    class_target = self._unwrap_definition(class_child)
+
+                    if class_target is None:
+                        continue
+
+                    if class_target.type in {
                         "function_definition",
                         "async_function_definition",
                     }:
                         calls.extend(
                             self._extract_calls_for_function(
-                                class_child,
+                                class_target,
                                 code,
                                 class_name=class_name,
                             )
@@ -277,6 +296,7 @@ class TreeSitterPythonParser:
                 "function_definition",
                 "async_function_definition",
                 "class_definition",
+                "decorated_definition",
             }:
                 continue
 
@@ -284,6 +304,19 @@ class TreeSitterPythonParser:
                 yield child
 
             yield from self._iter_call_nodes(child)
+
+    def _unwrap_definition(self, node: Node) -> Node | None:
+        if node.type == "decorated_definition":
+            for child in node.children:
+                if child.type in {
+                    "class_definition",
+                    "function_definition",
+                    "async_function_definition",
+                }:
+                    return child
+            return None
+
+        return node
 
     def _make_call_fact(self, caller_id: str, node: Node, code: str) -> CallFact:
         raw = "<unknown>"
