@@ -7,7 +7,7 @@ from codemarp.parser.python.ast_parser import module_id_from_path
 from codemarp.pipeline.discovery import discover_python_files
 
 
-def parse_repo_files(root: Path, engine: str = "ast") -> list[ParsedModule]:
+def parse_repo_files(root: Path, engine: str = "tree-sitter") -> list[ParsedModule]:
     parsed_modules: list[ParsedModule] = []
 
     for path in discover_python_files(root):

@@ -18,7 +18,7 @@ def analyze_command(
     module: str | None = None,
     max_depth: int | None = None,
     debug_resolution: bool = False,
-    parser_engine: str = "ast",
+    parser_engine: str = "tree-sitter",
 ) -> None:
     build_result = build_bundle(root, engine=parser_engine)
 
@@ -120,8 +120,8 @@ def build_parser() -> argparse.ArgumentParser:
     analyze.add_argument(
         "--parser-engine",
         choices=["ast", "tree-sitter"],
-        default="ast",
-        help="Parser backend to use (default: ast)",
+        default="tree-sitter",
+        help="Parser backend to use (default: tree-sitter)",
     )
 
     return parser
