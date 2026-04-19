@@ -110,8 +110,14 @@ class TreeSitterPythonParser:
             lineno=node.start_point[0] + 1,
             end_lineno=node.end_point[0] + 1,
             is_method=class_name is not None,
-            is_async=node.type == "async_function_definition",
+            is_async=self._is_async_function(node),
         )
+
+    def _is_async_function(self, node: Node) -> bool:
+        if node.type == "async_function_definition":
+            return True
+
+        return any(child.type == "async" for child in node.children)
 
     def _node_text(self, node: Node | None, code: str) -> str | None:
         if node is None:
