@@ -18,10 +18,10 @@ class BuildResult:
     high_level_edges: list[Edge]
 
 
-def build_bundle(repo_path: str | Path) -> BuildResult:
+def build_bundle(repo_path: str | Path, engine: str = "ast") -> BuildResult:
     root_path = Path(repo_path).resolve()
 
-    parsed_modules = parse_repo_files(root_path)
+    parsed_modules = parse_repo_files(root_path, engine=engine)
     builder = GraphBuilder()
 
     for parsed in parsed_modules:
