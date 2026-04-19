@@ -2,8 +2,8 @@ import ast
 from pathlib import Path
 
 from codemarp.errors import FocusFormatError, ResolutionError
-from codemarp.parser.python.ast_parser import module_id_from_path
 from codemarp.pipeline.discovery import discover_python_files
+from codemarp.pipeline.module_ids import module_id_from_path
 
 
 def parse_low_level_focus(focus: str) -> tuple[str, str]:

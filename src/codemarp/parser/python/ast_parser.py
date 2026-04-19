@@ -8,6 +8,7 @@ from codemarp.parser.contracts import (
     ImportFact,
     ParsedModule,
 )
+from codemarp.pipeline.module_ids import module_id_from_path
 
 
 class PythonParser(ast.NodeVisitor):
@@ -184,14 +185,6 @@ class PythonParser(ast.NodeVisitor):
             kind=kind,
             lineno=node.lineno,
         )
-
-
-def module_id_from_path(root: Path, path: Path) -> str:
-    rel = path.relative_to(root).with_suffix("")
-    parts = list(rel.parts)
-    if parts and parts[-1] == "__init__":
-        parts = parts[:-1]
-    return ".".join(parts) if parts else path.stem
 
 
 def parse_python_file(root: Path, path: Path) -> ParsedModule:

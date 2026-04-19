@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from codemarp.parser.python.ast_parser import module_id_from_path
 from codemarp.pipeline.discovery import discover_python_files
+from codemarp.pipeline.module_ids import module_id_from_path
 
 
 def test_module_id_from_path() -> None:
