@@ -1,0 +1,24 @@
+from codemarp.parser.typescript.tree_sitter_parser import TreeSitterTypeScriptParser
+
+
+def test_tree_sitter_typescript_extracts_top_level_function_and_method() -> None:
+    code = (
+        "function run() {\n"
+        "  return 1;\n"
+        "}\n"
+        "\n"
+        "class Service {\n"
+        "  save() {\n"
+        "    return 2;\n"
+        "  }\n"
+        "}\n"
+    )
+
+    parsed = TreeSitterTypeScriptParser("app.main").parse_code_to_facts(code)
+
+    assert parsed.language == "typescript"
+    assert [fn.function_id for fn in parsed.functions] == [
+        "app.main:run",
+        "app.main:Service.save",
+    ]
+    assert [fn.is_method for fn in parsed.functions] == [False, True]
