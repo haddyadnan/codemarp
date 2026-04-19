@@ -194,12 +194,6 @@ def module_id_from_path(root: Path, path: Path) -> str:
     return ".".join(parts) if parts else path.stem
 
 
-def package_from_module_id(module_id: str) -> str:
-    if "." not in module_id:
-        return ""
-    return module_id.rsplit(".", 1)[0]
-
-
 def parse_python_file(root: Path, path: Path) -> ParsedModule:
     module_id = module_id_from_path(root, path)
     parser = PythonParser(module_id)
