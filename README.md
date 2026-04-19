@@ -447,8 +447,7 @@ These are honest limitations, not bugs. Focused views exist precisely because fu
 
 - Better call resolution (method dispatch, aliases)
 - Graph filtering and noise reduction
-- Tree-sitter migration → multi-language support
-- JavaScript / TypeScript support
+- Multi-language support through tree-sitter
 - Interactive web UI
 
 ---
