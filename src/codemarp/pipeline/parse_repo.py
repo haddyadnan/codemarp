@@ -3,8 +3,8 @@ from pathlib import Path
 from codemarp.parser.contracts import ParsedModule
 from codemarp.parser.factory import get_parser
 from codemarp.parser.languages import detect_language
-from codemarp.parser.python.ast_parser import module_id_from_path
 from codemarp.pipeline.discovery import discover_python_files
+from codemarp.pipeline.module_ids import module_id_from_path
 
 
 def parse_repo_files(root: Path, engine: str = "tree-sitter") -> list[ParsedModule]:
