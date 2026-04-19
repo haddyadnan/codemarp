@@ -6,7 +6,7 @@ from codemarp.analyzers.mid_level import build_mid_level_edges
 from codemarp.graph.builder import GraphBuilder
 from codemarp.graph.models import Edge, FunctionNode, GraphBundle, ModuleNode
 from codemarp.parser.contracts import ParsedModule
-from codemarp.parser.python.ast_parser import package_from_module_id
+from codemarp.pipeline.module_ids import package_from_module_id
 from codemarp.pipeline.parse_repo import parse_repo_files
 
 
