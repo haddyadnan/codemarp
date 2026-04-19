@@ -3,7 +3,7 @@ from pathlib import Path
 from tree_sitter import Language, Node, Parser
 from tree_sitter_python import language as python_language
 
-from codemarp.parser.contracts import FunctionFact, ParsedModule
+from codemarp.parser.contracts import FunctionFact, ImportFact, ParsedModule
 
 
 class TreeSitterPythonParser:
@@ -28,12 +28,13 @@ class TreeSitterPythonParser:
         root_node = tree.root_node
 
         functions = self._extract_functions(root_node, code)
+        imports = self._extract_imports(root_node, code)
 
         return ParsedModule(
             module_id=self.module_id,
             file_path=Path(filepath),
             language="python",
-            imports=[],
+            imports=imports,
             functions=functions,
             calls=[],
             control_flow_roots=[],
@@ -107,3 +108,92 @@ class TreeSitterPythonParser:
             return None
         source = code.encode("utf-8")
         return source[node.start_byte : node.end_byte].decode("utf-8")
+
+    def _extract_imports(self, root_node: Node, code: str) -> list[ImportFact]:
+        imports: list[ImportFact] = []
+
+        for child in root_node.children:
+            if child.type == "import_statement":
+                imports.extend(self._extract_import_statement(child, code))
+            elif child.type == "import_from_statement":
+                imports.extend(self._extract_import_from_statement(child, code))
+
+        return imports
+
+    def _extract_import_statement(self, node: Node, code: str) -> list[ImportFact]:
+        imports: list[ImportFact] = []
+
+        for child in node.children:
+            if child.type == "dotted_name":
+                imports.append(
+                    ImportFact(
+                        raw_module=self._node_text(child, code),
+                        imported_name=None,
+                        alias=None,
+                        is_from_import=False,
+                        relative_level=0,
+                        lineno=node.start_point[0] + 1,
+                    )
+                )
+            elif child.type == "aliased_import":
+                module_node = child.child_by_field_name("name")
+                alias_node = child.child_by_field_name("alias")
+
+                imports.append(
+                    ImportFact(
+                        raw_module=self._node_text(module_node, code),
+                        imported_name=None,
+                        alias=self._node_text(alias_node, code),
+                        is_from_import=False,
+                        relative_level=0,
+                        lineno=node.start_point[0] + 1,
+                    )
+                )
+
+        return imports
+
+    def _extract_import_from_statement(self, node: Node, code: str) -> list[ImportFact]:
+        imports: list[ImportFact] = []
+
+        relative_level = 0
+        module_name: str | None = None
+        seen_module = False
+
+        for child in node.children:
+            if child.type == "relative_import":
+                text = self._node_text(child, code)
+                if text is not None:
+                    relative_level = text.count(".")
+
+            elif child.type == "dotted_name" and not seen_module:
+                module_name = self._node_text(child, code)
+                seen_module = True
+
+            elif child.type == "dotted_name":
+                imports.append(
+                    ImportFact(
+                        raw_module=module_name,
+                        imported_name=self._node_text(child, code),
+                        alias=None,
+                        is_from_import=True,
+                        relative_level=relative_level,
+                        lineno=node.start_point[0] + 1,
+                    )
+                )
+
+            elif child.type == "aliased_import":
+                name_node = child.child_by_field_name("name")
+                alias_node = child.child_by_field_name("alias")
+
+                imports.append(
+                    ImportFact(
+                        raw_module=module_name,
+                        imported_name=self._node_text(name_node, code),
+                        alias=self._node_text(alias_node, code),
+                        is_from_import=True,
+                        relative_level=relative_level,
+                        lineno=node.start_point[0] + 1,
+                    )
+                )
+
+        return imports
