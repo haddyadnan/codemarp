@@ -171,3 +171,45 @@ def test_tree_sitter_typescript_extracts_super_call() -> None:
             lineno=3,
         )
     ]
+
+
+def test_tree_sitter_typescript_extracts_named_re_export() -> None:
+    code = 'export { run, save as persist } from "app/service"\n'
+
+    parsed = TreeSitterTypeScriptParser("app.main").parse_code_to_facts(code)
+
+    assert parsed.imports == [
+        ImportFact(
+            raw_module="app/service",
+            imported_name="run",
+            alias=None,
+            is_from_import=True,
+            relative_level=0,
+            lineno=1,
+        ),
+        ImportFact(
+            raw_module="app/service",
+            imported_name="save",
+            alias="persist",
+            is_from_import=True,
+            relative_level=0,
+            lineno=1,
+        ),
+    ]
+
+
+def test_tree_sitter_typescript_extracts_star_re_export() -> None:
+    code = 'export * from "app/service"\n'
+
+    parsed = TreeSitterTypeScriptParser("app.main").parse_code_to_facts(code)
+
+    assert parsed.imports == [
+        ImportFact(
+            raw_module="app/service",
+            imported_name=None,
+            alias=None,
+            is_from_import=True,
+            relative_level=0,
+            lineno=1,
+        )
+    ]

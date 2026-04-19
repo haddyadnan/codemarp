@@ -156,6 +156,8 @@ class TreeSitterTypeScriptParser:
         for child in root_node.children:
             if child.type == "import_statement":
                 imports.extend(self._extract_import_statement(child, code))
+            elif child.type == "export_statement":
+                imports.extend(self._extract_export_statement(child, code))
 
         return imports
 
@@ -215,6 +217,66 @@ class TreeSitterTypeScriptParser:
                         lineno=node.start_point[0] + 1,
                     )
                 )
+
+        return imports
+
+    def _extract_export_statement(self, node: Node, code: str) -> list[ImportFact]:
+        imports: list[ImportFact] = []
+
+        source_node = node.child_by_field_name("source")
+        if source_node is None:
+            source_node = self._first_child_of_type(node, "string")
+
+        raw_module = self._string_text(source_node, code)
+        if raw_module is None:
+            return imports
+
+        # Case: export * from "./foo"
+        # curr does not handle `export * as name from ...`
+        if self._first_child_of_type(node, "*") is not None:
+            imports.append(
+                ImportFact(
+                    raw_module=raw_module,
+                    imported_name=None,
+                    alias=None,
+                    is_from_import=True,
+                    relative_level=0,
+                    lineno=node.start_point[0] + 1,
+                )
+            )
+            return imports
+
+        # Case: export { foo, bar as baz } from "./foo"
+        export_clause = self._first_child_of_type(node, "export_clause")
+        if export_clause is None:
+            return imports
+
+        for spec in export_clause.children:
+            if spec.type != "export_specifier":
+                continue
+
+            name_node = spec.child_by_field_name("name")
+            alias_node = spec.child_by_field_name("alias")
+
+            if name_node is None:
+                identifiers = self._children_of_type(spec, "identifier")
+                name_node = identifiers[0] if identifiers else None
+                alias_node = identifiers[1] if len(identifiers) > 1 else None
+
+            imported_name = self._node_text(name_node, code)
+            if imported_name is None:
+                continue
+
+            imports.append(
+                ImportFact(
+                    raw_module=raw_module,
+                    imported_name=imported_name,
+                    alias=self._node_text(alias_node, code),
+                    is_from_import=True,
+                    relative_level=0,
+                    lineno=node.start_point[0] + 1,
+                )
+            )
 
         return imports
 
