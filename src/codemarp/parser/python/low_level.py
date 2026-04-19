@@ -2,7 +2,7 @@ import ast
 from pathlib import Path
 
 from codemarp.errors import FocusFormatError, ResolutionError
-from codemarp.pipeline.discovery import discover_python_files
+from codemarp.pipeline.discovery import discover_source_files
 from codemarp.pipeline.module_ids import module_id_from_path
 
 
@@ -39,7 +39,9 @@ def find_function_node(
     """
     module_id, target_name = parse_low_level_focus(focus)
 
-    for file_path in discover_python_files(root):
+    for file_path in discover_source_files(root):
+        if file_path.suffix.lower() != ".py":
+            continue
         current_module_id = module_id_from_path(root, file_path)
         if current_module_id != module_id:
             continue
