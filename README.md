@@ -160,7 +160,7 @@ uv tool install git+https://github.com/haddyadnan/codemarp.git
 For a specific release tag:
 
 ```bash
-uv tool install git+https://github.com/haddyadnan/codemarp.git@v0.1.3
+uv tool install git+https://github.com/haddyadnan/codemarp.git@v0.2.0
 ```
 
 ---
@@ -456,7 +456,7 @@ These are honest limitations, not bugs. Focused views exist precisely because fu
 ## Philosophy
 
 **Useful before perfect.**
-CodeMarp v0.1 is not exhaustive. It is correct for common cases and honest about where it isn't.
+CodeMarp is not exhaustive. It is correct for common cases and honest about where it isn't.
 
 **Readable before complete.**
 A graph you can understand is more valuable than a graph that shows everything.
@@ -468,9 +468,9 @@ No runtime instrumentation. No code execution. Analysis runs anywhere.
 
 ## Status
 
-- Python only (AST-based, tree-sitter planned)
+- Python only (tree-sitter default, ast fallback)
 - CLI-first
-- v0.1.x — early but usable on real codebases
+- v0.2.x — early but usable on real codebases
 
 ---
 
