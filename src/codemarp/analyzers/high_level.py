@@ -69,12 +69,34 @@ def _resolve_local_import(
     if import_name in known_module_ids:
         return import_name
 
-    for module_id in sorted(known_module_ids, key=len, reverse=True):
-        if import_name.startswith(module_id + "."):
-            return module_id
-        if module_id.startswith(import_name + "."):
-            return module_id
+    for candidate in _import_name_candidates(import_name):
+        if candidate in known_module_ids:
+            return candidate
+
+        for module_id in sorted(known_module_ids, key=len, reverse=True):
+            if import_name.startswith(module_id + "."):
+                return module_id
+            if module_id.startswith(import_name + "."):
+                return module_id
     return None
+
+
+def _import_name_candidates(import_name: str) -> list[str]:
+    candidates = [import_name]
+
+    for suffix in (".js", ".ts", ".tsx", ".jsx", ".mjs", ".mts", ".cjs", ".cts"):
+        if import_name.endswith(suffix):
+            candidates.append(import_name[: -len(suffix)])
+            break
+
+    seen: set[str] = set()
+    out: list[str] = []
+    for candidate in candidates:
+        if candidate not in seen:
+            seen.add(candidate)
+            out.append(candidate)
+
+    return out
 
 
 def _dedupe_edges(edges: list[Edge]) -> list[Edge]:
