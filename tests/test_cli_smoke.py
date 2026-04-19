@@ -36,6 +36,7 @@ def _run_analyze_from_args(args) -> None:
         module=args.module,
         max_depth=args.max_depth,
         debug_resolution=args.debug_resolution,
+        parser_engine=args.parser_engine,
     )
 
 
@@ -55,6 +56,36 @@ def test_cli_smoke_full_view_writes_expected_outputs(tmp_path: Path) -> None:
 
 
 def test_cli_smoke_trace_view_writes_expected_outputs(tmp_path: Path) -> None:
+    repo = _make_repo(tmp_path)
+    out_dir = tmp_path / "out"
+
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "analyze",
+            str(repo),
+            "--view",
+            "trace",
+            "--focus",
+            "app.main:run",
+            "--max-depth",
+            "2",
+            "--parser-engine",
+            "tree-sitter",
+            "--out",
+            str(out_dir),
+        ]
+    )
+
+    _run_analyze_from_args(args)
+
+    assert (out_dir / "graph.json").exists()
+    assert (out_dir / "high_level.mmd").exists()
+    assert (out_dir / "mid_level.mmd").exists()
+    assert (out_dir / "mid_level.json").exists()
+
+
+def test_cli_smoke_trace_view_writes_expected_outputs_with_ast(tmp_path: Path) -> None:
     repo = _make_repo(tmp_path)
     out_dir = tmp_path / "out"
 

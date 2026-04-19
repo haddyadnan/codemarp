@@ -1,4 +1,4 @@
-from codemarp.parser.python_parser import PythonParser
+from codemarp.parser.python.ast_parser import PythonParser
 
 
 def test_parser_preserves_self_method_call_as_dotted_name() -> None:

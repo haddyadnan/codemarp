@@ -2,7 +2,7 @@ from codemarp.analyzers.mid_level import build_mid_level_edges
 from codemarp.contracts import ResolutionReason
 from codemarp.exporters.mermaid import export_function_graph
 from codemarp.graph.models import FunctionNode, GraphBundle
-from codemarp.parser.python_parser import PythonParser
+from codemarp.parser.python.ast_parser import PythonParser
 
 
 def _function_nodes(*parsed_modules) -> list[FunctionNode]:

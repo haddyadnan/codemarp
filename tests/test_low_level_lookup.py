@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from codemarp.errors import FocusFormatError, ResolutionError
-from codemarp.parser.python_parser import find_function_node, parse_low_level_focus
+from codemarp.parser.python.low_level import find_function_node, parse_low_level_focus
 
 
 def test_parse_low_level_focus_accepts_top_level_function() -> None:

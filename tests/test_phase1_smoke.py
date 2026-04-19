@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from codemarp.parser.python_parser import module_id_from_path
+from codemarp.parser.python.ast_parser import module_id_from_path
 from codemarp.pipeline.discovery import discover_python_files
 
 

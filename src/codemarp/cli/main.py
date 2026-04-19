@@ -18,8 +18,9 @@ def analyze_command(
     module: str | None = None,
     max_depth: int | None = None,
     debug_resolution: bool = False,
+    parser_engine: str = "tree-sitter",
 ) -> None:
-    build_result = build_bundle(root)
+    build_result = build_bundle(root, engine=parser_engine)
 
     if debug_resolution:
         grouped = defaultdict(list)
@@ -116,6 +117,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print why each mid-level call edge was resolved.",
     )
 
+    analyze.add_argument(
+        "--parser-engine",
+        choices=["ast", "tree-sitter"],
+        default="tree-sitter",
+        help="Parser backend to use (default: tree-sitter)",
+    )
+
     return parser
 
 
@@ -176,6 +184,7 @@ def main() -> None:
                 module=args.module,
                 max_depth=args.max_depth,
                 debug_resolution=args.debug_resolution,
+                parser_engine=args.parser_engine,
             )
         except codemarpError as exc:
             raise SystemExit(str(exc)) from exc
