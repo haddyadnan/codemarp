@@ -1,3 +1,5 @@
+from pathlib import PurePosixPath
+
 from codemarp.graph.models import Edge, ModuleNode
 from codemarp.parser.contracts import ImportFact, ParsedModule
 
@@ -18,7 +20,9 @@ def build_high_level_edges(
         )
 
         for imported in parsed.imports:
-            target_module = _resolve_local_import(imported, known_module_ids)
+            target_module = _resolve_local_import(
+                parsed.module_id, imported, known_module_ids
+            )
             if not target_module:
                 continue
 
@@ -56,38 +60,53 @@ def aggregate_module_id(module_id: str) -> str:
 
 
 def _resolve_local_import(
-    imported: ImportFact, known_module_ids: set[str]
+    current_module_id: str, imported: ImportFact, known_module_ids: set[str]
 ) -> str | None:
-    if imported.relative_level != 0:
-        return None
+    # if imported.relative_level != 0:
+    #     return None
 
     import_name = imported.raw_module
 
     if import_name is None:
         return None
 
-    if import_name in known_module_ids:
-        return import_name
+    # if import_name in known_module_ids:
+    #     return import_name
 
-    for candidate in _import_name_candidates(import_name):
+    for candidate in _import_name_candidates(current_module_id, import_name):
         if candidate in known_module_ids:
             return candidate
 
         for module_id in sorted(known_module_ids, key=len, reverse=True):
-            if import_name.startswith(module_id + "."):
+            if candidate.startswith(module_id + "."):
                 return module_id
-            if module_id.startswith(import_name + "."):
+            if module_id.startswith(candidate + "."):
                 return module_id
     return None
 
 
-def _import_name_candidates(import_name: str) -> list[str]:
-    candidates = [import_name]
+def _import_name_candidates(current_module_id: str, import_name: str) -> list[str]:
+    candidates = []
 
+    normalized = import_name
     for suffix in (".js", ".ts", ".tsx", ".jsx", ".mjs", ".mts", ".cjs", ".cts"):
-        if import_name.endswith(suffix):
-            candidates.append(import_name[: -len(suffix)])
+        if normalized.endswith(suffix):
+            normalized = normalized[: -len(suffix)]
             break
+
+    candidates.append(normalized)
+
+    if normalized.startswith("./") or normalized.startswith("../"):
+        current_parts = current_module_id.split(".")
+        base_parts = current_parts[:-1]
+
+        resolved_path = PurePosixPath("/".join(base_parts)) / normalized
+        normalized_path = resolved_path.as_posix()
+
+        while normalized_path.startswith("./"):
+            normalized_path = normalized_path[2:]
+
+        candidates.append(normalized_path.replace("/", "."))
 
     seen: set[str] = set()
     out: list[str] = []
