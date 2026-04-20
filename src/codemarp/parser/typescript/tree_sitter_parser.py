@@ -3,7 +3,7 @@
 
 - Some edge cases in arrow/function expressions may not be fully captured (e.g., complex destructuring or advanced patterns).
 - Namespace re-exports such as `export * as name from "./foo"` are not yet fully captured.
-- CommonJS `require()` calls are not yet normalized as imports.
+- Only string-literal `require()` calls are normalized as imports. Dynamic or computed `require()` calls are ignored.
 - Template-literal import sources are not specially handled.
 - Only declarations that normalize cleanly into the shared facts contract are extracted.
 - If a TypeScript construct has no clear equivalent in the shared facts, it is omitted rather than guessed.
@@ -175,6 +175,15 @@ class TreeSitterTypeScriptParser:
                 imports.extend(self._extract_import_statement(child, code))
             elif child.type == "export_statement":
                 imports.extend(self._extract_export_statement(child, code))
+            elif child.type in {"lexical_declaration", "variable_declaration"}:
+                imports.extend(
+                    self._extract_require_imports_from_variable_declaration(child, code)
+                )
+
+            elif child.type == "expression_statement":
+                imports.extend(
+                    self._extract_require_imports_from_expression_statement(child, code)
+                )
 
         return imports
 
@@ -521,6 +530,8 @@ class TreeSitterTypeScriptParser:
             raw = self._node_text(func, code) or "<unknown>"
             leaf_name = raw
             kind = "bare"
+            if raw == "require":
+                kind = "unknown"
 
         elif func.type == "member_expression":
             property_node = func.child_by_field_name("property")
@@ -649,3 +660,82 @@ class TreeSitterTypeScriptParser:
             calls.append(call)
 
         return calls
+
+    def _extract_require_imports_from_variable_declaration(
+        self,
+        node: Node,
+        code: str,
+    ) -> list[ImportFact]:
+        imports: list[ImportFact] = []
+
+        for declarator in self._children_of_type(node, "variable_declarator"):
+            name_node = declarator.child_by_field_name("name")
+            value_node = declarator.child_by_field_name("value")
+
+            if name_node is not None and name_node.type == "identifier":
+                alias = self._node_text(name_node, code)
+            else:
+                alias = None
+            import_fact = self._import_fact_from_require_call(
+                value_node,
+                code,
+                alias=alias,
+            )
+            if import_fact is not None:
+                imports.append(import_fact)
+
+        return imports
+
+    def _extract_require_imports_from_expression_statement(
+        self,
+        node: Node,
+        code: str,
+    ) -> list[ImportFact]:
+        expression = node.children[0] if node.children else None
+        import_fact = self._import_fact_from_require_call(
+            expression,
+            code,
+            alias=None,
+        )
+        if import_fact is None:
+            return []
+
+        return [import_fact]
+
+    def _import_fact_from_require_call(
+        self,
+        node: Node | None,
+        code: str,
+        *,
+        alias: str | None,
+    ) -> ImportFact | None:
+        if node is None or node.type != "call_expression":
+            return None
+
+        function_node = node.child_by_field_name("function")
+        if function_node is None or function_node.type != "identifier":
+            return None
+
+        if self._node_text(function_node, code) != "require":
+            return None
+
+        arguments_node = node.child_by_field_name("arguments")
+        if arguments_node is None:
+            return None
+
+        string_arg = self._first_child_of_type(arguments_node, "string")
+        if string_arg is None:
+            return None
+
+        raw_module = self._string_text(string_arg, code)
+        if raw_module is None:
+            return None
+
+        return ImportFact(
+            raw_module=raw_module,
+            imported_name=None,
+            alias=alias,
+            is_from_import=False,
+            relative_level=0,
+            lineno=node.start_point[0] + 1,
+        )
