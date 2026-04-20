@@ -100,3 +100,72 @@ def test_high_level_resolves_typescript_relative_js_specifier() -> None:
     assert "index" in group_ids
     assert "v4.classic" in group_ids
     assert {(edge.source, edge.target) for edge in edges} == {("index", "v4.classic")}
+
+
+def test_tree_sitter_typescript_extracts_require_import_with_alias() -> None:
+    code = 'const z = require("./v4/classic/external.js");\n'
+
+    parsed = TreeSitterTypeScriptParser("app.main").parse_code_to_facts(code)
+
+    assert parsed.imports == [
+        ImportFact(
+            raw_module="./v4/classic/external.js",
+            imported_name=None,
+            alias="z",
+            is_from_import=False,
+            relative_level=0,
+            lineno=1,
+        )
+    ]
+
+
+def test_tree_sitter_typescript_extracts_bare_require_import() -> None:
+    code = 'require("./v4/classic/external.js");\n'
+
+    parsed = TreeSitterTypeScriptParser("app.main").parse_code_to_facts(code)
+
+    assert parsed.imports == [
+        ImportFact(
+            raw_module="./v4/classic/external.js",
+            imported_name=None,
+            alias=None,
+            is_from_import=False,
+            relative_level=0,
+            lineno=1,
+        )
+    ]
+
+
+def test_tree_sitter_typescript_ignores_dynamic_require_import() -> None:
+    code = "const z = require(pathValue);\n"
+
+    parsed = TreeSitterTypeScriptParser("app.main").parse_code_to_facts(code)
+
+    assert parsed.imports == []
+
+
+def test_tree_sitter_typescript_extracts_destructured_require_import_without_alias() -> (
+    None
+):
+    code = 'const { foo, bar } = require("./utils");\n'
+
+    parsed = TreeSitterTypeScriptParser("app.main").parse_code_to_facts(code)
+
+    assert parsed.imports == [
+        ImportFact(
+            raw_module="./utils",
+            imported_name=None,
+            alias=None,
+            is_from_import=False,
+            relative_level=0,
+            lineno=1,
+        )
+    ]
+
+
+def test_tree_sitter_typescript_ignores_computed_require_import() -> None:
+    code = 'const z = require("prefix" + suffix);\n'
+
+    parsed = TreeSitterTypeScriptParser("app.main").parse_code_to_facts(code)
+
+    assert parsed.imports == []
