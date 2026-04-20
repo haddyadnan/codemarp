@@ -1,5 +1,6 @@
 import argparse
 from collections import defaultdict
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 from codemarp.analyzers.low_level import build_low_level_view
@@ -7,6 +8,13 @@ from codemarp.errors import codemarpError
 from codemarp.pipeline.apply_view import ViewType, apply_view
 from codemarp.pipeline.build_bundle import build_bundle
 from codemarp.pipeline.export_all import export_all, export_low_level
+
+
+def package_version() -> str:
+    try:
+        return version("codemarp")
+    except PackageNotFoundError:
+        return "unknown"
 
 
 def analyze_command(
@@ -85,6 +93,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="codemarp",
         description="CLI for generating multi-level code architecture graphs",
+    )
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=f"%(prog)s {package_version()}",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
