@@ -1,8 +1,7 @@
 """
 ## Known Limitations
 
-- Arrow functions and function expressions assigned to variables are not yet extracted as FunctionFact.
-- Calls inside such functions are not attributed.
+- Some edge cases in arrow/function expressions may not be fully captured (e.g., complex destructuring or advanced patterns).
 - Namespace re-exports such as `export * as name from "./foo"` are not yet fully captured.
 - CommonJS `require()` calls are not yet normalized as imports.
 - Template-literal import sources are not specially handled.
@@ -60,6 +59,11 @@ class TreeSitterTypeScriptParser:
                 if fn is not None:
                     functions.append(fn)
 
+            elif target.type in {"lexical_declaration", "variable_declaration"}:
+                functions.extend(
+                    self._extract_variable_assigned_functions(target, code)
+                )
+
             elif target.type == "class_declaration":
                 class_name = self._node_text(target.child_by_field_name("name"), code)
                 if class_name is None:
@@ -79,6 +83,18 @@ class TreeSitterTypeScriptParser:
                         if fn is not None:
                             functions.append(fn)
 
+                    elif class_child.type in {
+                        "public_field_definition",
+                        "field_definition",
+                    }:
+                        fn = self._extract_field_assigned_function(
+                            class_child,
+                            code,
+                            class_name=class_name,
+                        )
+                        if fn is not None:
+                            functions.append(fn)
+
         return functions
 
     def _make_function_fact(
@@ -87,9 +103,10 @@ class TreeSitterTypeScriptParser:
         code: str,
         *,
         class_name: str | None,
+        override_name: str | None = None,
     ) -> FunctionFact | None:
         name_node = node.child_by_field_name("name")
-        short_name = self._node_text(name_node, code)
+        short_name = override_name or self._node_text(name_node, code)
         if short_name is None:
             return None
 
@@ -357,6 +374,11 @@ class TreeSitterTypeScriptParser:
                     )
                 )
 
+            elif target.type in {"lexical_declaration", "variable_declaration"}:
+                calls.extend(
+                    self._extract_calls_for_variable_assigned_functions(target, code)
+                )
+
             elif target.type == "class_declaration":
                 class_name = self._node_text(target.child_by_field_name("name"), code)
                 if class_name is None:
@@ -375,6 +397,17 @@ class TreeSitterTypeScriptParser:
                                 class_name=class_name,
                             )
                         )
+
+                    elif class_child.type in {
+                        "public_field_definition",
+                        "field_definition",
+                    }:
+                        call_facts = self._extract_calls_for_field_assigned_function(
+                            class_child,
+                            code,
+                            class_name=class_name,
+                        )
+                        calls.extend(call_facts)
 
         return calls
 
@@ -397,23 +430,64 @@ class TreeSitterTypeScriptParser:
         if body is None:
             return []
 
+        return self._collect_calls(caller_id=caller_id, body=body, code=code)
+
+    def _extract_calls_for_variable_assigned_functions(
+        self,
+        node: Node,
+        code: str,
+    ) -> list[CallFact]:
         calls: list[CallFact] = []
 
-        for call_node in self._iter_call_nodes(body):
-            call = self._make_call_fact(
-                caller_id=caller_id,
-                node=call_node,
-                code=code,
-            )
-            if call.kind == "unknown":
+        for declarator in self._children_of_type(node, "variable_declarator"):
+            name_node = declarator.child_by_field_name("name")
+            value_node = declarator.child_by_field_name("value")
+
+            short_name = self._node_text(name_node, code)
+            if short_name is None or value_node is None:
                 continue
-            if call.kind == "bare" and call.raw == "super":
+
+            if value_node.type not in {"arrow_function", "function_expression"}:
                 continue
-            calls.append(call)
+
+            caller_id = f"{self.module_id}:{short_name}"
+            body = value_node.child_by_field_name("body")
+            if body is None:
+                continue
+
+            calls.extend(self._collect_calls(caller_id=caller_id, body=body, code=code))
 
         return calls
 
+    def _extract_calls_for_field_assigned_function(
+        self,
+        node: Node,
+        code: str,
+        *,
+        class_name: str,
+    ) -> list[CallFact]:
+        name_node = node.child_by_field_name("name")
+        value_node = node.child_by_field_name("value")
+
+        short_name = self._node_text(name_node, code)
+        if short_name is None or value_node is None:
+            return []
+
+        if value_node.type not in {"arrow_function", "function_expression"}:
+            return []
+
+        caller_id = f"{self.module_id}:{class_name}.{short_name}"
+        body = value_node.child_by_field_name("body")
+        if body is None:
+            return []
+
+        return self._collect_calls(caller_id=caller_id, body=body, code=code)
+
     def _iter_call_nodes(self, node: Node):
+
+        if node.type == "call_expression":
+            yield node
+
         for child in node.children:
             if child.type in {
                 "function_declaration",
@@ -423,9 +497,6 @@ class TreeSitterTypeScriptParser:
                 "function_expression",
             }:
                 continue
-
-            if child.type == "call_expression":
-                yield child
 
             yield from self._iter_call_nodes(child)
 
@@ -508,3 +579,73 @@ class TreeSitterTypeScriptParser:
 
     def _is_super_expression(self, node: Node) -> bool:
         return node.type == "super"
+
+    def _extract_variable_assigned_functions(
+        self,
+        node: Node,
+        code: str,
+    ) -> list[FunctionFact]:
+        functions: list[FunctionFact] = []
+
+        for declarator in self._children_of_type(node, "variable_declarator"):
+            name_node = declarator.child_by_field_name("name")
+            value_node = declarator.child_by_field_name("value")
+
+            short_name = self._node_text(name_node, code)
+            if short_name is None or value_node is None:
+                continue
+
+            if value_node.type not in {"arrow_function", "function_expression"}:
+                continue
+
+            fn = self._make_function_fact(
+                value_node,
+                code,
+                class_name=None,
+                override_name=short_name,
+            )
+            if fn is not None:
+                functions.append(fn)
+
+        return functions
+
+    def _extract_field_assigned_function(
+        self,
+        node: Node,
+        code: str,
+        *,
+        class_name: str,
+    ) -> FunctionFact | None:
+        name_node = node.child_by_field_name("name")
+        value_node = node.child_by_field_name("value")
+
+        short_name = self._node_text(name_node, code)
+        if short_name is None or value_node is None:
+            return None
+
+        if value_node.type not in {"arrow_function", "function_expression"}:
+            return None
+
+        return self._make_function_fact(
+            value_node,
+            code,
+            class_name=class_name,
+            override_name=short_name,
+        )
+
+    def _collect_calls(self, caller_id: str, body: Node, code: str) -> list[CallFact]:
+        calls: list[CallFact] = []
+
+        for call_node in self._iter_call_nodes(body):
+            call = self._make_call_fact(
+                caller_id=caller_id,
+                node=call_node,
+                code=code,
+            )
+            if call.kind == "unknown":
+                continue
+            if call.kind == "bare" and call.raw == "super":
+                continue
+            calls.append(call)
+
+        return calls
