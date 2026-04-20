@@ -93,7 +93,7 @@ out/
 To zoom into one Python function:
 
 ```bash
-codemarp analyze src --view low --focus codemarp.cli.main:analyze_command --out out
+codemarp analyze src --mode low --focus codemarp.cli.main:analyze_command --out out
 ```
 
 ---
@@ -201,7 +201,7 @@ codemarp analyze src
 See the entire graph — architecture + all function relationships.
 
 ```bash
-codemarp analyze path/to/repo --view full --out out
+codemarp analyze path/to/repo --mode full --out out
 ```
 
 #### Trace — what does this function call?
@@ -209,7 +209,7 @@ Follow a function forward through the call graph.
 
 ```bash
 codemarp analyze path/to/repo \
-  --view trace \
+  --mode trace \
   --focus package.module:function_name \
   --max-depth 3 \
   --out out
@@ -220,7 +220,7 @@ Find every path that leads to a function.
 
 ```bash
 codemarp analyze path/to/repo \
-  --view reverse \
+  --mode reverse \
   --focus package.module:function_name \
   --max-depth 3 \
   --out out
@@ -231,7 +231,7 @@ Show the functions and internal relationships for a single module.
 
 ```bash
 codemarp analyze path/to/repo \
-  --view module \
+  --mode module \
   --module package.module_name \
   --out out
 ```
@@ -241,7 +241,7 @@ Build a control-flow graph for one function.
 
 ```bash
 codemarp analyze path/to/repo \
-  --view low \
+  --mode low \
   --focus package.module:function_name \
   --out out
 ```
@@ -267,16 +267,16 @@ The generated graph files are still written to the directory passed with `--out`
 ## Typical workflow
 
 ```
-1. codemarp analyze src --view full
+1. codemarp analyze src --mode full
    → understand the overall structure
 
-2. codemarp analyze src --view module --module mypackage.core
+2. codemarp analyze src --mode module --module mypackage.core
    → inspect one area
 
-3. codemarp analyze src --view trace --focus mypackage.core:run --max-depth 3
+3. codemarp analyze src --mode trace --focus mypackage.core:run --max-depth 3
    → follow a specific entrypoint
 
-4. codemarp analyze src --view low --focus mypackage.core:run
+4. codemarp analyze src --mode low --focus mypackage.core:run
    → zoom into the logic
 ```
 
@@ -303,7 +303,7 @@ These examples were generated from the CodeMarp codebase itself.
 Command:
 
 ```bash
-codemarp analyze src --view full --out samples/codemarp_full_out
+codemarp analyze src --mode full --out samples/codemarp_full_out
 ```
 
 Excerpt from [`samples/codemarp_full_out/high_level.mmd`](samples/codemarp_full_out/high_level.mmd):
@@ -346,7 +346,7 @@ This is the zoomed-out package view: which parts of the project depend on which 
 Command:
 
 ```bash
-codemarp analyze src --view trace --focus codemarp.cli.main:analyze_command --out samples/codemarp_trace_out
+codemarp analyze src --mode trace --focus codemarp.cli.main:analyze_command --out samples/codemarp_trace_out
 ```
 
 Excerpt from [`samples/codemarp_trace_out/mid_level.mmd`](samples/codemarp_trace_out/mid_level.mmd):
@@ -378,7 +378,7 @@ This is the focused mid-level view: starting from one function, you can follow t
 Command:
 
 ```bash
-codemarp analyze src --view low --focus codemarp.parser.python.low_level:find_function_node --out samples/codemarp_low_out
+codemarp analyze src --mode low --focus codemarp.parser.python.low_level:find_function_node --out samples/codemarp_low_out
 ```
 
 Excerpt from [`samples/codemarp_low_out/low_level.mmd`](samples/codemarp_low_out/low_level.mmd):
@@ -444,7 +444,7 @@ CodeMarp is static analysis — it reads your code without running it.
 
 | Limitation | Workaround |
 |-----------|------------|
-| Relative imports may produce sparse high-level graphs | Use `--view module` or `--view trace` instead |
+| Relative imports may produce sparse high-level graphs | Use `--mode module` or `--mode trace` instead |
 | Method calls (`self.method()`) are conservatively handled | Some valid edges may be missing, but false positives are reduced |
 | Dynamic dispatch is not tracked | Results reflect static structure only |
 | TypeScript support is first-pass | Function/import/call facts are extracted, but some language forms are still omitted |

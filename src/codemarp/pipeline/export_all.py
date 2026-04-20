@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 def export_all(
     *,
     build_result: BuildResult,
-    view: GraphBundle,
+    mode: GraphBundle,
     out_dir: str | Path,
 ) -> None:
     out_path = Path(out_dir).resolve()
@@ -38,16 +38,16 @@ def export_all(
 
     # View-specific outputs
     (out_path / "mid_level.mmd").write_text(
-        export_function_graph(view.functions, view.edges),
+        export_function_graph(mode.functions, mode.edges),
         encoding="utf-8",
     )
-    export_bundle_json(view, out_path / "mid_level.json")
+    export_bundle_json(mode, out_path / "mid_level.json")
 
 
 def export_low_level(
     *,
     build_result: BuildResult,
-    low_view: "LowLevelResult",
+    low_mode: "LowLevelResult",
     out_dir: str | Path,
 ) -> None:
     out_path = Path(out_dir).resolve()
@@ -64,15 +64,15 @@ def export_low_level(
     )
 
     (out_path / "low_level.mmd").write_text(
-        export_low_level_graph(low_view.nodes, low_view.edges),
+        export_low_level_graph(low_mode.nodes, low_mode.edges),
         encoding="utf-8",
     )
     (out_path / "low_level.json").write_text(
         json.dumps(
             {
-                "function_id": low_view.function_id,
-                "nodes": [asdict(node) for node in low_view.nodes],
-                "edges": [asdict(edge) for edge in low_view.edges],
+                "function_id": low_mode.function_id,
+                "nodes": [asdict(node) for node in low_mode.nodes],
+                "edges": [asdict(edge) for edge in low_mode.edges],
             },
             indent=2,
         ),
