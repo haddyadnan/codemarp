@@ -161,7 +161,7 @@ uv tool install git+https://github.com/haddyadnan/codemarp.git
 For a specific release tag:
 
 ```bash
-uv tool install git+https://github.com/haddyadnan/codemarp.git@v0.3.1
+uv tool install git+https://github.com/haddyadnan/codemarp.git@v0.3.2
 ```
 
 ---
