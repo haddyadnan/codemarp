@@ -1,6 +1,8 @@
 from pathlib import Path
 
-from codemarp.cli.main import analyze_command, build_parser
+import pytest
+
+from codemarp.cli.main import analyze_command, build_parser, package_version
 from codemarp.pipeline.apply_view import ViewType
 
 
@@ -38,6 +40,19 @@ def _run_analyze_from_args(args) -> None:
         debug_resolution=args.debug_resolution,
         parser_engine=args.parser_engine,
     )
+
+
+@pytest.mark.parametrize("flag", ["--version", "-v"])
+def test_cli_version_flag_prints_package_version(flag: str, capsys) -> None:
+    parser = build_parser()
+
+    with pytest.raises(SystemExit) as exc_info:
+        parser.parse_args([flag])
+
+    captured = capsys.readouterr()
+
+    assert exc_info.value.code == 0
+    assert captured.out == f"codemarp {package_version()}\n"
 
 
 def test_cli_smoke_full_view_writes_expected_outputs(tmp_path: Path) -> None:
