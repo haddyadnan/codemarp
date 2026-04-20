@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from codemarp.cli.main import analyze_command, build_parser
-from codemarp.pipeline.apply_view import ViewType
+from codemarp.pipeline.apply_mode import ModeType
 
 
 def _make_repo(tmp_path: Path) -> Path:
@@ -31,14 +31,16 @@ def _run_analyze_from_args(args) -> None:
     analyze_command(
         root=Path(args.root),
         out=Path(args.out),
-        view=ViewType(args.view),
+        mode=ModeType(args.mode),
         focus=args.focus,
         module=args.module,
         max_depth=args.max_depth,
+        debug_resolution=args.debug_resolution,
+        parser_engine=args.parser_engine,
     )
 
 
-def test_cli_smoke_full_view_writes_expected_outputs(tmp_path: Path) -> None:
+def test_cli_smoke_full_mode_writes_expected_outputs(tmp_path: Path) -> None:
     repo = _make_repo(tmp_path)
     out_dir = tmp_path / "out"
 
@@ -53,7 +55,7 @@ def test_cli_smoke_full_view_writes_expected_outputs(tmp_path: Path) -> None:
     assert (out_dir / "mid_level.json").exists()
 
 
-def test_cli_smoke_trace_view_writes_expected_outputs(tmp_path: Path) -> None:
+def test_cli_smoke_trace_mode_writes_expected_outputs(tmp_path: Path) -> None:
     repo = _make_repo(tmp_path)
     out_dir = tmp_path / "out"
 
@@ -62,7 +64,7 @@ def test_cli_smoke_trace_view_writes_expected_outputs(tmp_path: Path) -> None:
         [
             "analyze",
             str(repo),
-            "--view",
+            "--mode",
             "trace",
             "--focus",
             "app.main:run",
@@ -81,7 +83,7 @@ def test_cli_smoke_trace_view_writes_expected_outputs(tmp_path: Path) -> None:
     assert (out_dir / "mid_level.json").exists()
 
 
-def test_cli_smoke_low_view_writes_expected_outputs_and_styles(tmp_path: Path) -> None:
+def test_cli_smoke_low_mode_writes_expected_outputs_and_styles(tmp_path: Path) -> None:
     repo = _make_repo(tmp_path)
     out_dir = tmp_path / "out"
 
@@ -90,7 +92,7 @@ def test_cli_smoke_low_view_writes_expected_outputs_and_styles(tmp_path: Path) -
         [
             "analyze",
             str(repo),
-            "--view",
+            "--mode",
             "low",
             "--focus",
             "app.main:run",
@@ -115,7 +117,7 @@ def test_cli_smoke_low_view_writes_expected_outputs_and_styles(tmp_path: Path) -
     assert "classDef terminal" in content
 
 
-def test_cli_smoke_module_view_writes_expected_outputs(tmp_path: Path) -> None:
+def test_cli_smoke_module_mode_writes_expected_outputs(tmp_path: Path) -> None:
     repo = _make_repo(tmp_path)
     out_dir = tmp_path / "out"
 
@@ -124,7 +126,7 @@ def test_cli_smoke_module_view_writes_expected_outputs(tmp_path: Path) -> None:
         [
             "analyze",
             str(repo),
-            "--view",
+            "--mode",
             "module",
             "--module",
             "app.main",

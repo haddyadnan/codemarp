@@ -5,7 +5,7 @@ from codemarp.views.module_view import module_function_view
 from codemarp.views.trace import reverse_trace_function_view, trace_function_view
 
 
-class ViewType(str, Enum):
+class ModeType(str, Enum):
     FULL = "full"
     TRACE = "trace"
     MODULE = "module"
@@ -13,28 +13,28 @@ class ViewType(str, Enum):
     LOW = "low"
 
 
-def apply_view(
+def apply_mode(
     bundle: GraphBundle,
     *,
-    view: ViewType,
+    mode: ModeType,
     focus: str | None = None,
     module: str | None = None,
     max_depth: int | None = None,
 ) -> GraphBundle:
-    if view is ViewType.FULL:
+    if mode is ModeType.FULL:
         return bundle
 
-    if view is ViewType.TRACE:
+    if mode is ModeType.TRACE:
         if focus is None:
-            raise ValueError("focus is required for trace view")
+            raise ValueError("focus is required for trace mode")
         return trace_function_view(bundle, focus, max_depth=max_depth)
 
-    if view is ViewType.MODULE:
+    if mode is ModeType.MODULE:
         if module is None:
-            raise ValueError("module is required for module view")
+            raise ValueError("module is required for module mode")
         return module_function_view(bundle, module)
 
     if focus is None:
-        raise ValueError("focus is required for reverse view")
+        raise ValueError("focus is required for reverse mode")
 
     return reverse_trace_function_view(bundle, focus, max_depth=max_depth)

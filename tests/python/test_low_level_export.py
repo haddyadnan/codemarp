@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from codemarp.analyzers.low_level import build_low_level_view
+from codemarp.analyzers.low_level import build_low_level_mode
 from codemarp.pipeline.build_bundle import build_bundle
 from codemarp.pipeline.export_all import export_low_level
 
@@ -17,8 +17,8 @@ def test_export_low_level_writes_expected_files(tmp_path: Path) -> None:
     )
 
     build_result = build_bundle(repo)
-    low_view = build_low_level_view(repo, "app.main:run")
-    export_low_level(build_result=build_result, low_view=low_view, out_dir=out_dir)
+    low_mode = build_low_level_mode(repo, "app.main:run")
+    export_low_level(build_result=build_result, low_mode=low_mode, out_dir=out_dir)
 
     assert (out_dir / "graph.json").exists()
     assert (out_dir / "high_level.mmd").exists()

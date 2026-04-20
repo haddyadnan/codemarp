@@ -13,7 +13,7 @@ class LowLevelResult:
     edges: list[Edge]
 
 
-def build_low_level_view(root: str | Path, focus: str) -> LowLevelResult:
+def build_low_level_mode(root: str | Path, focus: str) -> LowLevelResult:
     function_id, function_node = find_function_node(Path(root), focus)
     builder = ControlFlowBuilder()
     nodes, edges = builder.build_for_function(function_node)

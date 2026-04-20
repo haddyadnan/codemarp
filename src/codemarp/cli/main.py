@@ -3,9 +3,9 @@ from collections import defaultdict
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
-from codemarp.analyzers.low_level import build_low_level_view
+from codemarp.analyzers.low_level import build_low_level_mode
 from codemarp.errors import codemarpError
-from codemarp.pipeline.apply_view import ViewType, apply_view
+from codemarp.pipeline.apply_mode import ModeType, apply_mode
 from codemarp.pipeline.build_bundle import build_bundle
 from codemarp.pipeline.export_all import export_all, export_low_level
 
@@ -21,7 +21,7 @@ def analyze_command(
     root: Path,
     out: Path,
     *,
-    view: ViewType,
+    mode: ModeType,
     focus: str | None = None,
     module: str | None = None,
     max_depth: int | None = None,
@@ -46,43 +46,43 @@ def analyze_command(
                     print(f"  {src_fn} -> {edge.target}  [{edge.reason.value}]")
                 print()
 
-    if view is ViewType.LOW:
+    if mode is ModeType.LOW:
         assert focus is not None
-        low_view = build_low_level_view(root, focus)
-        export_low_level(build_result=build_result, low_view=low_view, out_dir=out)
+        low_mode = build_low_level_mode(root, focus)
+        export_low_level(build_result=build_result, low_mode=low_mode, out_dir=out)
 
         print(f"Parsed {len(build_result.parsed_modules)} modules")
         print(f"Discovered {len(build_result.bundle.functions)} functions")
-        print(f"View type: {view.value}")
-        print(f"Low-level view for {focus}")
-        print(f"Low-level view contains {len(low_view.nodes)} nodes")
+        print(f"Mode type: {mode.value}")
+        print(f"Low-level mode for {focus}")
+        print(f"Low-level mode contains {len(low_mode.nodes)} nodes")
         print("Wrote graph.json")
         print("Wrote high_level.mmd")
         print("Wrote low_level.mmd")
         print("Wrote low_level.json")
         return
 
-    graph_view = apply_view(
+    graph_mode = apply_mode(
         build_result.bundle,
-        view=view,
+        mode=mode,
         focus=focus,
         module=module,
         max_depth=max_depth,
     )
-    export_all(build_result=build_result, view=graph_view, out_dir=out)
+    export_all(build_result=build_result, mode=graph_mode, out_dir=out)
 
     print(f"Parsed {len(build_result.parsed_modules)} modules")
     print(f"Discovered {len(build_result.bundle.functions)} functions")
-    print(f"View type: {view.value}")
-    if view is ViewType.TRACE:
+    print(f"mode type: {mode.value}")
+    if mode is ModeType.TRACE:
         print(f"Focused trace from {focus}")
-        print(f"Trace contains {len(graph_view.functions)} functions")
-    if view is ViewType.MODULE:
-        print(f"Module view for {module}")
-        print(f"Module view contains {len(graph_view.functions)} functions")
-    if view is ViewType.REVERSE:
+        print(f"Trace contains {len(graph_mode.functions)} functions")
+    if mode is ModeType.MODULE:
+        print(f"Module mode for {module}")
+        print(f"Module mode contains {len(graph_mode.functions)} functions")
+    if mode is ModeType.REVERSE:
         print(f"Reverse trace from {focus}")
-        print(f"Reverse trace contains {len(graph_view.functions)} functions")
+        print(f"Reverse trace contains {len(graph_mode.functions)} functions")
     print("Wrote graph.json")
     print("Wrote high_level.mmd")
     print("Wrote mid_level.mmd")
@@ -106,20 +106,20 @@ def build_parser() -> argparse.ArgumentParser:
     analyze.add_argument("root", help="Path to the repository root")
     analyze.add_argument("--out", default="./codemarp_out", help="Output directory")
     analyze.add_argument(
-        "--view",
-        choices=[view.value for view in ViewType],
-        default=ViewType.FULL.value,
-        help="Graph view to export",
+        "--mode",
+        choices=[mode.value for mode in ModeType],
+        default=ModeType.FULL.value,
+        help="Graph mode to export",
     )
     analyze.add_argument(
         "--focus",
         default=None,
-        help="Entrypoint for TRACE/REVERSE view (function id: module:function)",
+        help="Entrypoint for TRACE/REVERSE mode (function id: module:function)",
     )
     analyze.add_argument(
         "--module",
         default=None,
-        help="Module id for MODULE view",
+        help="Module id for MODULE mode",
     )
     analyze.add_argument(
         "--max-depth",
@@ -147,43 +147,43 @@ def build_parser() -> argparse.ArgumentParser:
 def _validate_analyze_args(
     args: argparse.Namespace, parser: argparse.ArgumentParser
 ) -> None:
-    view = ViewType(args.view)
+    mode = ModeType(args.mode)
 
-    if view is ViewType.FULL:
+    if mode is ModeType.FULL:
         if args.focus is not None:
-            parser.error("--focus cannot be used with --view full")
+            parser.error("--focus cannot be used with --mode full")
         if args.module is not None:
-            parser.error("--module cannot be used with --view full")
+            parser.error("--module cannot be used with --mode full")
         if args.max_depth is not None:
-            parser.error("--max-depth cannot be used with --view full")
+            parser.error("--max-depth cannot be used with --mode full")
 
-    if view is ViewType.TRACE:
+    if mode is ModeType.TRACE:
         if not args.focus:
-            parser.error("--focus is required with --view trace")
+            parser.error("--focus is required with --mode trace")
         if args.module is not None:
-            parser.error("--module cannot be used with --view trace")
+            parser.error("--module cannot be used with --mode trace")
 
-    if view is ViewType.MODULE:
+    if mode is ModeType.MODULE:
         if not args.module:
-            parser.error("--module is required with --view module")
+            parser.error("--module is required with --mode module")
         if args.focus is not None:
-            parser.error("--focus cannot be used with --view module")
+            parser.error("--focus cannot be used with --mode module")
         if args.max_depth is not None:
-            parser.error("--max-depth cannot be used with --view module")
+            parser.error("--max-depth cannot be used with --mode module")
 
-    if view is ViewType.REVERSE:
+    if mode is ModeType.REVERSE:
         if not args.focus:
-            parser.error("--focus is required with --view reverse")
+            parser.error("--focus is required with --mode reverse")
         if args.module is not None:
-            parser.error("--module cannot be used with --view reverse")
+            parser.error("--module cannot be used with --mode reverse")
 
-    if view is ViewType.LOW:
+    if mode is ModeType.LOW:
         if not args.focus:
-            parser.error("--focus is required with --view low")
+            parser.error("--focus is required with --mode low")
         if args.module is not None:
-            parser.error("--module cannot be used with --view low")
+            parser.error("--module cannot be used with --mode low")
         if args.max_depth is not None:
-            parser.error("--max-depth cannot be used with --view low")
+            parser.error("--max-depth cannot be used with --mode low")
 
 
 def main() -> None:
@@ -196,7 +196,7 @@ def main() -> None:
             analyze_command(
                 args.root,
                 args.out,
-                view=ViewType(args.view),
+                mode=ModeType(args.mode),
                 focus=args.focus,
                 module=args.module,
                 max_depth=args.max_depth,

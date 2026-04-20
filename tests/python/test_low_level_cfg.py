@@ -1,7 +1,7 @@
 import ast
 from pathlib import Path
 
-from codemarp.analyzers.low_level import ControlFlowBuilder, build_low_level_view
+from codemarp.analyzers.low_level import ControlFlowBuilder, build_low_level_mode
 
 
 def test_low_level_builds_linear_flow(tmp_path: Path) -> None:
@@ -14,7 +14,7 @@ def test_low_level_builds_linear_flow(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    result = build_low_level_view(repo, "app.main:run")
+    result = build_low_level_mode(repo, "app.main:run")
 
     labels = [node.label for node in result.nodes]
     assert labels[0] == "Start"
@@ -33,7 +33,7 @@ def test_low_level_builds_if_flow(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    result = build_low_level_view(repo, "app.main:run")
+    result = build_low_level_mode(repo, "app.main:run")
 
     labels = {node.label for node in result.nodes}
     assert "flag" in labels
@@ -59,7 +59,7 @@ def test_low_level_builds_loop_flow(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    result = build_low_level_view(repo, "app.main:run")
+    result = build_low_level_mode(repo, "app.main:run")
 
     labels = {node.label for node in result.nodes}
     assert "For" in labels
@@ -78,7 +78,7 @@ def test_low_level_supports_method_focus(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    result = build_low_level_view(repo, "app.main:Service.run")
+    result = build_low_level_mode(repo, "app.main:Service.run")
     assert result.function_id == "app.main:Service.run"
     assert any(node.label == "Return" for node in result.nodes)
 
@@ -93,7 +93,7 @@ def test_low_level_supports_async_function(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    result = build_low_level_view(repo, "app.main:run")
+    result = build_low_level_mode(repo, "app.main:run")
     assert result.function_id == "app.main:run"
     assert any(node.label == "Return" for node in result.nodes)
 
@@ -108,7 +108,7 @@ def test_low_level_if_without_else_does_not_create_false_node(tmp_path: Path) ->
         encoding="utf-8",
     )
 
-    result = build_low_level_view(repo, "app.main:run")
+    result = build_low_level_mode(repo, "app.main:run")
 
     labels = {node.label for node in result.nodes}
     assert "False" not in labels
@@ -131,7 +131,7 @@ def test_low_level_simplifies_call_statement_labels(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    result = build_low_level_view(repo, "app.main:run")
+    result = build_low_level_mode(repo, "app.main:run")
 
     labels = {node.label for node in result.nodes}
     assert "print(...)" in labels
@@ -148,7 +148,7 @@ def test_low_level_simplifies_assignment_call_labels(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    result = build_low_level_view(repo, "app.main:run")
+    result = build_low_level_mode(repo, "app.main:run")
 
     labels = {node.label for node in result.nodes}
     assert "value = make_value(...)" in labels
