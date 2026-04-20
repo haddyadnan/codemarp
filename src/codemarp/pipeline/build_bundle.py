@@ -32,6 +32,7 @@ def build_bundle(repo_path: str | Path, engine: str = "tree-sitter") -> BuildRes
                 id=parsed.module_id,
                 path=parsed.file_path,
                 package=package_from_module_id(parsed.module_id),
+                language=parsed.language,
             )
         )
         builder.add_functions(
