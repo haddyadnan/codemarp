@@ -1,6 +1,6 @@
 [project]
 name = "codemarp"
-version = "0.3.0"
+version = "0.3.1"
 description = "CLI for generating multi-level code architecture graphs"
 readme = "README.md"
 requires-python = ">=3.11"
