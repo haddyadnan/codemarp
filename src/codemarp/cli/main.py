@@ -8,6 +8,8 @@ from codemarp.errors import codemarpError
 from codemarp.pipeline.apply_mode import ModeType, apply_mode
 from codemarp.pipeline.build_bundle import build_bundle
 from codemarp.pipeline.export_all import export_all, export_low_level
+from codemarp.pipeline.render_mode import render_mode_to_mermaid
+from codemarp.viewer import open_mermaid_view
 
 
 def package_version() -> str:
@@ -15,6 +17,31 @@ def package_version() -> str:
         return version("codemarp")
     except PackageNotFoundError:
         return "unknown"
+
+
+def _build_low_mode(
+    root: Path,
+    *,
+    focus: str,
+):
+    return build_low_level_mode(root, focus)
+
+
+def _build_graph_mode(
+    build_result,
+    *,
+    mode: ModeType,
+    focus: str | None = None,
+    module: str | None = None,
+    max_depth: int | None = None,
+):
+    return apply_mode(
+        build_result.bundle,
+        mode=mode,
+        focus=focus,
+        module=module,
+        max_depth=max_depth,
+    )
 
 
 def analyze_command(
@@ -48,7 +75,7 @@ def analyze_command(
 
     if mode is ModeType.LOW:
         assert focus is not None
-        low_mode = build_low_level_mode(root, focus)
+        low_mode = _build_low_mode(root, focus=focus)
         export_low_level(build_result=build_result, low_mode=low_mode, out_dir=out)
 
         print(f"Parsed {len(build_result.parsed_modules)} modules")
@@ -62,8 +89,8 @@ def analyze_command(
         print("Wrote low_level.json")
         return
 
-    graph_mode = apply_mode(
-        build_result.bundle,
+    graph_mode = _build_graph_mode(
+        build_result,
         mode=mode,
         focus=focus,
         module=module,
@@ -87,6 +114,46 @@ def analyze_command(
     print("Wrote high_level.mmd")
     print("Wrote mid_level.mmd")
     print("Wrote mid_level.json")
+
+
+def view_command(
+    root: Path,
+    *,
+    mode: ModeType,
+    focus: str | None = None,
+    module: str | None = None,
+    max_depth: int | None = None,
+    parser_engine: str = "tree-sitter",
+) -> None:
+    build_result = build_bundle(root, engine=parser_engine)
+
+    graph_mode, low_mode = None, None
+
+    if mode is ModeType.LOW:
+        assert focus is not None
+        low_mode = _build_low_mode(root, focus=focus)
+    else:
+        graph_mode = _build_graph_mode(
+            build_result,
+            mode=mode,
+            focus=focus,
+            module=module,
+            max_depth=max_depth,
+        )
+
+    mermaid = render_mode_to_mermaid(
+        build_result,
+        mode=mode,
+        graph_mode=graph_mode,
+        low_mode=low_mode,
+    )
+
+    output_path = open_mermaid_view(mermaid, title=f"Codemarp - {mode.value}")
+
+    print(f"Parsed {len(build_result.parsed_modules)} modules")
+    print(f"Discovered {len(build_result.bundle.functions)} functions")
+    print(f"mode type: {mode.value}")
+    print(f"Opened viewer: {output_path}")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -141,10 +208,41 @@ def build_parser() -> argparse.ArgumentParser:
         help="Parser backend to use (default: tree-sitter)",
     )
 
+    view = subparsers.add_parser("view", help="Open a graph in the browser")
+    view.add_argument("root", help="Path to the repository root")
+    view.add_argument(
+        "--mode",
+        choices=[mode.value for mode in ModeType],
+        default=ModeType.FULL.value,
+        help="Graph mode to render",
+    )
+    view.add_argument(
+        "--focus",
+        default=None,
+        help="Entrypoint for TRACE/REVERSE/LOW mode (function id: module:function)",
+    )
+    view.add_argument(
+        "--module",
+        default=None,
+        help="Module id for MODULE mode",
+    )
+    view.add_argument(
+        "--max-depth",
+        type=int,
+        default=None,
+        help="Maximum trace depth from the focused function",
+    )
+    view.add_argument(
+        "--parser-engine",
+        choices=["ast", "tree-sitter"],
+        default="tree-sitter",
+        help="Parser backend to use (default: tree-sitter)",
+    )
+
     return parser
 
 
-def _validate_analyze_args(
+def _validate_mode_args(
     args: argparse.Namespace, parser: argparse.ArgumentParser
 ) -> None:
     mode = ModeType(args.mode)
@@ -191,7 +289,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "analyze":
-        _validate_analyze_args(args, parser)
+        _validate_mode_args(args, parser)
         try:
             analyze_command(
                 args.root,
@@ -201,6 +299,21 @@ def main() -> None:
                 module=args.module,
                 max_depth=args.max_depth,
                 debug_resolution=args.debug_resolution,
+                parser_engine=args.parser_engine,
+            )
+
+        except codemarpError as exc:
+            raise SystemExit(str(exc)) from exc
+
+    elif args.command == "view":
+        _validate_mode_args(args, parser)
+        try:
+            view_command(
+                args.root,
+                mode=ModeType(args.mode),
+                focus=args.focus,
+                module=args.module,
+                max_depth=args.max_depth,
                 parser_engine=args.parser_engine,
             )
         except codemarpError as exc:
