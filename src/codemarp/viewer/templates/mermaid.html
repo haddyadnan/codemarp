@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>{{title}}</title>
+        <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4/dist/panzoom.min.js"></script>
+        <style>
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                font-family:
+                    "SF Mono", "JetBrains Mono", "Fira Code", monospace;
+                background: #0d1117;
+                color: #e6edf3;
+                display: flex;
+                flex-direction: column;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            header {
+                flex-shrink: 0;
+                padding: 10px 20px;
+                background: #161b22;
+                border-bottom: 1px solid #30363d;
+                display: flex;
+                align-items: center;
+                gap: 16px;
+            }
+
+            .header-logo {
+                font-size: 13px;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                color: #58a6ff;
+                text-transform: uppercase;
+            }
+
+            .header-sep {
+                color: #30363d;
+                font-size: 18px;
+                font-weight: 200;
+            }
+
+            .header-title {
+                font-size: 13px;
+                color: #c9d1d9;
+                font-weight: 600;
+            }
+
+            .header-subtitle {
+                font-size: 12px;
+                color: #8b949e;
+                margin-left: auto;
+            }
+
+            main {
+                flex: 1;
+                overflow: hidden;
+                position: relative;
+                background: #0d1117;
+            }
+
+            .graph-container {
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+                cursor: grab;
+                position: relative;
+            }
+
+            .graph-container:active {
+                cursor: grabbing;
+            }
+
+            .graph-inner {
+                /*padding: 32px;
+                display: inline-block;
+                min-width: max-content;*/
+                width: 100%;
+                height: 100%;
+                overflow: visible;
+                position: relative;
+            }
+
+            #panzoom-target {
+                width: 4000px;
+                height: 4000px;
+                transform-origin: 0 0;
+                position: relative;
+                overflow: visible;
+            }
+
+            .mermaid {
+                display: inline-block;
+                min-width: max-content;
+                position: absolute;
+                left: 1200px;
+                top: 1200px;
+            }
+
+            .mermaid svg {
+                max-width: none !important;
+                width: auto !important;
+                height: auto !important;
+                background: transparent !important;
+            }
+
+            .mermaid rect {
+                stroke-width: 1.5px;
+            }
+
+            footer {
+                flex-shrink: 0;
+                padding: 8px 20px;
+                background: #161b22;
+                border-top: 1px solid #30363d;
+                font-size: 12px;
+                color: #8b949e;
+                display: flex;
+                align-items: center;
+                gap: 16px;
+            }
+
+            .footer-stat {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .footer-stat-value {
+                color: #c9d1d9;
+                font-weight: 600;
+            }
+
+            .footer-hint {
+                margin-left: auto;
+                color: #8b949e;
+            }
+
+            .zoom-controls {
+                position: absolute;
+                bottom: 16px;
+                right: 20px;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                z-index: 10;
+            }
+
+            .zoom-btn {
+                width: 32px;
+                height: 32px;
+                background: #161b22;
+                border: 1px solid #30363d;
+                border-radius: 6px;
+                color: #8b949e;
+                font-size: 16px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition:
+                    background 0.15s,
+                    color 0.15s;
+                user-select: none;
+            }
+
+            .zoom-btn:hover {
+                background: #21262d;
+                color: #e6edf3;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <span class="header-logo">codemarp</span>
+            <span class="header-sep">/</span>
+            <span class="header-title">{{title}}</span>
+            <span class="header-subtitle">{{subtitle}}</span>
+        </header>
+
+        <main>
+            <div class="graph-container" id="graph-container">
+                <div class="graph-inner">
+                    <div id="panzoom-target">
+                        <div class="mermaid" id="mermaid-graph">
+                            {{mermaid}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="zoom-controls">
+                <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+                <button
+                    class="zoom-btn"
+                    id="zoom-reset"
+                    title="Reset zoom"
+                    style="font-size: 11px"
+                >
+                    1:1
+                </button>
+                <button class="zoom-btn" id="zoom-out" title="Zoom out">
+                    −
+                </button>
+            </div>
+        </main>
+
+        <footer>
+            <span class="footer-stat">
+                <span>mode</span>
+                <span class="footer-stat-value">{{mode}}</span>
+            </span>
+            <span class="footer-stat">
+                <span>lang</span>
+                <span class="footer-stat-value">{{language}}</span>
+            </span>
+            <span class="footer-stat">
+                <span>nodes</span>
+                <span class="footer-stat-value">{{node_count}}</span>
+            </span>
+            <span class="footer-stat">
+                <span>edges</span>
+                <span class="footer-stat-value">{{edge_count}}</span>
+            </span>
+            <span class="footer-hint">scroll to zoom · drag to pan</span>
+        </footer>
+
+        <script>
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: "dark",
+                maxTextSize: 1000000,
+                flowchart: {
+                    useMaxWidth: false,
+                    nodeSpacing: 40,
+                    rankSpacing: 60,
+                },
+                themeVariables: {
+                    fontSize: "13px",
+                    darkMode: true,
+                    background: "#0d1117",
+                    mainBkg: "#161b22",
+                    nodeBorder: "#30363d",
+                    clusterBkg: "#161b22",
+                    titleColor: "#e6edf3",
+                    edgeLabelBackground: "#0d1117",
+                    lineColor: "#58a6ff",
+                },
+            });
+
+            window.addEventListener("load", () => {
+                setTimeout(() => {
+                    const target = document.getElementById("panzoom-target");
+                    const container =
+                        document.getElementById("graph-container");
+                    const mermaidGraph =
+                        document.getElementById("mermaid-graph");
+
+                    if (!target || !container || !mermaidGraph) return;
+
+                    const pz = Panzoom(target, {
+                        maxScale: 8,
+                        minScale: 0.05,
+                        step: 0.15,
+                    });
+
+                    function computeInitialPan() {
+                        const containerRect = container.getBoundingClientRect();
+                        const svg = mermaidGraph.querySelector("svg");
+                        if (!svg) return { x: 0, y: 0 };
+
+                        const graphBox = svg.getBBox();
+
+                        const graphLeft = mermaidGraph.offsetLeft + graphBox.x;
+                        const graphTop = mermaidGraph.offsetTop + graphBox.y;
+
+                        return {
+                            x:
+                                containerRect.width / 2 -
+                                graphLeft -
+                                graphBox.width / 2,
+                            y:
+                                containerRect.height / 2 -
+                                graphTop -
+                                graphBox.height / 2,
+                        };
+                    }
+
+                    const initialScale = 1;
+                    let initialPan = { x: 0, y: 0 };
+
+                    function resetView() {
+                        pz.zoom(initialScale, { animate: false });
+                        pz.pan(initialPan.x, initialPan.y, { animate: false });
+                    }
+
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            initialPan = computeInitialPan();
+                            resetView();
+                        });
+                    });
+
+                    container.addEventListener(
+                        "wheel",
+                        (e) => {
+                            pz.zoomWithWheel(e);
+                            e.preventDefault();
+                        },
+                        { passive: false },
+                    );
+
+                    document
+                        .getElementById("zoom-in")
+                        .addEventListener("click", () => pz.zoomIn());
+
+                    document
+                        .getElementById("zoom-out")
+                        .addEventListener("click", () => pz.zoomOut());
+
+                    document
+                        .getElementById("zoom-reset")
+                        .addEventListener("click", resetView);
+                }, 100);
+            });
+        </script>
+    </body>
+</html>
