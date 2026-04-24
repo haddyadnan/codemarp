@@ -8,7 +8,11 @@ from codemarp.errors import codemarpError
 from codemarp.pipeline.apply_mode import ModeType, apply_mode
 from codemarp.pipeline.build_bundle import build_bundle
 from codemarp.pipeline.export_all import export_all, export_low_level
-from codemarp.pipeline.render_mode import render_mode_to_mermaid
+from codemarp.pipeline.render_mode import (
+    language_summary,
+    render_mode_to_mermaid,
+    stats_for_mode,
+)
 from codemarp.viewer import open_mermaid_view
 
 
@@ -126,6 +130,7 @@ def view_command(
     parser_engine: str = "tree-sitter",
 ) -> None:
     build_result = build_bundle(root, engine=parser_engine)
+    language = language_summary(build_result.parsed_modules)
 
     graph_mode, low_mode = None, None
 
@@ -141,6 +146,13 @@ def view_command(
             max_depth=max_depth,
         )
 
+    stats = stats_for_mode(
+        build_result,
+        mode=mode,
+        graph_mode=graph_mode,
+        low_mode=low_mode,
+    )
+
     mermaid = render_mode_to_mermaid(
         build_result,
         mode=mode,
@@ -148,7 +160,17 @@ def view_command(
         low_mode=low_mode,
     )
 
-    output_path = open_mermaid_view(mermaid, title=f"Codemarp - {mode.value}")
+    subtitle = f"mode: {mode.value}"
+
+    output_path = open_mermaid_view(
+        mermaid,
+        title=f"Codemarp - {mode.value}",
+        subtitle=subtitle,
+        mode=mode.value,
+        language=language,
+        node_count=stats.node_count,
+        edge_count=stats.edge_count,
+    )
 
     print(f"Parsed {len(build_result.parsed_modules)} modules")
     print(f"Discovered {len(build_result.bundle.functions)} functions")
