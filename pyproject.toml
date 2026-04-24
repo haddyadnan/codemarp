@@ -1,6 +1,6 @@
 [project]
 name = "codemarp"
-version = "0.4.0"
+version = "0.4.2"
 description = "CLI for generating multi-level code architecture graphs"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -24,6 +24,9 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+codemarp = ["viewer/templates/*.html"]
 
 [project.scripts]
 codemarp = "codemarp.cli.main:main"
