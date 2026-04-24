@@ -1,143 +1,93 @@
-from pathlib import Path
+import pytest
 
-from codemarp.cli.main import analyze_command, build_parser
+from codemarp.cli.main import _validate_mode_args, build_parser, view_command
 from codemarp.pipeline.apply_mode import ModeType
 
 
-def _make_repo(tmp_path: Path) -> Path:
-    repo = tmp_path / "repo"
-    pkg = repo / "app"
-    pkg.mkdir(parents=True)
+def test_view_command_runs(monkeypatch, tmp_path) -> None:
 
-    (pkg / "__init__.py").write_text("", encoding="utf-8")
-    (pkg / "worker.py").write_text(
-        "def work():\n    return 1\n",
-        encoding="utf-8",
+    monkeypatch.setattr(
+        "codemarp.cli.main.open_mermaid_view",
+        lambda *args, **kwargs: tmp_path / "codemarp_view.html",
     )
-    (pkg / "main.py").write_text(
-        "from app.worker import work\n"
-        "\n"
-        "def run(flag: bool = True):\n"
-        "    if flag:\n"
-        "        work()\n"
-        "    return 1\n",
-        encoding="utf-8",
+    monkeypatch.setattr(
+        "codemarp.cli.main.render_mode_to_mermaid",
+        lambda *args, **kwargs: "flowchart LR",
     )
 
-    return repo
+    view_command(root=tmp_path, mode=ModeType.FULL)
 
 
-def _run_analyze_from_args(args) -> None:
-    analyze_command(
-        root=Path(args.root),
-        out=Path(args.out),
-        mode=ModeType(args.mode),
-        focus=args.focus,
-        module=args.module,
-        max_depth=args.max_depth,
-        debug_resolution=args.debug_resolution,
-        parser_engine=args.parser_engine,
-    )
-
-
-def test_cli_smoke_full_mode_writes_expected_outputs(tmp_path: Path) -> None:
-    repo = _make_repo(tmp_path)
-    out_dir = tmp_path / "out"
-
+def test_view_low_requires_focus():
     parser = build_parser()
-    args = parser.parse_args(["analyze", str(repo), "--out", str(out_dir)])
+    args = parser.parse_args(["view", ".", "--mode", "low"])
 
-    _run_analyze_from_args(args)
-
-    assert (out_dir / "graph.json").exists()
-    assert (out_dir / "high_level.mmd").exists()
-    assert (out_dir / "mid_level.mmd").exists()
-    assert (out_dir / "mid_level.json").exists()
+    with pytest.raises(SystemExit):
+        _validate_mode_args(args, parser)
 
 
-def test_cli_smoke_trace_mode_writes_expected_outputs(tmp_path: Path) -> None:
-    repo = _make_repo(tmp_path)
-    out_dir = tmp_path / "out"
-
+def test_view_trace_requires_focus():
     parser = build_parser()
-    args = parser.parse_args(
-        [
-            "analyze",
-            str(repo),
-            "--mode",
-            "trace",
-            "--focus",
-            "app.main:run",
-            "--max-depth",
-            "2",
-            "--out",
-            str(out_dir),
-        ]
+    args = parser.parse_args(["view", ".", "--mode", "trace"])
+
+    with pytest.raises(SystemExit):
+        _validate_mode_args(args, parser)
+
+
+def test_view_calls_render_and_open(monkeypatch, tmp_path):
+
+    called = {}
+
+    def fake_render(*args, **kwargs):
+        called["render"] = True
+        return "flowchart LR\nA --> B"
+
+    def fake_open(*args, **kwargs):
+        called["open"] = True
+
+    monkeypatch.setattr("codemarp.cli.main.render_mode_to_mermaid", fake_render)
+    monkeypatch.setattr("codemarp.cli.main.open_mermaid_view", fake_open)
+
+    view_command(
+        root=tmp_path,
+        mode=ModeType.FULL,
     )
 
-    _run_analyze_from_args(args)
-
-    assert (out_dir / "graph.json").exists()
-    assert (out_dir / "high_level.mmd").exists()
-    assert (out_dir / "mid_level.mmd").exists()
-    assert (out_dir / "mid_level.json").exists()
+    assert called.get("render")
+    assert called.get("open")
 
 
-def test_cli_smoke_low_mode_writes_expected_outputs_and_styles(tmp_path: Path) -> None:
-    repo = _make_repo(tmp_path)
-    out_dir = tmp_path / "out"
+def test_view_low_uses_low_mode(monkeypatch, tmp_path):
 
-    parser = build_parser()
-    args = parser.parse_args(
-        [
-            "analyze",
-            str(repo),
-            "--mode",
-            "low",
-            "--focus",
-            "app.main:run",
-            "--out",
-            str(out_dir),
-        ]
+    called = {}
+
+    def fake_low_mode(*args, **kwargs):
+        called["low"] = True
+
+        class Dummy:
+            nodes = []
+            edges = []
+
+        return Dummy()
+
+    monkeypatch.setattr(
+        "codemarp.cli.main._build_low_mode",
+        fake_low_mode,
     )
 
-    _run_analyze_from_args(args)
-
-    low_level_mmd = out_dir / "low_level.mmd"
-    low_level_json = out_dir / "low_level.json"
-
-    assert (out_dir / "graph.json").exists()
-    assert (out_dir / "high_level.mmd").exists()
-    assert low_level_mmd.exists()
-    assert low_level_json.exists()
-
-    content = low_level_mmd.read_text(encoding="utf-8")
-    assert "classDef decision" in content
-    assert "classDef merge" in content
-    assert "classDef terminal" in content
-
-
-def test_cli_smoke_module_mode_writes_expected_outputs(tmp_path: Path) -> None:
-    repo = _make_repo(tmp_path)
-    out_dir = tmp_path / "out"
-
-    parser = build_parser()
-    args = parser.parse_args(
-        [
-            "analyze",
-            str(repo),
-            "--mode",
-            "module",
-            "--module",
-            "app.main",
-            "--out",
-            str(out_dir),
-        ]
+    monkeypatch.setattr(
+        "codemarp.pipeline.render_mode.render_mode_to_mermaid",
+        lambda *a, **k: "flowchart LR",
+    )
+    monkeypatch.setattr(
+        "codemarp.cli.main.open_mermaid_view",
+        lambda *a, **k: None,
     )
 
-    _run_analyze_from_args(args)
+    view_command(
+        root=tmp_path,
+        mode=ModeType.LOW,
+        focus="x:y",
+    )
 
-    assert (out_dir / "graph.json").exists()
-    assert (out_dir / "high_level.mmd").exists()
-    assert (out_dir / "mid_level.mmd").exists()
-    assert (out_dir / "mid_level.json").exists()
+    assert called.get("low")
