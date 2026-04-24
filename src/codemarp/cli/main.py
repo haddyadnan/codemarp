@@ -13,7 +13,7 @@ from codemarp.pipeline.render_mode import (
     render_mode_to_mermaid,
     stats_for_mode,
 )
-from codemarp.viewer import open_mermaid_view
+from codemarp.viewer import open_mermaid_view, wrap_mermaid_html
 
 
 def package_version() -> str:
@@ -128,6 +128,7 @@ def view_command(
     module: str | None = None,
     max_depth: int | None = None,
     parser_engine: str = "tree-sitter",
+    out: Path | None = None,
 ) -> None:
     build_result = build_bundle(root, engine=parser_engine)
     language = language_summary(build_result.parsed_modules)
@@ -162,7 +163,7 @@ def view_command(
 
     subtitle = f"mode: {mode.value}"
 
-    output_path = open_mermaid_view(
+    html = wrap_mermaid_html(
         mermaid,
         title=f"Codemarp - {mode.value}",
         subtitle=subtitle,
@@ -172,10 +173,17 @@ def view_command(
         edge_count=stats.edge_count,
     )
 
+    if out is not None:
+        out = out.resolve()
+        out.write_text(html, encoding="utf-8")
+        open_mermaid_view(html, output_path=out)
+    else:
+        out = open_mermaid_view(html)
+
     print(f"Parsed {len(build_result.parsed_modules)} modules")
     print(f"Discovered {len(build_result.bundle.functions)} functions")
     print(f"mode type: {mode.value}")
-    print(f"Opened viewer: {output_path}")
+    print(f"Opened viewer: {out}")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -261,6 +269,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Parser backend to use (default: tree-sitter)",
     )
 
+    view.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help="Output file path for the generated HTML",
+    )
+
     return parser
 
 
@@ -337,6 +352,7 @@ def main() -> None:
                 module=args.module,
                 max_depth=args.max_depth,
                 parser_engine=args.parser_engine,
+                out=args.out,
             )
         except codemarpError as exc:
             raise SystemExit(str(exc)) from exc

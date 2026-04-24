@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from codemarp.cli.main import _validate_mode_args, build_parser, view_command
@@ -91,3 +93,42 @@ def test_view_low_uses_low_mode(monkeypatch, tmp_path):
     )
 
     assert called.get("low")
+
+
+def test_view_writes_output_file(tmp_path, monkeypatch):
+    out = tmp_path / "graph.html"
+
+    monkeypatch.setattr(
+        "codemarp.cli.main.open_mermaid_view",
+        lambda html, output_path=None: None,
+    )
+
+    view_command(
+        root=Path("tests/fixtures/simple_project"),
+        mode=ModeType.FULL,
+        out=out,
+    )
+
+    assert out.exists()
+    content = out.read_text()
+    assert "<html" in content
+    assert "mermaid" in content
+
+
+def test_view_opens_browser_when_no_out(monkeypatch):
+    called = {"value": False}
+
+    def fake_open(html, output_path=None):
+        called["value"] = True
+
+    monkeypatch.setattr(
+        "codemarp.cli.main.open_mermaid_view",
+        fake_open,
+    )
+
+    view_command(
+        root=Path("tests/fixtures/simple_project"),
+        mode=ModeType.FULL,
+    )
+
+    assert called["value"] is True
