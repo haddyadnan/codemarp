@@ -14,7 +14,7 @@ class TraceError(ResolutionError):
     pass
 
 
-class ModuleViewError(ResolutionError):
+class ModuleModeError(ResolutionError):
     pass
 
 
