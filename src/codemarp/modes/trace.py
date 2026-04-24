@@ -2,7 +2,7 @@ from collections import deque
 
 from codemarp.errors import TraceError
 from codemarp.graph.models import GraphBundle
-from codemarp.views.subgraph import build_function_subgraph
+from codemarp.modes.subgraph import build_function_subgraph
 
 
 def _build_call_adjacency(bundle: GraphBundle) -> dict[str, set[str]]:
@@ -39,7 +39,7 @@ def trace_functions_forward(
     return visited
 
 
-def trace_function_view(
+def trace_function_mode(
     bundle: GraphBundle, entrypoint_id: str, max_depth: int | None = None
 ) -> GraphBundle:
     _validate_entrypoint(bundle, entrypoint_id)
@@ -81,7 +81,7 @@ def _build_reverse_call_adjacency(bundle: GraphBundle) -> dict[str, set[str]]:
     return adjacency
 
 
-def reverse_trace_function_view(
+def reverse_trace_function_mode(
     bundle: GraphBundle,
     entrypoint_id: str,
     max_depth: int | None = None,

@@ -1,8 +1,8 @@
 from enum import Enum
 
 from codemarp.graph.models import GraphBundle
-from codemarp.views.module_view import module_function_view
-from codemarp.views.trace import reverse_trace_function_view, trace_function_view
+from codemarp.modes.module_mode import module_function_mode
+from codemarp.modes.trace import reverse_trace_function_mode, trace_function_mode
 
 
 class ModeType(str, Enum):
@@ -27,14 +27,14 @@ def apply_mode(
     if mode is ModeType.TRACE:
         if focus is None:
             raise ValueError("focus is required for trace mode")
-        return trace_function_view(bundle, focus, max_depth=max_depth)
+        return trace_function_mode(bundle, focus, max_depth=max_depth)
 
     if mode is ModeType.MODULE:
         if module is None:
             raise ValueError("module is required for module mode")
-        return module_function_view(bundle, module)
+        return module_function_mode(bundle, module)
 
     if focus is None:
         raise ValueError("focus is required for reverse mode")
 
-    return reverse_trace_function_view(bundle, focus, max_depth=max_depth)
+    return reverse_trace_function_mode(bundle, focus, max_depth=max_depth)

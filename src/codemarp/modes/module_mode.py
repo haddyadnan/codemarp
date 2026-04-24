@@ -1,9 +1,9 @@
-from codemarp.errors import ModuleViewError
+from codemarp.errors import ModuleModeError
 from codemarp.graph.models import GraphBundle
-from codemarp.views.subgraph import build_function_subgraph
+from codemarp.modes.subgraph import build_function_subgraph
 
 
-def module_function_view(bundle: GraphBundle, module_id: str) -> GraphBundle:
+def module_function_mode(bundle: GraphBundle, module_id: str) -> GraphBundle:
     _validate_module(bundle, module_id)
     function_ids = {
         function.id for function in bundle.functions if function.module_id == module_id
@@ -13,4 +13,4 @@ def module_function_view(bundle: GraphBundle, module_id: str) -> GraphBundle:
 
 def _validate_module(bundle: GraphBundle, module_id: str) -> None:
     if bundle.module_by_id(module_id) is None:
-        raise ModuleViewError(f"Module not found: {module_id}")
+        raise ModuleModeError(f"Module not found: {module_id}")

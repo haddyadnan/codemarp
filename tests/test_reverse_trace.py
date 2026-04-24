@@ -1,19 +1,21 @@
+from pathlib import Path
+
 import pytest
 
 from codemarp.graph.models import Edge, FunctionNode, GraphBundle, ModuleNode
-from codemarp.views.trace import (
+from codemarp.modes.trace import (
     TraceError,
-    reverse_trace_function_view,
+    reverse_trace_function_mode,
     trace_functions_reverse,
 )
 
 
 def _bundle() -> GraphBundle:
     modules = [
-        ModuleNode(id="app.entry", path="app/entry.py", package="app"),
-        ModuleNode(id="app.service", path="app/service.py", package="app"),
-        ModuleNode(id="app.worker", path="app/worker.py", package="app"),
-        ModuleNode(id="app.other", path="app/other.py", package="app"),
+        ModuleNode(id="app.entry", path=Path("app/entry.py"), package="app"),
+        ModuleNode(id="app.service", path=Path("app/service.py"), package="app"),
+        ModuleNode(id="app.worker", path=Path("app/worker.py"), package="app"),
+        ModuleNode(id="app.other", path=Path("app/other.py"), package="app"),
     ]
     functions = [
         FunctionNode(
@@ -83,18 +85,18 @@ def test_reverse_trace_respects_max_depth() -> None:
     assert visited == {"app.worker:work", "app.service:run"}
 
 
-def test_reverse_trace_view_builds_valid_subgraph() -> None:
-    view = reverse_trace_function_view(_bundle(), "app.worker:work", max_depth=1)
+def test_reverse_trace_mode_builds_valid_subgraph() -> None:
+    mode = reverse_trace_function_mode(_bundle(), "app.worker:work", max_depth=1)
 
-    assert {function.id for function in view.functions} == {
+    assert {function.id for function in mode.functions} == {
         "app.worker:work",
         "app.service:run",
     }
-    assert len(view.edges) == 1
-    assert view.edges[0].source == "app.service:run"
-    assert view.edges[0].target == "app.worker:work"
+    assert len(mode.edges) == 1
+    assert mode.edges[0].source == "app.service:run"
+    assert mode.edges[0].target == "app.worker:work"
 
 
 def test_reverse_trace_missing_entrypoint_raises() -> None:
     with pytest.raises(TraceError, match="Entrypoint not found"):
-        reverse_trace_function_view(_bundle(), "app.worker:missing")
+        reverse_trace_function_mode(_bundle(), "app.worker:missing")
