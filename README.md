@@ -34,7 +34,7 @@ Zoom out to see the city. Zoom in to see the streets. Zoom in further to see the
 
 ## Graph Levels & Guarantees
 
-CodeMarp produces three views of your codebase. Each view has a different goal and level of precision.
+CodeMarp produces three graph levels. The CLI uses `--mode` to choose how you want to inspect them.
 
 ### High-level (architecture)
 
@@ -100,7 +100,7 @@ codemarp analyze src --mode low --focus codemarp.cli.main:analyze_command --out 
 
 ## Output
 
-Full, trace, reverse, and module views produce:
+Full, trace, reverse, and module modes produce:
 
 ```
 out/
@@ -110,7 +110,7 @@ out/
   graph.json        # full graph data for tooling
 ```
 
-Low view produces:
+Low mode produces:
 
 ```
 out/
@@ -161,7 +161,7 @@ uv tool install git+https://github.com/haddyadnan/codemarp.git
 For a specific release tag:
 
 ```bash
-uv tool install git+https://github.com/haddyadnan/codemarp.git@v0.3.2
+uv tool install git+https://github.com/haddyadnan/codemarp.git@v0.4.0
 ```
 
 ---
@@ -193,9 +193,21 @@ codemarp analyze .
 codemarp analyze src
 ```
 
+`--focus` and `--module` must match the module IDs produced from the root you analyze.
+
+```bash
+# src layout: module ids start at the package
+codemarp analyze src --mode trace --focus codemarp.cli.main:analyze_command
+
+# repo root: module ids include src
+codemarp analyze . --mode trace --focus src.codemarp.cli.main:analyze_command
+```
+
 ---
 
-### Views
+### Modes
+
+In `v0.4`, the CLI flag for selecting graph output changed from `--view` to `--mode`.
 
 #### Full (default)
 See the entire graph — architecture + all function relationships.
@@ -244,6 +256,25 @@ codemarp analyze path/to/repo \
   --mode low \
   --focus package.module:function_name \
   --out out
+```
+
+`--focus` is required for `trace`, `reverse`, and `low`. `--module` is required for `module`.
+
+### Open a browser rendering
+
+Use `view` to render a graph directly in the browser instead of writing Mermaid and JSON files first.
+
+```bash
+codemarp view src --mode trace --focus codemarp.cli.main:analyze_command
+```
+
+To keep the generated HTML:
+
+```bash
+codemarp view src \
+  --mode trace \
+  --focus codemarp.cli.main:analyze_command \
+  --out codemarp_trace.html
 ```
 
 ### Debug call resolution
@@ -339,7 +370,7 @@ flowchart LR
     codemarp_views -->|imports| codemarp_graph
 ```
 
-This is the zoomed-out package view: which parts of the project depend on which others.
+This is the zoomed-out high-level graph: which parts of the project depend on which others.
 
 ### Focused function trace
 
@@ -371,7 +402,7 @@ flowchart LR
     codemarp_views_trace__validate_entrypoint -->|calls| codemarp_graph_models_GraphBundle_function_by_id
 ```
 
-This is the focused mid-level view: starting from one function, you can follow the call chain it reaches.
+This is the focused mid-level graph: starting from one function, you can follow the call chain it reaches.
 
 ### Low-level control flow
 
@@ -434,7 +465,7 @@ flowchart TD
     classDef start fill:#e8f5e9,stroke:#2e7d32,color:#000;
 ```
 
-This is the zoomed-in function view: branches, merges, and return flow inside a single function.
+This is the zoomed-in low-level graph: branches, merges, and return flow inside a single function.
 
 ---
 
@@ -448,10 +479,10 @@ CodeMarp is static analysis — it reads your code without running it.
 | Method calls (`self.method()`) are conservatively handled | Some valid edges may be missing, but false positives are reduced |
 | Dynamic dispatch is not tracked | Results reflect static structure only |
 | TypeScript support is first-pass | Function/import/call facts are extracted, but some language forms are still omitted |
-| Low-level CFG is Python-only | Use high, mid, trace, reverse, or module views for TypeScript |
-| Large full graphs can be hard to read | Use focused views — `trace`, `module`, `reverse` |
+| Low-level CFG is Python-only | Use high, mid, trace, reverse, or module modes for TypeScript |
+| Large full graphs can be hard to read | Use focused modes — `trace`, `module`, `reverse` |
 
-These are honest limitations, not bugs. Focused views exist precisely because full graphs on real codebases get noisy.
+These are honest limitations, not bugs. Focused modes exist precisely because full graphs on real codebases get noisy.
 
 ---
 
@@ -485,7 +516,7 @@ No runtime instrumentation. No code execution. Analysis runs anywhere.
 - Tree-sitter default parser
 - Python AST fallback available with `--parser-engine ast`
 - CLI-first
-- v0.3.x — early but usable on real codebases
+- v0.4.x — early but usable on real codebases
 
 ---
 
