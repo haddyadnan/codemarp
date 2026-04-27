@@ -10,10 +10,11 @@ from codemarp.pipeline.build_bundle import build_bundle
 from codemarp.pipeline.export_all import export_all, export_low_level
 from codemarp.pipeline.render_mode import (
     language_summary,
+    render_mode_to_json,
     render_mode_to_mermaid,
     stats_for_mode,
 )
-from codemarp.viewer import open_mermaid_view, wrap_mermaid_html
+from codemarp.viewer import open_mermaid_view, wrap_cytoscape_html, wrap_mermaid_html
 
 
 def package_version() -> str:
@@ -128,6 +129,7 @@ def view_command(
     module: str | None = None,
     max_depth: int | None = None,
     parser_engine: str = "tree-sitter",
+    renderer: str = "mermaid",
     out: Path | None = None,
 ) -> None:
     build_result = build_bundle(root, engine=parser_engine)
@@ -154,24 +156,41 @@ def view_command(
         low_mode=low_mode,
     )
 
-    mermaid = render_mode_to_mermaid(
-        build_result,
-        mode=mode,
-        graph_mode=graph_mode,
-        low_mode=low_mode,
-    )
-
+    title = f"Codemarp - {mode.value}"
     subtitle = f"mode: {mode.value}"
+    if renderer == "cytoscape":
+        graph_json = render_mode_to_json(
+            build_result,
+            mode=mode,
+            graph_mode=graph_mode,
+            low_mode=low_mode,
+        )
+        html = wrap_cytoscape_html(
+            graph_json,
+            title=title,
+            subtitle=subtitle,
+            mode=mode.value,
+            language=language,
+            node_count=stats.node_count,
+            edge_count=stats.edge_count,
+        )
+    else:
+        mermaid = render_mode_to_mermaid(
+            build_result,
+            mode=mode,
+            graph_mode=graph_mode,
+            low_mode=low_mode,
+        )
 
-    html = wrap_mermaid_html(
-        mermaid,
-        title=f"Codemarp - {mode.value}",
-        subtitle=subtitle,
-        mode=mode.value,
-        language=language,
-        node_count=stats.node_count,
-        edge_count=stats.edge_count,
-    )
+        html = wrap_mermaid_html(
+            mermaid,
+            title=title,
+            subtitle=subtitle,
+            mode=mode.value,
+            language=language,
+            node_count=stats.node_count,
+            edge_count=stats.edge_count,
+        )
 
     if out is not None:
         out = out.resolve()
@@ -270,6 +289,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     view.add_argument(
+        "--renderer",
+        choices=["mermaid", "cytoscape"],
+        default="mermaid",
+        help="Viewer renderer to use",
+    )
+
+    view.add_argument(
         "--out",
         type=Path,
         default=None,
@@ -352,6 +378,7 @@ def main() -> None:
                 module=args.module,
                 max_depth=args.max_depth,
                 parser_engine=args.parser_engine,
+                renderer=args.renderer,
                 out=args.out,
             )
         except codemarpError as exc:
