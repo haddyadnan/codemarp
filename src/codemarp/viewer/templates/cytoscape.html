@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>{{title}} · codemarp</title>
+        <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+        <style>
+            @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap");
+
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            :root {
+                --bg: #0d1117;
+                --surface: #161b22;
+                --border: #21262d;
+                --border-hi: #30363d;
+                --text-hi: #e6edf3;
+                --text-md: #c9d1d9;
+                --text-lo: #8b949e;
+                --text-dim: #484f58;
+                --accent: #58a6ff;
+                --green: #3fb950;
+                --orange: #d29922;
+                --mono: "JetBrains Mono", "SF Mono", "Fira Code", monospace;
+            }
+
+            body {
+                margin: 0;
+                font-family: var(--mono);
+                background: var(--bg);
+                color: var(--text-hi);
+                display: flex;
+                flex-direction: column;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            /* ── HEADER ── */
+            header {
+                flex-shrink: 0;
+                height: 44px;
+                padding: 0 20px;
+                background: var(--surface);
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+                gap: 0;
+            }
+
+            .logo {
+                font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.15em;
+                color: var(--accent);
+                text-transform: uppercase;
+                padding-right: 12px;
+                border-right: 1px solid var(--border-hi);
+                margin-right: 12px;
+            }
+
+            .breadcrumb {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 12px;
+            }
+
+            .breadcrumb-item {
+                color: var(--text-md);
+                font-weight: 600;
+            }
+
+            .breadcrumb-sep {
+                color: var(--border-hi);
+                font-size: 14px;
+            }
+
+            .breadcrumb-sub {
+                color: var(--text-lo);
+                font-weight: 400;
+            }
+
+            .header-right {
+                margin-left: auto;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .badge {
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                padding: 2px 8px;
+                border-radius: 3px;
+                border: 1px solid var(--border-hi);
+                color: var(--text-lo);
+            }
+
+            .badge-blue {
+                border-color: var(--accent);
+                color: var(--accent);
+                background: rgba(31, 111, 235, 0.13);
+            }
+
+            .badge-green {
+                border-color: var(--green);
+                color: var(--green);
+                background: rgba(63, 185, 80, 0.07);
+            }
+
+            /* ── LAYOUT ── */
+            .workspace {
+                flex: 1;
+                display: flex;
+                overflow: hidden;
+                position: relative;
+            }
+
+            /* subtle grid */
+            .workspace::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background-image:
+                    linear-gradient(var(--border) 1px, transparent 1px),
+                    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+                background-size: 40px 40px;
+                opacity: 0.25;
+                pointer-events: none;
+                z-index: 0;
+            }
+
+            /* ── SIDEBAR (LEFT) ── */
+            .sidebar {
+                width: 280px;
+                flex-shrink: 0;
+                background: var(--surface);
+                border-right: 1px solid var(--border);
+                display: flex;
+                flex-direction: column;
+                z-index: 2;
+                overflow: hidden;
+                order: -1;
+            }
+
+            .sidebar-header {
+                padding: 12px 16px;
+                border-bottom: 1px solid var(--border);
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                color: var(--text-dim);
+            }
+
+            .sidebar-empty {
+                flex: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+                gap: 8px;
+                color: var(--text-dim);
+                font-size: 11px;
+                text-align: center;
+                padding: 24px;
+            }
+
+            .sidebar-empty-icon {
+                font-size: 24px;
+                opacity: 0.3;
+            }
+
+            .sidebar-content {
+                flex: 1;
+                overflow-y: auto;
+                padding: 16px;
+                display: none;
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .sidebar-content.visible {
+                display: flex;
+            }
+
+            .node-name {
+                font-size: 12px;
+                font-weight: 700;
+                color: var(--text-hi);
+                word-break: break-all;
+                line-height: 1.5;
+            }
+
+            .node-meta {
+                font-size: 10px;
+                color: var(--text-lo);
+                margin-top: 4px;
+            }
+
+            .sidebar-section {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            .sidebar-section-title {
+                font-size: 9px;
+                font-weight: 700;
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                color: var(--text-dim);
+                padding-bottom: 4px;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .edge-item {
+                font-size: 10px;
+                color: var(--text-lo);
+                padding: 4px 8px;
+                border-radius: 4px;
+                background: var(--bg);
+                border: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                cursor: pointer;
+                transition:
+                    border-color 0.1s,
+                    color 0.1s;
+                word-break: break-all;
+            }
+
+            .edge-item:hover {
+                border-color: var(--accent);
+                color: var(--text-md);
+            }
+
+            .edge-arrow {
+                color: var(--accent);
+                flex-shrink: 0;
+                font-size: 9px;
+            }
+
+            .resolution-tag {
+                font-size: 9px;
+                padding: 1px 5px;
+                border-radius: 2px;
+                font-weight: 600;
+                letter-spacing: 0.05em;
+                flex-shrink: 0;
+                margin-left: auto;
+            }
+
+            .res-same_module {
+                background: rgba(63, 185, 80, 0.12);
+                color: var(--green);
+            }
+            .res-imported_symbol {
+                background: rgba(88, 166, 255, 0.12);
+                color: var(--accent);
+            }
+            .res-unique_global {
+                background: rgba(210, 153, 34, 0.12);
+                color: var(--orange);
+            }
+            .res-unknown {
+                background: rgba(72, 79, 88, 0.2);
+                color: var(--text-dim);
+            }
+
+            .filepath {
+                font-size: 10px;
+                color: var(--text-dim);
+                background: var(--bg);
+                border: 1px solid var(--border);
+                border-radius: 4px;
+                padding: 6px 8px;
+                word-break: break-all;
+                line-height: 1.6;
+            }
+
+            /* ── GRAPH ── */
+            #graph {
+                flex: 1;
+                min-height: 0;
+                position: relative;
+                z-index: 1;
+            }
+
+            /* ── ZOOM CONTROLS ── */
+            .zoom-controls {
+                position: absolute;
+                bottom: 20px;
+                right: 20px;
+                display: flex;
+                flex-direction: column;
+                gap: 0;
+                z-index: 10;
+                background: var(--surface);
+                border: 1px solid var(--border-hi);
+                border-radius: 8px;
+                overflow: hidden;
+            }
+
+            .zoom-btn {
+                width: 36px;
+                height: 36px;
+                background: transparent;
+                border: none;
+                border-bottom: 1px solid var(--border);
+                color: var(--text-lo);
+                font-family: var(--mono);
+                font-size: 16px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition:
+                    background 0.1s,
+                    color 0.1s;
+                user-select: none;
+            }
+
+            .zoom-btn:last-child {
+                border-bottom: none;
+            }
+            .zoom-btn:hover {
+                background: var(--border);
+                color: var(--text-hi);
+            }
+            .zoom-btn.reset {
+                font-size: 9px;
+                letter-spacing: 0.05em;
+                color: var(--text-dim);
+            }
+
+            /* ── FOOTER ── */
+            footer {
+                flex-shrink: 0;
+                height: 36px;
+                padding: 0 20px;
+                background: var(--surface);
+                border-top: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+                gap: 0;
+                font-size: 11px;
+            }
+
+            .stat {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                padding-right: 16px;
+                margin-right: 16px;
+                border-right: 1px solid var(--border);
+                color: var(--text-dim);
+            }
+
+            .stat-value {
+                color: var(--text-md);
+                font-weight: 600;
+            }
+
+            .footer-hint {
+                margin-left: auto;
+                color: var(--text-dim);
+                font-size: 10px;
+                letter-spacing: 0.05em;
+            }
+
+            /* ── LOADING ── */
+            .loading-overlay {
+                position: absolute;
+                inset: 0;
+                background: var(--bg);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 100;
+                flex-direction: column;
+                gap: 12px;
+                font-size: 12px;
+                color: var(--text-lo);
+                transition: opacity 0.3s;
+            }
+
+            .loading-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: var(--accent);
+                display: inline-block;
+                animation: pulse 1.2s ease-in-out infinite;
+            }
+
+            @keyframes pulse {
+                0%,
+                100% {
+                    opacity: 0.2;
+                    transform: scale(0.8);
+                }
+                50% {
+                    opacity: 1;
+                    transform: scale(1.2);
+                }
+            }
+
+            /* scrollbar */
+            ::-webkit-scrollbar {
+                width: 4px;
+            }
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: var(--border-hi);
+                border-radius: 2px;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <span class="logo">codemarp</span>
+            <div class="breadcrumb">
+                <span class="breadcrumb-item">{{title}}</span>
+                <span class="breadcrumb-sep">·</span>
+                <span class="breadcrumb-sub">{{subtitle}}</span>
+            </div>
+            <div class="header-right">
+                <span class="badge badge-blue">cytoscape</span>
+                <span class="badge badge-green">{{mode}}</span>
+            </div>
+        </header>
+
+        <div class="workspace">
+            <div class="loading-overlay" id="loading">
+                <span class="loading-dot"></span>
+                <span>laying out graph</span>
+            </div>
+
+            <!-- LEFT SIDEBAR -->
+            <aside class="sidebar">
+                <div class="sidebar-header">inspector</div>
+                <div class="sidebar-empty" id="sidebar-empty">
+                    <span class="sidebar-empty-icon">◈</span>
+                    <span>click a node<br />to inspect it</span>
+                </div>
+                <div class="sidebar-content" id="sidebar-content">
+                    <div>
+                        <div class="node-name" id="node-name"></div>
+                        <div class="node-meta" id="node-meta"></div>
+                    </div>
+                    <div
+                        class="filepath"
+                        id="node-filepath"
+                        style="display: none"
+                    ></div>
+                    <div
+                        class="sidebar-section"
+                        id="section-calls"
+                        style="display: none"
+                    >
+                        <div class="sidebar-section-title">calls</div>
+                        <div id="calls-list"></div>
+                    </div>
+                    <div
+                        class="sidebar-section"
+                        id="section-callers"
+                        style="display: none"
+                    >
+                        <div class="sidebar-section-title">called by</div>
+                        <div id="callers-list"></div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- GRAPH -->
+            <div id="graph"></div>
+
+            <!-- ZOOM -->
+            <div class="zoom-controls">
+                <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+                <button
+                    class="zoom-btn reset"
+                    id="zoom-reset"
+                    title="Fit to screen"
+                >
+                    fit
+                </button>
+                <button class="zoom-btn" id="zoom-out" title="Zoom out">
+                    −
+                </button>
+            </div>
+        </div>
+
+        <footer>
+            <span class="stat">
+                <span>nodes</span>
+                <span class="stat-value">{{node_count}}</span>
+            </span>
+            <span class="stat">
+                <span>edges</span>
+                <span class="stat-value">{{edge_count}}</span>
+            </span>
+            <span class="stat">
+                <span>lang</span>
+                <span class="stat-value">{{language}}</span>
+            </span>
+            <span class="stat">
+                <span>mode</span>
+                <span class="stat-value">{{mode}}</span>
+            </span>
+            <span class="footer-hint"
+                >click node to inspect · scroll to zoom · drag to pan</span
+            >
+        </footer>
+
+        <script>
+            const graph = {{graph_json}};
+
+            const cy = cytoscape({
+                container: document.getElementById("graph"),
+                elements: [
+                    ...graph.nodes.map((n) => ({
+                        data: {
+                            id: n.id,
+                            label: n.label || n.id,
+                            kind: n.kind || "module",
+                            language: n.language,
+                            file_path: n.file_path || null,
+                        },
+                    })),
+                    ...graph.edges.map((e) => ({
+                        data: {
+                            source: e.source,
+                            target: e.target,
+                            kind: e.kind || "calls",
+                            label: e.label || "",
+                            resolution_kind: e.resolution_kind || "unknown",
+                        },
+                    })),
+                ],
+                style: [
+                    {
+                        selector: "node",
+                        style: {
+                            "background-color": "#161b22",
+                            "border-color": "#30363d",
+                            "border-width": 1.5,
+                            "label": "data(label)",
+                            "color": "#c9d1d9",
+                            "font-size": 11,
+                            "text-valign": "center",
+                            "text-halign": "center",
+                            "width": "label",
+                            "height": "label",
+                            "padding": "10px",
+                            "shape": "round-rectangle",
+                            "text-wrap": "wrap",
+                            "text-max-width": "200px",
+                        },
+                    },
+                    {
+                        selector: "node.hovered",
+                        style: {
+                            "background-color": "#1f2937",
+                            "border-color": "#58a6ff",
+                            "border-width": 2,
+                            "color": "#e6edf3",
+                        },
+                    },
+                    {
+                        selector: "node.selected",
+                        style: {
+                            "background-color": "rgba(31, 111, 235, 0.13)",
+                            "border-color": "#58a6ff",
+                            "border-width": 2,
+                            "color": "#e6edf3",
+                        },
+                    },
+                    {
+                        selector: "node.dimmed",
+                        style: {
+                            "background-color": "#0d1117",
+                            "border-color": "#21262d",
+                            "color": "#484f58",
+                            "opacity": 0.4,
+                        },
+                    },
+                    {
+                        selector: "edge",
+                        style: {
+                            "width": 1.5,
+                            "line-color": "rgba(88, 166, 255, 0.35)",
+                            "target-arrow-color": "rgba(88, 166, 255, 0.5)",
+                            "target-arrow-shape": "triangle",
+                            "curve-style": "bezier",
+                            "opacity": 1,
+                        },
+                    },
+                    {
+                        selector: "edge.highlighted",
+                        style: {
+                            "line-color": "#58a6ff",
+                            "target-arrow-color": "#58a6ff",
+                            "opacity": 1,
+                            "width": 2,
+                        },
+                    },
+                    {
+                        selector: "edge.dimmed",
+                        style: {
+                            "line-color": "rgba(88, 166, 255, 0.06)",
+                            "target-arrow-color": "rgba(88, 166, 255, 0.06)",
+                            "opacity": 1,
+                        },
+                    },
+                ],
+                userZoomingEnabled: true,
+                userPanningEnabled: true,
+                minZoom: 0.05,
+                maxZoom: 8,
+            });
+
+            // layout
+            cy.ready(() => {
+                cy.layout({
+                    name: "cose",
+                    animate: false,
+                    fit: true,
+                    padding: 60,
+                    nodeRepulsion: () => 8000,
+                    edgeElasticity: () => 32,
+                    idealEdgeLength: () => 80,
+                    gravity: 0.25,
+                    numIter: 2500,
+                    initialTemp: 200,
+                    coolingFactor: 0.95,
+                    minTemp: 1.0,
+                }).run();
+
+                cy.fit(undefined, 60);
+
+                const loading = document.getElementById("loading");
+                if (loading) {
+                    loading.style.opacity = "0";
+                    setTimeout(() => loading.remove(), 300);
+                }
+            });
+
+            // ── HOVER via events (pseudo-selectors not supported) ──
+            cy.on("mouseover", "node", (e) => {
+                if (!e.target.hasClass("selected")) {
+                    e.target.addClass("hovered");
+                }
+            });
+            cy.on("mouseout", "node", (e) => {
+                e.target.removeClass("hovered");
+            });
+
+            // ── SIDEBAR ──
+            const sidebarEmpty   = document.getElementById("sidebar-empty");
+            const sidebarContent = document.getElementById("sidebar-content");
+            const nodeName       = document.getElementById("node-name");
+            const nodeMeta       = document.getElementById("node-meta");
+            const nodeFilepath   = document.getElementById("node-filepath");
+            const callsList      = document.getElementById("calls-list");
+            const callersList    = document.getElementById("callers-list");
+            const sectionCalls   = document.getElementById("section-calls");
+            const sectionCallers = document.getElementById("section-callers");
+
+            function resTag(kind) {
+                const label = kind || "unknown";
+                return `<span class="resolution-tag res-${label}">${label}</span>`;
+            }
+
+            function showSidebar(node) {
+                const data = node.data();
+
+                sidebarEmpty.style.display = "none";
+                sidebarContent.classList.add("visible");
+
+                nodeName.textContent = data.label || data.id;
+                nodeMeta.textContent = data.kind || "";
+
+                if (data.file_path) {
+                    nodeFilepath.textContent = data.file_path;
+                    nodeFilepath.style.display = "block";
+                } else {
+                    nodeFilepath.style.display = "none";
+                }
+
+                // outgoing
+                const outEdges = node.connectedEdges().filter(e => e.data("source") === data.id);
+                if (outEdges.length > 0) {
+                    callsList.innerHTML = "";
+                    outEdges.forEach((e) => {
+                        const targetNode = cy.getElementById(e.data("target"));
+                        const label = targetNode.data("label") || e.data("target");
+                        const div = document.createElement("div");
+                        div.className = "edge-item";
+                        div.innerHTML = `<span class="edge-arrow">→</span><span style="flex:1">${label}</span>${resTag(e.data("resolution_kind"))}`;
+                        div.addEventListener("click", () => cy.getElementById(e.data("target")).trigger("tap"));
+                        callsList.appendChild(div);
+                    });
+                    sectionCalls.style.display = "flex";
+                } else {
+                    sectionCalls.style.display = "none";
+                }
+
+                // incoming
+                const inEdges = node.connectedEdges().filter(e => e.data("target") === data.id);
+                if (inEdges.length > 0) {
+                    callersList.innerHTML = "";
+                    inEdges.forEach((e) => {
+                        const sourceNode = cy.getElementById(e.data("source"));
+                        const label = sourceNode.data("label") || e.data("source");
+                        const div = document.createElement("div");
+                        div.className = "edge-item";
+                        div.innerHTML = `<span class="edge-arrow">←</span><span style="flex:1">${label}</span>${resTag(e.data("resolution_kind"))}`;
+                        div.addEventListener("click", () => cy.getElementById(e.data("source")).trigger("tap"));
+                        callersList.appendChild(div);
+                    });
+                    sectionCallers.style.display = "flex";
+                } else {
+                    sectionCallers.style.display = "none";
+                }
+            }
+
+            function hideSidebar() {
+                sidebarEmpty.style.display = "flex";
+                sidebarContent.classList.remove("visible");
+            }
+
+            // ── NODE TAP ──
+            cy.on("tap", "node", (e) => {
+                const node = e.target;
+                const id = node.data("id");
+
+                cy.elements().removeClass("selected dimmed highlighted hovered");
+
+                const neighborhood = node.neighborhood().add(node);
+                cy.elements().not(neighborhood).addClass("dimmed");
+                node.addClass("selected");
+                node.connectedEdges().addClass("highlighted");
+
+                showSidebar(node);
+            });
+
+            // tap on background — reset
+            cy.on("tap", (e) => {
+                if (e.target === cy) {
+                    cy.elements().removeClass("selected dimmed highlighted hovered");
+                    hideSidebar();
+                }
+            });
+
+            // ── ZOOM BUTTONS ──
+            document.getElementById("zoom-in").addEventListener("click", () => {
+                cy.zoom({
+                    level: cy.zoom() * 1.3,
+                    renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 },
+                });
+            });
+            document.getElementById("zoom-out").addEventListener("click", () => {
+                cy.zoom({
+                    level: cy.zoom() * 0.75,
+                    renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 },
+                });
+            });
+            document.getElementById("zoom-reset").addEventListener("click", () => {
+                cy.fit(undefined, 60);
+            });
+        </script>
+    </body>
+</html>
