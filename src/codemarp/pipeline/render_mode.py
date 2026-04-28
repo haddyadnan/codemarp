@@ -1,7 +1,10 @@
 from dataclasses import dataclass
 
 from codemarp.analyzers.low_level import LowLevelResult
-from codemarp.exporters.json_exporter import bundle_to_json_dict, full_mode_to_json_dict
+from codemarp.exporters.json_exporter import (
+    full_mode_to_json_dict,
+    graph_mode_to_json_dict,
+)
 from codemarp.exporters.mermaid import (
     export_function_graph,
     export_low_level_graph,
@@ -84,7 +87,7 @@ def render_mode_to_json(
     if graph_mode is None:
         raise ValueError("graph_mode is required for non-full graph modes")
 
-    return bundle_to_json_dict(graph_mode)
+    return graph_mode_to_json_dict(graph_mode)
 
 
 def language_summary(parsed_modules) -> str:
