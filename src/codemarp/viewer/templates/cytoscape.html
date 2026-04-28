@@ -347,36 +347,30 @@
             /* ── FOOTER ── */
             footer {
                 flex-shrink: 0;
-                height: 36px;
-                padding: 0 20px;
-                background: var(--surface);
-                border-top: 1px solid var(--border);
+                padding: 8px 20px;
+                background: #161b22;
+                border-top: 1px solid #30363d;
+                font-size: 12px;
+                color: #8b949e;
                 display: flex;
                 align-items: center;
-                gap: 0;
-                font-size: 11px;
+                gap: 16px;
             }
 
-            .stat {
+            .footer-stat {
                 display: flex;
                 align-items: center;
                 gap: 5px;
-                padding-right: 16px;
-                margin-right: 16px;
-                border-right: 1px solid var(--border);
-                color: var(--text-dim);
             }
 
-            .stat-value {
-                color: var(--text-md);
+            .footer-stat-value {
+                color: #c9d1d9;
                 font-weight: 600;
             }
 
             .footer-hint {
                 margin-left: auto;
-                color: var(--text-dim);
-                font-size: 10px;
-                letter-spacing: 0.05em;
+                color: #8b949e;
             }
 
             /* ── LOADING ── */
@@ -505,21 +499,21 @@
         </div>
 
         <footer>
-            <span class="stat">
-                <span>nodes</span>
-                <span class="stat-value">{{node_count}}</span>
-            </span>
-            <span class="stat">
-                <span>edges</span>
-                <span class="stat-value">{{edge_count}}</span>
-            </span>
-            <span class="stat">
-                <span>lang</span>
-                <span class="stat-value">{{language}}</span>
-            </span>
-            <span class="stat">
+            <span class="footer-stat">
                 <span>mode</span>
-                <span class="stat-value">{{mode}}</span>
+                <span class="footer-stat-value">{{mode}}</span>
+            </span>
+            <span class="footer-stat">
+                <span>lang</span>
+                <span class="footer-stat-value">{{language}}</span>
+            </span>
+            <span class="footer-stat">
+                <span>nodes</span>
+                <span class="footer-stat-value">{{node_count}}</span>
+            </span>
+            <span class="footer-stat">
+                <span>edges</span>
+                <span class="footer-stat-value">{{edge_count}}</span>
             </span>
             <span class="footer-hint"
                 >click node to inspect · scroll to zoom · drag to pan</span
@@ -592,10 +586,10 @@
                     {
                         selector: "node.dimmed",
                         style: {
-                            "background-color": "#0d1117",
+                            "background-color": "#161b22",
                             "border-color": "#21262d",
-                            "color": "#484f58",
-                            "opacity": 0.4,
+                            "color": "#6b7280",
+                            "opacity": 0.65,
                         },
                     },
                     {
