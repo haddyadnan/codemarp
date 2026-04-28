@@ -1,6 +1,10 @@
 from dataclasses import dataclass
 
 from codemarp.analyzers.low_level import LowLevelResult
+from codemarp.exporters.json_exporter import (
+    full_mode_to_json_dict,
+    graph_mode_to_json_dict,
+)
 from codemarp.exporters.mermaid import (
     export_function_graph,
     export_low_level_graph,
@@ -40,6 +44,50 @@ def render_mode_to_mermaid(
         raise ValueError("graph_mode is required for non-full graph modes")
 
     return export_function_graph(graph_mode.functions, graph_mode.edges)
+
+
+def render_mode_to_json(
+    build_result: BuildResult,
+    *,
+    mode: ModeType,
+    graph_mode: GraphBundle | None = None,
+    low_mode: LowLevelResult | None = None,
+) -> dict:
+    if mode is ModeType.LOW:
+        if low_mode is None:
+            raise ValueError("low_mode is required for low mode")
+
+        return {
+            "nodes": [
+                {
+                    "id": node.id,
+                    "label": node.label,
+                    "kind": "cfg_node",
+                    "cfg_kind": node.kind,
+                    "file_path": None,
+                    "language": None,
+                }
+                for node in low_mode.nodes
+            ],
+            "edges": [
+                {
+                    "source": edge.source,
+                    "target": edge.target,
+                    "kind": edge.kind,
+                    "label": edge.label,
+                    "resolution_kind": None,
+                }
+                for edge in low_mode.edges
+            ],
+        }
+
+    if mode is ModeType.FULL:
+        return full_mode_to_json_dict(build_result)
+
+    if graph_mode is None:
+        raise ValueError("graph_mode is required for non-full graph modes")
+
+    return graph_mode_to_json_dict(graph_mode)
 
 
 def language_summary(parsed_modules) -> str:

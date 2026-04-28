@@ -7,18 +7,34 @@
         <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4/dist/panzoom.min.js"></script>
         <style>
+            @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap");
+
             *,
             *::before,
             *::after {
                 box-sizing: border-box;
             }
 
+            :root {
+                --bg: #0d1117;
+                --surface: #161b22;
+                --border: #21262d;
+                --border-hi: #30363d;
+                --text-hi: #e6edf3;
+                --text-md: #c9d1d9;
+                --text-lo: #8b949e;
+                --text-dim: #484f58;
+                --accent: #58a6ff;
+                --green: #3fb950;
+                --orange: #d29922;
+                --mono: "JetBrains Mono", "SF Mono", "Fira Code", monospace;
+            }
+
             body {
                 margin: 0;
-                font-family:
-                    "SF Mono", "JetBrains Mono", "Fira Code", monospace;
-                background: #0d1117;
-                color: #e6edf3;
+                font-family: var(--mono);
+                background: var(--bg);
+                color: var(--text-hi);
                 display: flex;
                 flex-direction: column;
                 height: 100vh;
@@ -27,45 +43,83 @@
 
             header {
                 flex-shrink: 0;
-                padding: 10px 20px;
-                background: #161b22;
-                border-bottom: 1px solid #30363d;
+                height: 44px;
+                padding: 0 20px;
+                background: var(--surface);
+                border-bottom: 1px solid var(--border);
                 display: flex;
                 align-items: center;
-                gap: 16px;
+                gap: 0;
             }
 
-            .header-logo {
-                font-size: 13px;
+            .logo {
+                font-size: 11px;
                 font-weight: 700;
-                letter-spacing: 0.08em;
-                color: #58a6ff;
+                letter-spacing: 0.15em;
+                color: var(--accent);
                 text-transform: uppercase;
+                padding-right: 12px;
+                border-right: 1px solid var(--border-hi);
+                margin-right: 12px;
             }
 
-            .header-sep {
-                color: #30363d;
-                font-size: 18px;
-                font-weight: 200;
+            .breadcrumb {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 12px;
             }
 
-            .header-title {
-                font-size: 13px;
-                color: #c9d1d9;
+            .breadcrumb-item {
+                color: var(--text-md);
                 font-weight: 600;
             }
 
-            .header-subtitle {
-                font-size: 12px;
-                color: #8b949e;
+            .breadcrumb-sep {
+                color: var(--border-hi);
+                font-size: 14px;
+            }
+
+            .breadcrumb-sub {
+                color: var(--text-lo);
+                font-weight: 400;
+            }
+
+            .header-right {
                 margin-left: auto;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .badge {
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                padding: 2px 8px;
+                border-radius: 3px;
+                border: 1px solid var(--border-hi);
+                color: var(--text-lo);
+            }
+
+            .badge-blue {
+                border-color: var(--accent);
+                color: var(--accent);
+                background: rgba(31, 111, 235, 0.13);
+            }
+
+            .badge-green {
+                border-color: var(--green);
+                color: var(--green);
+                background: rgba(63, 185, 80, 0.07);
             }
 
             main {
                 flex: 1;
                 overflow: hidden;
                 position: relative;
-                background: #0d1117;
+                background: var(--bg);
             }
 
             .graph-container {
@@ -120,10 +174,10 @@
             footer {
                 flex-shrink: 0;
                 padding: 8px 20px;
-                background: #161b22;
-                border-top: 1px solid #30363d;
+                background: var(--surface);
+                border-top: 1px solid var(--border-hi);
                 font-size: 12px;
-                color: #8b949e;
+                color: var(--text-lo);
                 display: flex;
                 align-items: center;
                 gap: 16px;
@@ -136,13 +190,13 @@
             }
 
             .footer-stat-value {
-                color: #c9d1d9;
+                color: var(--text-md);
                 font-weight: 600;
             }
 
             .footer-hint {
                 margin-left: auto;
-                color: #8b949e;
+                color: var(--text-lo);
             }
 
             .zoom-controls {
@@ -158,10 +212,10 @@
             .zoom-btn {
                 width: 32px;
                 height: 32px;
-                background: #161b22;
-                border: 1px solid #30363d;
+                background: var(--surface);
+                border: 1px solid var(--border-hi);
                 border-radius: 6px;
-                color: #8b949e;
+                color: var(--text-lo);
                 font-size: 16px;
                 cursor: pointer;
                 display: flex;
@@ -174,17 +228,23 @@
             }
 
             .zoom-btn:hover {
-                background: #21262d;
-                color: #e6edf3;
+                background: var(--border);
+                color: var(--text-hi);
             }
         </style>
     </head>
     <body>
         <header>
-            <span class="header-logo">codemarp</span>
-            <span class="header-sep">/</span>
-            <span class="header-title">{{title}}</span>
-            <span class="header-subtitle">{{subtitle}}</span>
+            <span class="logo">codemarp</span>
+            <div class="breadcrumb">
+                <span class="breadcrumb-item">{{title}}</span>
+                <span class="breadcrumb-sep">·</span>
+                <span class="breadcrumb-sub">{{subtitle}}</span>
+            </div>
+            <div class="header-right">
+                <span class="badge badge-blue">mermaid</span>
+                <span class="badge badge-green">{{mode}}</span>
+            </div>
         </header>
 
         <main>

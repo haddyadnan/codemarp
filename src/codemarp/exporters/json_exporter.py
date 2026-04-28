@@ -82,6 +82,49 @@ def full_mode_to_json_dict(build_result: BuildResult) -> dict:
     return {"nodes": nodes, "edges": edges}
 
 
+def graph_mode_to_json_dict(graph_mode: GraphBundle) -> dict:
+    module_path_map = {module.id: module.path for module in graph_mode.modules}
+    module_language_map = {module.id: module.language for module in graph_mode.modules}
+
+    nodes = []
+    for fn in graph_mode.functions:
+        module_path = module_path_map.get(fn.module_id)
+        module_language = module_language_map.get(fn.module_id)
+
+        nodes.append(
+            {
+                "id": fn.id,
+                "label": fn.name,
+                "kind": "function",
+                "module_id": fn.module_id,
+                "file_path": str(module_path) if module_path else None,
+                "language": module_language,
+            }
+        )
+
+    edges = []
+    function_ids = {fn.id for fn in graph_mode.functions}
+
+    for edge in graph_mode.edges:
+        if edge.kind != "calls":
+            continue
+        if edge.source not in function_ids or edge.target not in function_ids:
+            continue
+
+        reason = edge.reason
+        edges.append(
+            {
+                "source": edge.source,
+                "target": edge.target,
+                "kind": edge.kind,
+                "label": edge.label,
+                "resolution_kind": reason.value if reason is not None else None,
+            }
+        )
+
+    return {"nodes": nodes, "edges": edges}
+
+
 def export_bundle_json(bundle: GraphBundle, out_path: str | Path) -> None:
     out_path = Path(out_path)
     out_path.write_text(
