@@ -155,11 +155,11 @@
             .sidebar-header {
                 padding: 12px 16px;
                 border-bottom: 1px solid var(--border);
-                font-size: 10px;
+                font-size: 11px;
                 font-weight: 700;
                 letter-spacing: 0.12em;
                 text-transform: uppercase;
-                color: var(--text-dim);
+                color: var(--text-lo);
             }
 
             .sidebar-empty {
@@ -169,15 +169,15 @@
                 justify-content: center;
                 flex-direction: column;
                 gap: 8px;
-                color: var(--text-dim);
-                font-size: 11px;
+                color: var(--text-lo);
+                font-size: 12px;
                 text-align: center;
                 padding: 24px;
             }
 
             .sidebar-empty-icon {
-                font-size: 24px;
-                opacity: 0.3;
+                font-size: 28px;
+                opacity: 0.4;
             }
 
             .sidebar-content {
@@ -194,7 +194,7 @@
             }
 
             .node-name {
-                font-size: 12px;
+                font-size: 14px;
                 font-weight: 700;
                 color: var(--text-hi);
                 word-break: break-all;
@@ -202,8 +202,8 @@
             }
 
             .node-meta {
-                font-size: 10px;
-                color: var(--text-lo);
+                font-size: 12px;
+                color: var(--text-md);
                 margin-top: 4px;
             }
 
@@ -214,22 +214,22 @@
             }
 
             .sidebar-section-title {
-                font-size: 9px;
+                font-size: 10px;
                 font-weight: 700;
                 letter-spacing: 0.12em;
                 text-transform: uppercase;
-                color: var(--text-dim);
+                color: var(--text-lo);
                 padding-bottom: 4px;
                 border-bottom: 1px solid var(--border);
             }
 
             .edge-item {
-                font-size: 10px;
-                color: var(--text-lo);
-                padding: 4px 8px;
+                font-size: 11px;
+                color: var(--text-md);
+                padding: 5px 8px;
                 border-radius: 4px;
                 background: var(--bg);
-                border: 1px solid var(--border);
+                border: 1px solid var(--border-hi);
                 display: flex;
                 align-items: center;
                 gap: 6px;
@@ -242,51 +242,51 @@
 
             .edge-item:hover {
                 border-color: var(--accent);
-                color: var(--text-md);
+                color: var(--text-hi);
             }
 
             .edge-arrow {
                 color: var(--accent);
                 flex-shrink: 0;
-                font-size: 9px;
+                font-size: 10px;
             }
 
             .resolution-tag {
                 font-size: 9px;
-                padding: 1px 5px;
+                padding: 2px 6px;
                 border-radius: 2px;
-                font-weight: 600;
+                font-weight: 700;
                 letter-spacing: 0.05em;
                 flex-shrink: 0;
                 margin-left: auto;
             }
 
             .res-same_module {
-                background: rgba(63, 185, 80, 0.12);
-                color: var(--green);
+                background: rgba(63, 185, 80, 0.15);
+                color: #5dd879;
             }
             .res-imported_symbol {
-                background: rgba(88, 166, 255, 0.12);
-                color: var(--accent);
+                background: rgba(88, 166, 255, 0.15);
+                color: #79b8ff;
             }
             .res-unique_global {
-                background: rgba(210, 153, 34, 0.12);
-                color: var(--orange);
+                background: rgba(210, 153, 34, 0.15);
+                color: #e3b341;
             }
             .res-unknown {
-                background: rgba(72, 79, 88, 0.2);
-                color: var(--text-dim);
+                background: rgba(139, 148, 158, 0.15);
+                color: var(--text-lo);
             }
 
             .filepath {
-                font-size: 10px;
-                color: var(--text-dim);
+                font-size: 11px;
+                color: var(--text-lo);
                 background: var(--bg);
-                border: 1px solid var(--border);
+                border: 1px solid var(--border-hi);
                 border-radius: 4px;
-                padding: 6px 8px;
+                padding: 7px 10px;
                 word-break: break-all;
-                line-height: 1.6;
+                line-height: 1.7;
             }
 
             /* ── GRAPH ── */
@@ -339,9 +339,9 @@
                 color: var(--text-hi);
             }
             .zoom-btn.reset {
-                font-size: 9px;
+                font-size: 10px;
                 letter-spacing: 0.05em;
-                color: var(--text-dim);
+                color: var(--text-lo);
             }
 
             /* ── FOOTER ── */
@@ -421,6 +421,159 @@
                 background: var(--border-hi);
                 border-radius: 2px;
             }
+
+            /* ── SEARCH ── */
+            .search-overlay {
+                display: none;
+                position: absolute;
+                top: 60px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 480px;
+                z-index: 50;
+                flex-direction: column;
+                border: 1px solid var(--border-hi);
+                border-radius: 10px;
+                overflow: hidden;
+                background: #1c2128;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            }
+
+            .search-overlay.open {
+                display: flex;
+            }
+
+            .search-input-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px 14px;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .search-icon {
+                color: var(--text-lo);
+                font-size: 16px;
+                flex-shrink: 0;
+            }
+
+            .search-input {
+                flex: 1;
+                background: transparent;
+                border: none;
+                outline: none;
+                font-family: var(--mono);
+                font-size: 14px;
+                color: var(--text-hi);
+                caret-color: var(--accent);
+            }
+
+            .search-input::placeholder {
+                color: var(--text-lo);
+            }
+
+            .search-kbd {
+                font-size: 11px;
+                color: var(--text-lo);
+                background: var(--border-hi);
+                border-radius: 3px;
+                padding: 2px 6px;
+                flex-shrink: 0;
+            }
+
+            .search-results {
+                max-height: 320px;
+                overflow-y: auto;
+            }
+
+            .search-empty {
+                padding: 20px 14px;
+                font-size: 12px;
+                color: var(--text-lo);
+                text-align: center;
+            }
+
+            .search-result {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 9px 14px;
+                cursor: pointer;
+                border-left: 2px solid transparent;
+                transition: background 0.1s;
+            }
+
+            .search-result:hover,
+            .search-result.active {
+                background: var(--border);
+                border-left-color: var(--accent);
+            }
+
+            .search-result-icon {
+                font-size: 12px;
+                color: var(--text-lo);
+                flex-shrink: 0;
+                width: 16px;
+                text-align: center;
+            }
+
+            .search-result-body {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .search-result-label {
+                font-size: 13px;
+                color: var(--text-hi);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .search-result-label mark {
+                background: transparent;
+                color: var(--accent);
+                font-weight: 700;
+            }
+
+            .search-result-sub {
+                font-size: 11px;
+                color: var(--text-lo);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                margin-top: 2px;
+            }
+
+            .search-result-kind {
+                font-size: 10px;
+                color: var(--text-lo);
+                background: var(--border-hi);
+                border-radius: 2px;
+                padding: 2px 6px;
+                flex-shrink: 0;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                font-weight: 600;
+            }
+
+            .search-hint-bar {
+                padding: 8px 14px;
+                border-top: 1px solid var(--border);
+                display: flex;
+                gap: 14px;
+                font-size: 11px;
+                color: var(--text-lo);
+            }
+
+            .search-hint-bar kbd {
+                background: var(--border-hi);
+                border-radius: 3px;
+                padding: 1px 5px;
+                font-family: var(--mono);
+                font-size: 10px;
+                color: var(--text-md);
+            }
         </style>
     </head>
     <body>
@@ -482,6 +635,28 @@
             <!-- GRAPH -->
             <div id="graph"></div>
 
+            <!-- SEARCH OVERLAY -->
+            <div class="search-overlay" id="search-overlay">
+                <div class="search-input-row">
+                    <span class="search-icon">⌕</span>
+                    <input
+                        class="search-input"
+                        id="search-input"
+                        type="text"
+                        placeholder="search nodes..."
+                        autocomplete="off"
+                        spellcheck="false"
+                    />
+                    <span class="search-kbd">esc</span>
+                </div>
+                <div class="search-results" id="search-results"></div>
+                <div class="search-hint-bar">
+                    <span><kbd>↑↓</kbd> navigate</span>
+                    <span><kbd>↵</kbd> select</span>
+                    <span><kbd>esc</kbd> close</span>
+                </div>
+            </div>
+
             <!-- ZOOM -->
             <div class="zoom-controls">
                 <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
@@ -516,7 +691,8 @@
                 <span class="footer-stat-value">{{edge_count}}</span>
             </span>
             <span class="footer-hint"
-                >click node to inspect · scroll to zoom · drag to pan</span
+                >⌘K search · click node to inspect · scroll to zoom · drag to
+                pan</span
             >
         </footer>
 
@@ -549,38 +725,38 @@
                     {
                         selector: "node",
                         style: {
-                            "background-color": "#161b22",
-                            "border-color": "#30363d",
+                            "background-color": "#1c2128",
+                            "border-color": "#444c56",
                             "border-width": 1.5,
                             "label": "data(label)",
-                            "color": "#c9d1d9",
-                            "font-size": 11,
+                            "color": "#e6edf3",
+                            "font-size": 13,
                             "text-valign": "center",
                             "text-halign": "center",
                             "width": "label",
                             "height": "label",
-                            "padding": "10px",
+                            "padding": "12px",
                             "shape": "round-rectangle",
                             "text-wrap": "wrap",
-                            "text-max-width": "200px",
+                            "text-max-width": "220px",
                         },
                     },
                     {
                         selector: "node.hovered",
                         style: {
-                            "background-color": "#1f2937",
+                            "background-color": "#2d333b",
                             "border-color": "#58a6ff",
                             "border-width": 2,
-                            "color": "#e6edf3",
+                            "color": "#ffffff",
                         },
                     },
                     {
                         selector: "node.selected",
                         style: {
-                            "background-color": "rgba(31, 111, 235, 0.13)",
+                            "background-color": "rgba(31, 111, 235, 0.2)",
                             "border-color": "#58a6ff",
-                            "border-width": 2,
-                            "color": "#e6edf3",
+                            "border-width": 2.5,
+                            "color": "#ffffff",
                         },
                     },
                     {
@@ -759,6 +935,235 @@
                     hideSidebar();
                 }
             });
+
+            // ── SEARCH ──
+            const searchOverlay  = document.getElementById("search-overlay");
+            const searchInput    = document.getElementById("search-input");
+            const searchResults  = document.getElementById("search-results");
+
+            let activeResultIdx  = -1;
+            let currentResults   = [];
+
+            // snapshot of graph state before search opened
+            let preSearchState   = null;
+
+            function highlightMatch(text, query) {
+                if (!query) return text;
+                const idx = text.toLowerCase().indexOf(query.toLowerCase());
+                if (idx === -1) return text;
+                return (
+                    text.slice(0, idx) +
+                    "<mark>" + text.slice(idx, idx + query.length) + "</mark>" +
+                    text.slice(idx + query.length)
+                );
+            }
+
+            function nodeIcon(kind) {
+                return kind === "function" ? "ƒ" : "◻";
+            }
+
+            function runSearch(query) {
+                activeResultIdx = -1;
+                const q = query.trim().toLowerCase();
+
+                if (!q) {
+                    searchResults.innerHTML = "";
+                    currentResults = [];
+                    // restore pre-search dim state
+                    cy.elements().removeClass("search-dim search-match");
+                    return;
+                }
+
+                const allNodes = cy.nodes();
+                const matches = [];
+
+                allNodes.forEach((node) => {
+                    const d = node.data();
+                    const haystack = [
+                        d.label   || "",
+                        d.id      || "",
+                        d.file_path || "",
+                        d.module_id || "",
+                    ].join(" ").toLowerCase();
+
+                    if (haystack.includes(q)) {
+                        matches.push(node);
+                    }
+                });
+
+                currentResults = matches.slice(0, 8);
+
+                // dim non-matches on canvas
+                cy.elements().removeClass("search-dim search-match selected dimmed highlighted");
+                if (matches.length > 0) {
+                    cy.nodes().not(cy.collection(matches)).addClass("search-dim");
+                    cy.collection(matches).addClass("search-match");
+                    cy.edges().addClass("search-dim");
+                }
+
+                // render results list
+                if (currentResults.length === 0) {
+                    searchResults.innerHTML = `<div class="search-empty">no nodes matching "${query}"</div>`;
+                    return;
+                }
+
+                searchResults.innerHTML = "";
+                currentResults.forEach((node, i) => {
+                    const d = node.data();
+                    const div = document.createElement("div");
+                    div.className = "search-result";
+                    div.dataset.idx = i;
+
+                    const sub = d.file_path
+                        ? d.file_path.split("/").slice(-2).join("/")
+                        : d.module_id || d.id;
+
+                    div.innerHTML = `
+                        <span class="search-result-icon">${nodeIcon(d.kind)}</span>
+                        <div class="search-result-body">
+                            <div class="search-result-label">${highlightMatch(d.label || d.id, query)}</div>
+                            <div class="search-result-sub">${sub}</div>
+                        </div>
+                        <span class="search-result-kind">${d.kind || "node"}</span>
+                    `;
+
+                    div.addEventListener("click", () => selectResult(i));
+                    div.addEventListener("mouseover", () => setActive(i));
+                    searchResults.appendChild(div);
+                });
+            }
+
+            function setActive(idx) {
+                activeResultIdx = idx;
+                searchResults.querySelectorAll(".search-result").forEach((el, i) => {
+                    el.classList.toggle("active", i === idx);
+                });
+            }
+
+            function selectResult(idx) {
+                const node = currentResults[idx];
+                if (!node) return;
+
+                closeSearch();
+
+                // reuse existing tap selection logic
+                cy.elements().removeClass("selected dimmed highlighted hovered search-dim search-match");
+                const neighborhood = node.neighborhood().add(node);
+                cy.elements().not(neighborhood).addClass("dimmed");
+                node.addClass("selected");
+                node.connectedEdges().addClass("highlighted");
+                showSidebar(node);
+
+                // fly to node smoothly
+                cy.animate({
+                    center: { eles: node },
+                    zoom: Math.max(cy.zoom(), 1.2),
+                    duration: 300,
+                    easing: "ease-in-out-cubic",
+                });
+            }
+
+            function openSearch() {
+                // snapshot current state
+                preSearchState = {
+                    selectedNode: cy.nodes(".selected").first() || null,
+                };
+                searchOverlay.classList.add("open");
+                searchInput.value = "";
+                searchInput.focus();
+                searchResults.innerHTML = "";
+                currentResults = [];
+                activeResultIdx = -1;
+            }
+
+            function closeSearch() {
+                searchOverlay.classList.remove("open");
+                searchInput.value = "";
+                currentResults = [];
+                activeResultIdx = -1;
+
+                // restore pre-search canvas state
+                cy.elements().removeClass("search-dim search-match");
+
+                // restore previous selection if there was one
+                if (preSearchState && preSearchState.selectedNode && preSearchState.selectedNode.length > 0) {
+                    const prev = preSearchState.selectedNode;
+                    cy.elements().removeClass("selected dimmed highlighted");
+                    const neighborhood = prev.neighborhood().add(prev);
+                    cy.elements().not(neighborhood).addClass("dimmed");
+                    prev.addClass("selected");
+                    prev.connectedEdges().addClass("highlighted");
+                } else {
+                    cy.elements().removeClass("selected dimmed highlighted");
+                    hideSidebar();
+                }
+
+                preSearchState = null;
+            }
+
+            // keyboard shortcut to open
+            document.addEventListener("keydown", (e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+                    e.preventDefault();
+                    if (searchOverlay.classList.contains("open")) {
+                        closeSearch();
+                    } else {
+                        openSearch();
+                    }
+                }
+            });
+
+            // input events
+            searchInput.addEventListener("input", (e) => {
+                runSearch(e.target.value);
+            });
+
+            searchInput.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") {
+                    closeSearch();
+                    return;
+                }
+
+                if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setActive(Math.min(activeResultIdx + 1, currentResults.length - 1));
+                    return;
+                }
+
+                if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setActive(Math.max(activeResultIdx - 1, 0));
+                    return;
+                }
+
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    const idx = activeResultIdx >= 0 ? activeResultIdx : 0;
+                    selectResult(idx);
+                    return;
+                }
+            });
+
+            // close on click outside
+            document.addEventListener("click", (e) => {
+                if (
+                    searchOverlay.classList.contains("open") &&
+                    !searchOverlay.contains(e.target)
+                ) {
+                    closeSearch();
+                }
+            });
+
+            // add search-dim cytoscape style
+            cy.style().selector("node.search-dim").style({
+                "opacity": 0.15,
+            }).selector("node.search-match").style({
+                "border-color": "#58a6ff",
+                "border-width": 2,
+                "opacity": 1,
+            }).selector("edge.search-dim").style({
+                "opacity": 0.05,
+            }).update();
 
             // ── ZOOM BUTTONS ──
             document.getElementById("zoom-in").addEventListener("click", () => {
