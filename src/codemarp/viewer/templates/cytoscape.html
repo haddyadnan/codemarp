@@ -46,12 +46,13 @@
             header {
                 flex-shrink: 0;
                 height: 44px;
-                padding: 0 20px;
+                padding: 0 16px;
                 background: var(--surface);
                 border-bottom: 1px solid var(--border);
                 display: flex;
                 align-items: center;
                 gap: 0;
+                z-index: 20;
             }
 
             .logo {
@@ -63,28 +64,97 @@
                 padding-right: 12px;
                 border-right: 1px solid var(--border-hi);
                 margin-right: 12px;
+                flex-shrink: 0;
             }
 
-            .breadcrumb {
+            /* nav breadcrumb — shows path in exploration mode */
+            .nav-breadcrumb {
                 display: flex;
                 align-items: center;
-                gap: 6px;
-                font-size: 12px;
+                gap: 0;
+                flex: 1;
+                min-width: 0;
+                overflow: hidden;
             }
 
-            .breadcrumb-item {
+            .nav-back {
+                display: none;
+                align-items: center;
+                gap: 6px;
+                font-size: 11px;
+                color: var(--text-lo);
+                cursor: pointer;
+                padding: 4px 10px 4px 6px;
+                border-radius: 5px;
+                border: 1px solid var(--border);
+                margin-right: 10px;
+                flex-shrink: 0;
+                transition:
+                    color 0.1s,
+                    border-color 0.1s;
+                user-select: none;
+            }
+
+            .nav-back:hover {
+                color: var(--text-hi);
+                border-color: var(--border-hi);
+            }
+
+            .nav-back.visible {
+                display: flex;
+            }
+
+            .nav-crumbs {
+                display: flex;
+                align-items: center;
+                gap: 0;
+                overflow: hidden;
+                flex: 1;
+            }
+
+            .nav-crumb {
+                font-size: 12px;
+                color: var(--text-lo);
+                cursor: pointer;
+                white-space: nowrap;
+                max-width: 160px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                padding: 2px 4px;
+                border-radius: 3px;
+                transition: color 0.1s;
+                flex-shrink: 1;
+            }
+
+            .nav-crumb:hover {
+                color: var(--text-hi);
+            }
+
+            .nav-crumb.current {
+                color: var(--text-hi);
+                font-weight: 600;
+                cursor: default;
+                flex-shrink: 0;
+            }
+
+            .nav-crumb-sep {
+                color: var(--border-hi);
+                font-size: 14px;
+                padding: 0 2px;
+                flex-shrink: 0;
+            }
+
+            /* overview title (shown in overview mode) */
+            .nav-title {
+                font-size: 12px;
                 color: var(--text-md);
                 font-weight: 600;
             }
 
-            .breadcrumb-sep {
-                color: var(--border-hi);
-                font-size: 14px;
-            }
-
-            .breadcrumb-sub {
+            .nav-subtitle {
+                font-size: 12px;
                 color: var(--text-lo);
-                font-weight: 400;
+                margin-left: 8px;
             }
 
             .header-right {
@@ -92,6 +162,7 @@
                 display: flex;
                 align-items: center;
                 gap: 8px;
+                flex-shrink: 0;
             }
 
             .badge {
@@ -117,6 +188,13 @@
                 background: rgba(63, 185, 80, 0.07);
             }
 
+            .mode-indicator {
+                font-size: 10px;
+                color: var(--text-dim);
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+            }
+
             /* ── LAYOUT ── */
             .workspace {
                 flex: 1;
@@ -125,7 +203,6 @@
                 position: relative;
             }
 
-            /* subtle grid */
             .workspace::before {
                 content: "";
                 position: absolute;
@@ -139,7 +216,7 @@
                 z-index: 0;
             }
 
-            /* ── SIDEBAR (LEFT) ── */
+            /* ── SIDEBAR ── */
             .sidebar {
                 width: 280px;
                 flex-shrink: 0;
@@ -160,6 +237,26 @@
                 letter-spacing: 0.12em;
                 text-transform: uppercase;
                 color: var(--text-lo);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .sidebar-mode-tag {
+                font-size: 9px;
+                padding: 2px 6px;
+                border-radius: 3px;
+                border: 1px solid var(--border-hi);
+                color: var(--text-dim);
+                letter-spacing: 0.08em;
+                font-weight: 700;
+                text-transform: uppercase;
+            }
+
+            .sidebar-mode-tag.exploration {
+                border-color: var(--accent);
+                color: var(--accent);
+                background: rgba(88, 166, 255, 0.08);
             }
 
             .sidebar-empty {
@@ -168,16 +265,23 @@
                 align-items: center;
                 justify-content: center;
                 flex-direction: column;
-                gap: 8px;
+                gap: 10px;
                 color: var(--text-lo);
                 font-size: 12px;
                 text-align: center;
                 padding: 24px;
+                line-height: 1.6;
             }
 
             .sidebar-empty-icon {
                 font-size: 28px;
                 opacity: 0.4;
+            }
+
+            .sidebar-empty-hint {
+                font-size: 11px;
+                color: var(--text-dim);
+                margin-top: 4px;
             }
 
             .sidebar-content {
@@ -221,12 +325,23 @@
                 color: var(--text-lo);
                 padding-bottom: 4px;
                 border-bottom: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .sidebar-section-count {
+                font-size: 9px;
+                color: var(--text-dim);
+                font-weight: 400;
+                letter-spacing: 0;
+                text-transform: none;
             }
 
             .edge-item {
                 font-size: 11px;
                 color: var(--text-md);
-                padding: 5px 8px;
+                padding: 6px 8px;
                 border-radius: 4px;
                 background: var(--bg);
                 border: 1px solid var(--border-hi);
@@ -236,13 +351,15 @@
                 cursor: pointer;
                 transition:
                     border-color 0.1s,
-                    color 0.1s;
+                    color 0.1s,
+                    background 0.1s;
                 word-break: break-all;
             }
 
             .edge-item:hover {
                 border-color: var(--accent);
                 color: var(--text-hi);
+                background: rgba(88, 166, 255, 0.05);
             }
 
             .edge-arrow {
@@ -289,7 +406,7 @@
                 line-height: 1.7;
             }
 
-            /* ── GRAPH ── */
+            /* ── GRAPH CONTAINER ── */
             #graph {
                 flex: 1;
                 min-height: 0;
@@ -304,7 +421,6 @@
                 right: 20px;
                 display: flex;
                 flex-direction: column;
-                gap: 0;
                 z-index: 10;
                 background: var(--surface);
                 border: 1px solid var(--border-hi);
@@ -371,6 +487,7 @@
             .footer-hint {
                 margin-left: auto;
                 color: #8b949e;
+                font-size: 11px;
             }
 
             /* ── LOADING ── */
@@ -426,17 +543,17 @@
             .search-overlay {
                 display: none;
                 position: absolute;
-                top: 60px;
+                top: 56px;
                 left: 50%;
                 transform: translateX(-50%);
-                width: 480px;
+                width: 500px;
                 z-index: 50;
                 flex-direction: column;
                 border: 1px solid var(--border-hi);
                 border-radius: 10px;
                 overflow: hidden;
                 background: #1c2128;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
             }
 
             .search-overlay.open {
@@ -447,7 +564,7 @@
                 display: flex;
                 align-items: center;
                 gap: 10px;
-                padding: 10px 14px;
+                padding: 12px 16px;
                 border-bottom: 1px solid var(--border);
             }
 
@@ -477,17 +594,17 @@
                 color: var(--text-lo);
                 background: var(--border-hi);
                 border-radius: 3px;
-                padding: 2px 6px;
+                padding: 2px 7px;
                 flex-shrink: 0;
             }
 
             .search-results {
-                max-height: 320px;
+                max-height: 340px;
                 overflow-y: auto;
             }
 
             .search-empty {
-                padding: 20px 14px;
+                padding: 20px 16px;
                 font-size: 12px;
                 color: var(--text-lo);
                 text-align: center;
@@ -497,7 +614,7 @@
                 display: flex;
                 align-items: center;
                 gap: 10px;
-                padding: 9px 14px;
+                padding: 10px 16px;
                 cursor: pointer;
                 border-left: 2px solid transparent;
                 transition: background 0.1s;
@@ -558,10 +675,10 @@
             }
 
             .search-hint-bar {
-                padding: 8px 14px;
+                padding: 8px 16px;
                 border-top: 1px solid var(--border);
                 display: flex;
-                gap: 14px;
+                gap: 16px;
                 font-size: 11px;
                 color: var(--text-lo);
             }
@@ -579,13 +696,21 @@
     <body>
         <header>
             <span class="logo">codemarp</span>
-            <div class="breadcrumb">
-                <span class="breadcrumb-item">{{title}}</span>
-                <span class="breadcrumb-sep">·</span>
-                <span class="breadcrumb-sub">{{subtitle}}</span>
+
+            <div class="nav-breadcrumb">
+                <div class="nav-back" id="nav-back">
+                    <span>←</span>
+                    <span>overview</span>
+                </div>
+                <div class="nav-crumbs" id="nav-crumbs">
+                    <!-- overview mode shows title -->
+                    <span class="nav-title">{{title}}</span>
+                    <span class="nav-subtitle">{{subtitle}}</span>
+                </div>
             </div>
+
             <div class="header-right">
-                <span class="badge badge-blue">cytoscape</span>
+                <span class="mode-indicator" id="mode-indicator">overview</span>
                 <span class="badge badge-green">{{mode}}</span>
             </div>
         </header>
@@ -598,10 +723,16 @@
 
             <!-- LEFT SIDEBAR -->
             <aside class="sidebar">
-                <div class="sidebar-header">inspector</div>
+                <div class="sidebar-header">
+                    <span>inspector</span>
+                    <span class="sidebar-mode-tag" id="sidebar-mode-tag"
+                        >overview</span
+                    >
+                </div>
                 <div class="sidebar-empty" id="sidebar-empty">
                     <span class="sidebar-empty-icon">◈</span>
-                    <span>click a node<br />to inspect it</span>
+                    <span>click any node to<br />enter exploration mode</span>
+                    <span class="sidebar-empty-hint">or use ⌘K to search</span>
                 </div>
                 <div class="sidebar-content" id="sidebar-content">
                     <div>
@@ -618,7 +749,13 @@
                         id="section-calls"
                         style="display: none"
                     >
-                        <div class="sidebar-section-title">calls</div>
+                        <div class="sidebar-section-title">
+                            <span>calls</span>
+                            <span
+                                class="sidebar-section-count"
+                                id="calls-count"
+                            ></span>
+                        </div>
                         <div id="calls-list"></div>
                     </div>
                     <div
@@ -626,7 +763,13 @@
                         id="section-callers"
                         style="display: none"
                     >
-                        <div class="sidebar-section-title">called by</div>
+                        <div class="sidebar-section-title">
+                            <span>called by</span>
+                            <span
+                                class="sidebar-section-count"
+                                id="callers-count"
+                            ></span>
+                        </div>
                         <div id="callers-list"></div>
                     </div>
                 </div>
@@ -660,11 +803,7 @@
             <!-- ZOOM -->
             <div class="zoom-controls">
                 <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
-                <button
-                    class="zoom-btn reset"
-                    id="zoom-reset"
-                    title="Fit to screen"
-                >
+                <button class="zoom-btn reset" id="zoom-reset" title="Fit">
                     fit
                 </button>
                 <button class="zoom-btn" id="zoom-out" title="Zoom out">
@@ -691,14 +830,15 @@
                 <span class="footer-stat-value">{{edge_count}}</span>
             </span>
             <span class="footer-hint"
-                >⌘K search · click node to inspect · scroll to zoom · drag to
-                pan</span
+                >⌘K search · click node to explore · double-click canvas to zoom
+                out</span
             >
         </footer>
 
         <script>
             const graph = {{graph_json}};
 
+            // ── CYTOSCAPE INIT ──
             const cy = cytoscape({
                 container: document.getElementById("graph"),
                 elements: [
@@ -709,6 +849,7 @@
                             kind: n.kind || "module",
                             language: n.language,
                             file_path: n.file_path || null,
+                            module_id: n.module_id || null,
                         },
                     })),
                     ...graph.edges.map((e) => ({
@@ -722,6 +863,7 @@
                     })),
                 ],
                 style: [
+                    // ── OVERVIEW NODE ──
                     {
                         selector: "node",
                         style: {
@@ -750,24 +892,34 @@
                             "color": "#ffffff",
                         },
                     },
+                    // ── EXPLORATION STATES ──
                     {
-                        selector: "node.selected",
+                        selector: "node.focus",
                         style: {
-                            "background-color": "rgba(31, 111, 235, 0.2)",
+                            "background-color": "rgba(31, 111, 235, 0.25)",
                             "border-color": "#58a6ff",
-                            "border-width": 2.5,
+                            "border-width": 3,
                             "color": "#ffffff",
+                            "font-size": 14,
                         },
                     },
                     {
-                        selector: "node.dimmed",
+                        selector: "node.neighbor",
                         style: {
-                            "background-color": "#161b22",
-                            "border-color": "#21262d",
-                            "color": "#6b7280",
-                            "opacity": 0.65,
+                            "background-color": "#2d333b",
+                            "border-color": "#444c56",
+                            "border-width": 1.5,
+                            "color": "#e6edf3",
+                            "opacity": 1,
                         },
                     },
+                    {
+                        selector: "node.hidden",
+                        style: {
+                            "display": "none",
+                        },
+                    },
+                    // ── EDGES ──
                     {
                         selector: "edge",
                         style: {
@@ -780,21 +932,36 @@
                         },
                     },
                     {
-                        selector: "edge.highlighted",
+                        selector: "edge.focus-edge",
                         style: {
                             "line-color": "#58a6ff",
                             "target-arrow-color": "#58a6ff",
-                            "opacity": 1,
                             "width": 2,
+                            "opacity": 1,
                         },
                     },
                     {
-                        selector: "edge.dimmed",
+                        selector: "edge.hidden",
                         style: {
-                            "line-color": "rgba(88, 166, 255, 0.06)",
-                            "target-arrow-color": "rgba(88, 166, 255, 0.06)",
+                            "display": "none",
+                        },
+                    },
+                    // ── SEARCH STATES ──
+                    {
+                        selector: "node.search-dim",
+                        style: { "opacity": 0.15 },
+                    },
+                    {
+                        selector: "node.search-match",
+                        style: {
+                            "border-color": "#58a6ff",
+                            "border-width": 2,
                             "opacity": 1,
                         },
+                    },
+                    {
+                        selector: "edge.search-dim",
+                        style: { "opacity": 0.05 },
                     },
                 ],
                 userZoomingEnabled: true,
@@ -803,18 +970,18 @@
                 maxZoom: 8,
             });
 
-            // layout
+            // ── LAYOUT (run once, positions never change) ──
             cy.ready(() => {
                 cy.layout({
                     name: "cose",
                     animate: false,
                     fit: true,
                     padding: 60,
-                    nodeRepulsion: () => 8000,
+                    nodeRepulsion: () => {{node_repulsion}},
                     edgeElasticity: () => 32,
-                    idealEdgeLength: () => 80,
+                    idealEdgeLength: () => {{ideal_edge_length}},
                     gravity: 0.25,
-                    numIter: 2500,
+                    numIter: {{num_iter}},
                     initialTemp: 200,
                     coolingFactor: 0.95,
                     minTemp: 1.0,
@@ -829,19 +996,18 @@
                 }
             });
 
-            // ── HOVER via events (pseudo-selectors not supported) ──
-            cy.on("mouseover", "node", (e) => {
-                if (!e.target.hasClass("selected")) {
-                    e.target.addClass("hovered");
-                }
-            });
-            cy.on("mouseout", "node", (e) => {
-                e.target.removeClass("hovered");
-            });
+            // ── MODE STATE ──
+            // "overview" | "exploration"
+            let appMode = "overview";
+            let focusHistory = []; // array of node ids — navigation history
 
-            // ── SIDEBAR ──
+            // ── DOM REFS ──
+            const navBack        = document.getElementById("nav-back");
+            const navCrumbs      = document.getElementById("nav-crumbs");
+            const modeIndicator  = document.getElementById("mode-indicator");
             const sidebarEmpty   = document.getElementById("sidebar-empty");
             const sidebarContent = document.getElementById("sidebar-content");
+            const sidebarModeTag = document.getElementById("sidebar-mode-tag");
             const nodeName       = document.getElementById("node-name");
             const nodeMeta       = document.getElementById("node-meta");
             const nodeFilepath   = document.getElementById("node-filepath");
@@ -849,12 +1015,192 @@
             const callersList    = document.getElementById("callers-list");
             const sectionCalls   = document.getElementById("section-calls");
             const sectionCallers = document.getElementById("section-callers");
+            const callsCount     = document.getElementById("calls-count");
+            const callersCount   = document.getElementById("callers-count");
+            const graphEl        = document.getElementById("graph");
 
+            // ── HELPERS ──
             function resTag(kind) {
                 const label = kind || "unknown";
                 return `<span class="resolution-tag res-${label}">${label}</span>`;
             }
 
+            function nodeIcon(kind) {
+                return kind === "function" ? "ƒ" : "◻";
+            }
+
+            // ── OVERVIEW MODE ──
+            function enterOverview(animate = true) {
+                appMode = "overview";
+                focusHistory = [];
+
+                if (animate) {
+                    // step 1: fade out current subgraph view
+                    graphEl.style.transition = "opacity 0.18s ease";
+                    graphEl.style.opacity = "0";
+
+                    setTimeout(() => {
+                        // step 2: restore all elements (still invisible)
+                        cy.elements().removeClass("focus neighbor hidden focus-edge hovered search-dim search-match");
+
+                        // step 3: animate camera zoom-out to full graph
+                        cy.animate({
+                            fit: { eles: cy.elements(), padding: 60 },
+                            duration: 350,
+                            easing: "ease-in-out-cubic",
+                            complete: () => {
+                                // step 4: fade back in on the full graph
+                                graphEl.style.opacity = "1";
+                                setTimeout(() => {
+                                    graphEl.style.transition = "";
+                                }, 200);
+                            }
+                        });
+                    }, 180);
+                } else {
+                    cy.elements().removeClass("focus neighbor hidden focus-edge hovered search-dim search-match");
+                    cy.fit(undefined, 60);
+                }
+
+                // update header
+                navBack.classList.remove("visible");
+                navCrumbs.innerHTML = `
+                    <span class="nav-title">{{title}}</span>
+                    <span class="nav-subtitle">{{subtitle}}</span>
+                `;
+                modeIndicator.textContent = "overview";
+
+                // update sidebar
+                sidebarModeTag.textContent = "overview";
+                sidebarModeTag.classList.remove("exploration");
+                sidebarEmpty.style.display = "flex";
+                sidebarContent.classList.remove("visible");
+            }
+
+            // ── EXPLORATION MODE ──
+            function enterExploration(nodeId, addToHistory = true) {
+                const node = cy.getElementById(nodeId);
+                if (!node || node.length === 0) return;
+
+                const wasOverview = appMode === "overview";
+                appMode = "exploration";
+
+                if (addToHistory) {
+                    focusHistory.push(nodeId);
+                }
+
+                // compute direct neighbors
+                const neighbors = node.neighborhood().nodes();
+                const focusEdges = node.connectedEdges();
+
+                if (wasOverview) {
+                    // overview → exploration
+                    // step 1: fade out everything except the clicked node
+                    graphEl.style.transition = "opacity 0.18s ease";
+                    graphEl.style.opacity = "0";
+
+                    setTimeout(() => {
+                        // step 2: apply classes while invisible
+                        cy.nodes().removeClass("focus neighbor hidden hovered search-dim search-match");
+                        cy.edges().removeClass("focus-edge hidden search-dim");
+
+                        node.addClass("focus");
+                        neighbors.addClass("neighbor");
+                        cy.nodes().not(node).not(neighbors).addClass("hidden");
+                        cy.edges().not(focusEdges).addClass("hidden");
+                        focusEdges.addClass("focus-edge");
+
+                        // step 3: animate camera zoom-in to subgraph
+                        const subgraph = node.add(neighbors);
+                        cy.animate({
+                            fit: { eles: subgraph, padding: 80 },
+                            duration: 350,
+                            easing: "ease-in-out-cubic",
+                            complete: () => {
+                                // step 4: fade back in on focused subgraph
+                                graphEl.style.opacity = "1";
+                                setTimeout(() => {
+                                    graphEl.style.transition = "";
+                                }, 200);
+                            }
+                        });
+                    }, 180);
+
+                } else {
+                    // exploration → exploration (navigating between nodes)
+                    // lighter transition — just a quick fade and refit
+                    graphEl.style.transition = "opacity 0.12s ease";
+                    graphEl.style.opacity = "0";
+
+                    setTimeout(() => {
+                        cy.nodes().removeClass("focus neighbor hidden hovered");
+                        cy.edges().removeClass("focus-edge hidden");
+
+                        node.addClass("focus");
+                        neighbors.addClass("neighbor");
+                        cy.nodes().not(node).not(neighbors).addClass("hidden");
+                        cy.edges().not(focusEdges).addClass("hidden");
+                        focusEdges.addClass("focus-edge");
+
+                        const subgraph = node.add(neighbors);
+                        cy.animate({
+                            fit: { eles: subgraph, padding: 80 },
+                            duration: 250,
+                            easing: "ease-in-out-cubic",
+                            complete: () => {
+                                graphEl.style.opacity = "1";
+                                setTimeout(() => {
+                                    graphEl.style.transition = "";
+                                }, 150);
+                            }
+                        });
+                    }, 120);
+                }
+
+                // update header breadcrumb immediately
+                navBack.classList.add("visible");
+                updateBreadcrumb();
+                modeIndicator.textContent = "exploring";
+
+                // update sidebar immediately
+                sidebarModeTag.textContent = "exploring";
+                sidebarModeTag.classList.add("exploration");
+                showSidebar(node);
+            }
+
+            function updateBreadcrumb() {
+                navCrumbs.innerHTML = "";
+
+                focusHistory.forEach((id, i) => {
+                    const node = cy.getElementById(id);
+                    const label = node.data("label") || id;
+                    const isCurrent = i === focusHistory.length - 1;
+
+                    if (i > 0) {
+                        const sep = document.createElement("span");
+                        sep.className = "nav-crumb-sep";
+                        sep.textContent = "→";
+                        navCrumbs.appendChild(sep);
+                    }
+
+                    const crumb = document.createElement("span");
+                    crumb.className = "nav-crumb" + (isCurrent ? " current" : "");
+                    crumb.textContent = label;
+                    crumb.title = id;
+
+                    if (!isCurrent) {
+                        crumb.addEventListener("click", () => {
+                            // navigate back to this point in history
+                            focusHistory = focusHistory.slice(0, i + 1);
+                            enterExploration(id, false);
+                        });
+                    }
+
+                    navCrumbs.appendChild(crumb);
+                });
+            }
+
+            // ── SIDEBAR ──
             function showSidebar(node) {
                 const data = node.data();
 
@@ -871,68 +1217,114 @@
                     nodeFilepath.style.display = "none";
                 }
 
-                // outgoing
+                // outgoing edges
                 const outEdges = node.connectedEdges().filter(e => e.data("source") === data.id);
                 if (outEdges.length > 0) {
                     callsList.innerHTML = "";
+                    callsCount.textContent = outEdges.length;
                     outEdges.forEach((e) => {
                         const targetNode = cy.getElementById(e.data("target"));
                         const label = targetNode.data("label") || e.data("target");
                         const div = document.createElement("div");
                         div.className = "edge-item";
                         div.innerHTML = `<span class="edge-arrow">→</span><span style="flex:1">${label}</span>${resTag(e.data("resolution_kind"))}`;
-                        div.addEventListener("click", () => cy.getElementById(e.data("target")).trigger("tap"));
+                        div.addEventListener("click", () => {
+                            enterExploration(e.data("target"));
+                        });
                         callsList.appendChild(div);
                     });
                     sectionCalls.style.display = "flex";
                 } else {
+                    callsCount.textContent = "";
                     sectionCalls.style.display = "none";
                 }
 
-                // incoming
+                // incoming edges
                 const inEdges = node.connectedEdges().filter(e => e.data("target") === data.id);
                 if (inEdges.length > 0) {
                     callersList.innerHTML = "";
+                    callersCount.textContent = inEdges.length;
                     inEdges.forEach((e) => {
                         const sourceNode = cy.getElementById(e.data("source"));
                         const label = sourceNode.data("label") || e.data("source");
                         const div = document.createElement("div");
                         div.className = "edge-item";
                         div.innerHTML = `<span class="edge-arrow">←</span><span style="flex:1">${label}</span>${resTag(e.data("resolution_kind"))}`;
-                        div.addEventListener("click", () => cy.getElementById(e.data("source")).trigger("tap"));
+                        div.addEventListener("click", () => {
+                            enterExploration(e.data("source"));
+                        });
                         callersList.appendChild(div);
                     });
                     sectionCallers.style.display = "flex";
                 } else {
+                    callersCount.textContent = "";
                     sectionCallers.style.display = "none";
                 }
             }
 
-            function hideSidebar() {
-                sidebarEmpty.style.display = "flex";
-                sidebarContent.classList.remove("visible");
-            }
+            // ── NODE INTERACTIONS ──
+            cy.on("mouseover", "node", (e) => {
+                if (!e.target.hasClass("focus")) {
+                    e.target.addClass("hovered");
+                }
+            });
 
-            // ── NODE TAP ──
+            cy.on("mouseout", "node", (e) => {
+                e.target.removeClass("hovered");
+            });
+
+            // clicking any node enters exploration mode for that node
             cy.on("tap", "node", (e) => {
                 const node = e.target;
                 const id = node.data("id");
 
-                cy.elements().removeClass("selected dimmed highlighted hovered");
+                if (appMode === "exploration" && node.hasClass("focus")) {
+                    // clicking the focus node again does nothing
+                    return;
+                }
 
-                const neighborhood = node.neighborhood().add(node);
-                cy.elements().not(neighborhood).addClass("dimmed");
-                node.addClass("selected");
-                node.connectedEdges().addClass("highlighted");
-
-                showSidebar(node);
+                enterExploration(id);
             });
 
-            // tap on background — reset
+            // clicking canvas background — nothing on single click
+            // double-click background — zoom out to overview
             cy.on("tap", (e) => {
                 if (e.target === cy) {
-                    cy.elements().removeClass("selected dimmed highlighted hovered");
-                    hideSidebar();
+                    // single tap on background: do nothing
+                    // user navigates back explicitly via button, Escape, or double-click
+                }
+            });
+
+            cy.on("dblclick", (e) => {
+                if (e.target === cy && appMode === "exploration") {
+                    enterOverview(true);
+                }
+            });
+
+            // ── BACK TO OVERVIEW ──
+            navBack.addEventListener("click", () => {
+                enterOverview(true);
+            });
+
+            // keyboard: Escape in exploration returns to overview
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") {
+                    if (searchOverlay.classList.contains("open")) {
+                        closeSearch();
+                        return;
+                    }
+                    if (appMode === "exploration") {
+                        enterOverview(true);
+                    }
+                }
+
+                if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+                    e.preventDefault();
+                    if (searchOverlay.classList.contains("open")) {
+                        closeSearch();
+                    } else {
+                        openSearch();
+                    }
                 }
             });
 
@@ -941,11 +1333,9 @@
             const searchInput    = document.getElementById("search-input");
             const searchResults  = document.getElementById("search-results");
 
-            let activeResultIdx  = -1;
-            let currentResults   = [];
-
-            // snapshot of graph state before search opened
-            let preSearchState   = null;
+            let activeResultIdx = -1;
+            let currentResults  = [];
+            let preSearchState  = null;
 
             function highlightMatch(text, query) {
                 if (!query) return text;
@@ -958,10 +1348,6 @@
                 );
             }
 
-            function nodeIcon(kind) {
-                return kind === "function" ? "ƒ" : "◻";
-            }
-
             function runSearch(query) {
                 activeResultIdx = -1;
                 const q = query.trim().toLowerCase();
@@ -969,39 +1355,34 @@
                 if (!q) {
                     searchResults.innerHTML = "";
                     currentResults = [];
-                    // restore pre-search dim state
                     cy.elements().removeClass("search-dim search-match");
                     return;
                 }
 
+                // search all nodes regardless of current mode
+                // temporarily show all for search
                 const allNodes = cy.nodes();
                 const matches = [];
 
                 allNodes.forEach((node) => {
                     const d = node.data();
                     const haystack = [
-                        d.label   || "",
-                        d.id      || "",
-                        d.file_path || "",
-                        d.module_id || "",
+                        d.label || "", d.id || "",
+                        d.file_path || "", d.module_id || "",
                     ].join(" ").toLowerCase();
-
-                    if (haystack.includes(q)) {
-                        matches.push(node);
-                    }
+                    if (haystack.includes(q)) matches.push(node);
                 });
 
                 currentResults = matches.slice(0, 8);
 
-                // dim non-matches on canvas
-                cy.elements().removeClass("search-dim search-match selected dimmed highlighted");
+                // show all nodes temporarily for search highlighting
+                cy.elements().removeClass("hidden focus neighbor focus-edge search-dim search-match");
                 if (matches.length > 0) {
                     cy.nodes().not(cy.collection(matches)).addClass("search-dim");
                     cy.collection(matches).addClass("search-match");
                     cy.edges().addClass("search-dim");
                 }
 
-                // render results list
                 if (currentResults.length === 0) {
                     searchResults.innerHTML = `<div class="search-empty">no nodes matching "${query}"</div>`;
                     return;
@@ -1010,14 +1391,12 @@
                 searchResults.innerHTML = "";
                 currentResults.forEach((node, i) => {
                     const d = node.data();
-                    const div = document.createElement("div");
-                    div.className = "search-result";
-                    div.dataset.idx = i;
-
                     const sub = d.file_path
                         ? d.file_path.split("/").slice(-2).join("/")
                         : d.module_id || d.id;
 
+                    const div = document.createElement("div");
+                    div.className = "search-result";
                     div.innerHTML = `
                         <span class="search-result-icon">${nodeIcon(d.kind)}</span>
                         <div class="search-result-body">
@@ -1026,8 +1405,7 @@
                         </div>
                         <span class="search-result-kind">${d.kind || "node"}</span>
                     `;
-
-                    div.addEventListener("click", () => selectResult(i));
+                    div.addEventListener("click", () => selectSearchResult(i));
                     div.addEventListener("mouseover", () => setActive(i));
                     searchResults.appendChild(div);
                 });
@@ -1040,34 +1418,17 @@
                 });
             }
 
-            function selectResult(idx) {
+            function selectSearchResult(idx) {
                 const node = currentResults[idx];
                 if (!node) return;
-
                 closeSearch();
-
-                // reuse existing tap selection logic
-                cy.elements().removeClass("selected dimmed highlighted hovered search-dim search-match");
-                const neighborhood = node.neighborhood().add(node);
-                cy.elements().not(neighborhood).addClass("dimmed");
-                node.addClass("selected");
-                node.connectedEdges().addClass("highlighted");
-                showSidebar(node);
-
-                // fly to node smoothly
-                cy.animate({
-                    center: { eles: node },
-                    zoom: Math.max(cy.zoom(), 1.2),
-                    duration: 300,
-                    easing: "ease-in-out-cubic",
-                });
+                // search always enters exploration mode
+                focusHistory = [];
+                enterExploration(node.data("id"));
             }
 
             function openSearch() {
-                // snapshot current state
-                preSearchState = {
-                    selectedNode: cy.nodes(".selected").first() || null,
-                };
+                preSearchState = { mode: appMode, history: [...focusHistory] };
                 searchOverlay.classList.add("open");
                 searchInput.value = "";
                 searchInput.focus();
@@ -1082,104 +1443,66 @@
                 currentResults = [];
                 activeResultIdx = -1;
 
-                // restore pre-search canvas state
-                cy.elements().removeClass("search-dim search-match");
-
-                // restore previous selection if there was one
-                if (preSearchState && preSearchState.selectedNode && preSearchState.selectedNode.length > 0) {
-                    const prev = preSearchState.selectedNode;
-                    cy.elements().removeClass("selected dimmed highlighted");
-                    const neighborhood = prev.neighborhood().add(prev);
-                    cy.elements().not(neighborhood).addClass("dimmed");
-                    prev.addClass("selected");
-                    prev.connectedEdges().addClass("highlighted");
-                } else {
-                    cy.elements().removeClass("selected dimmed highlighted");
-                    hideSidebar();
+                // restore canvas state
+                if (preSearchState) {
+                    if (preSearchState.mode === "overview") {
+                        cy.elements().removeClass("search-dim search-match hidden focus neighbor focus-edge");
+                    } else {
+                        // restore exploration state
+                        cy.elements().removeClass("search-dim search-match");
+                        const lastId = preSearchState.history[preSearchState.history.length - 1];
+                        if (lastId) {
+                            focusHistory = preSearchState.history;
+                            enterExploration(lastId, false);
+                        }
+                    }
+                    preSearchState = null;
                 }
-
-                preSearchState = null;
             }
 
-            // keyboard shortcut to open
-            document.addEventListener("keydown", (e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-                    e.preventDefault();
-                    if (searchOverlay.classList.contains("open")) {
-                        closeSearch();
-                    } else {
-                        openSearch();
-                    }
-                }
-            });
-
-            // input events
-            searchInput.addEventListener("input", (e) => {
-                runSearch(e.target.value);
-            });
+            searchInput.addEventListener("input", (e) => runSearch(e.target.value));
 
             searchInput.addEventListener("keydown", (e) => {
-                if (e.key === "Escape") {
-                    closeSearch();
-                    return;
-                }
-
+                if (e.key === "Escape") { closeSearch(); return; }
                 if (e.key === "ArrowDown") {
                     e.preventDefault();
                     setActive(Math.min(activeResultIdx + 1, currentResults.length - 1));
                     return;
                 }
-
                 if (e.key === "ArrowUp") {
                     e.preventDefault();
                     setActive(Math.max(activeResultIdx - 1, 0));
                     return;
                 }
-
                 if (e.key === "Enter") {
                     e.preventDefault();
-                    const idx = activeResultIdx >= 0 ? activeResultIdx : 0;
-                    selectResult(idx);
+                    selectSearchResult(activeResultIdx >= 0 ? activeResultIdx : 0);
                     return;
                 }
             });
 
-            // close on click outside
             document.addEventListener("click", (e) => {
-                if (
-                    searchOverlay.classList.contains("open") &&
-                    !searchOverlay.contains(e.target)
-                ) {
+                if (searchOverlay.classList.contains("open") && !searchOverlay.contains(e.target)) {
                     closeSearch();
                 }
             });
 
-            // add search-dim cytoscape style
-            cy.style().selector("node.search-dim").style({
-                "opacity": 0.15,
-            }).selector("node.search-match").style({
-                "border-color": "#58a6ff",
-                "border-width": 2,
-                "opacity": 1,
-            }).selector("edge.search-dim").style({
-                "opacity": 0.05,
-            }).update();
-
-            // ── ZOOM BUTTONS ──
+            // ── ZOOM ──
             document.getElementById("zoom-in").addEventListener("click", () => {
-                cy.zoom({
-                    level: cy.zoom() * 1.3,
-                    renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 },
-                });
+                cy.zoom({ level: cy.zoom() * 1.3, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } });
             });
             document.getElementById("zoom-out").addEventListener("click", () => {
-                cy.zoom({
-                    level: cy.zoom() * 0.75,
-                    renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 },
-                });
+                cy.zoom({ level: cy.zoom() * 0.75, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } });
             });
             document.getElementById("zoom-reset").addEventListener("click", () => {
-                cy.fit(undefined, 60);
+                if (appMode === "exploration" && focusHistory.length > 0) {
+                    const id = focusHistory[focusHistory.length - 1];
+                    const node = cy.getElementById(id);
+                    const neighbors = node.neighborhood().nodes();
+                    cy.fit(node.add(neighbors), 80);
+                } else {
+                    cy.fit(undefined, 60);
+                }
             });
         </script>
     </body>
