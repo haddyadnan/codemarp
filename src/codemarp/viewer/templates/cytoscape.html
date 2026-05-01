@@ -7,6 +7,7 @@
         <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
         <script src="https://unpkg.com/dagre/dist/dagre.min.js"></script>
         <script src="https://unpkg.com/cytoscape-dagre/cytoscape-dagre.js"></script>
+        <script src="https://unpkg.com/cytoscape-cxtmenu/cytoscape-cxtmenu.js"></script>
         <style>
             @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap");
 
@@ -693,6 +694,46 @@
                 font-size: 10px;
                 color: var(--text-md);
             }
+
+            /* ── EXPLORE BUTTON ── */
+            .explore-btn {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                width: 100%;
+                padding: 8px 12px;
+                background: rgba(56, 139, 253, 0.1);
+                border: 1px solid rgba(56, 139, 253, 0.3);
+                border-radius: 6px;
+                color: #79b8ff;
+                font-family: var(--mono);
+                font-size: 11px;
+                font-weight: 600;
+                cursor: pointer;
+                transition:
+                    background 0.15s,
+                    border-color 0.15s;
+                text-align: left;
+            }
+
+            .explore-btn:hover {
+                background: rgba(56, 139, 253, 0.2);
+                border-color: rgba(56, 139, 253, 0.6);
+                color: #a8d1ff;
+            }
+
+            .explore-btn-icon {
+                font-size: 13px;
+                flex-shrink: 0;
+            }
+
+            /* ── NODE KIND ICONS in breadcrumb ── */
+            .crumb-icon-module {
+                color: #79b8ff;
+            }
+            .crumb-icon-function {
+                color: #e3b341;
+            }
         </style>
     </head>
     <body>
@@ -746,6 +787,13 @@
                         id="node-filepath"
                         style="display: none"
                     ></div>
+                    <!-- explore functions button — shown for module nodes only -->
+                    <div id="section-explore" style="display: none">
+                        <button class="explore-btn" id="explore-btn">
+                            <span class="explore-btn-icon">ƒ</span>
+                            <span>Explore functions →</span>
+                        </button>
+                    </div>
                     <div
                         class="sidebar-section"
                         id="section-calls"
@@ -839,11 +887,18 @@
 
         <script>
             const graph = {{graph_json}};
+            const fullBundle = {{full_bundle_json}}; // all nodes+edges for drill-down
 
-            // register dagre layout extension
+            // TEMP DEBUG TIMING: remove after renderer performance investigation.
+            console.log("nodes", graph.nodes.length, "edges", graph.edges.length);
+
+            // register layout and menu extensions
             cytoscape.use(cytoscapeDagre);
+            cytoscape.use(cytoscapeCxtmenu);
 
             // ── CYTOSCAPE INIT ──
+            // TEMP DEBUG TIMING: remove after renderer performance investigation.
+            console.time("cytoscape init");
             const cy = cytoscape({
                 container: document.getElementById("graph"),
                 elements: [
@@ -868,7 +923,7 @@
                     })),
                 ],
                 style: [
-                    // ── OVERVIEW NODE ──
+                    // ── BASE NODE (fallback) ──
                     {
                         selector: "node",
                         style: {
@@ -888,20 +943,48 @@
                             "text-max-width": "220px",
                         },
                     },
+                    // ── MODULE NODE ──
+                    {
+                        selector: "node[kind='module']",
+                        style: {
+                            "background-color": "#1c2128",
+                            "border-color": "#388bfd",
+                            "border-width": 2,
+                            "color": "#79b8ff",
+                            "font-size": 13,
+                            "width": "label",
+                            "height": "label",
+                            "padding": "12px",
+                        },
+                    },
+                    // ── FUNCTION NODE ──
+                    {
+                        selector: "node[kind='function']",
+                        style: {
+                            "background-color": "#1c2128",
+                            "border-color": "#b08800",
+                            "border-width": 1.5,
+                            "color": "#e3b341",
+                            "font-size": 12,
+                            "width": "label",
+                            "height": "label",
+                            "padding": "10px",
+                        },
+                    },
+                    // ── HOVER ──
                     {
                         selector: "node.hovered",
                         style: {
                             "background-color": "#2d333b",
-                            "border-color": "#58a6ff",
-                            "border-width": 2,
+                            "border-width": 2.5,
                             "color": "#ffffff",
                         },
                     },
-                    // ── EXPLORATION STATES ──
+                    // ── FOCUS (selected in exploration) ──
                     {
                         selector: "node.focus",
                         style: {
-                            "background-color": "rgba(31, 111, 235, 0.25)",
+                            "background-color": "rgba(31, 111, 235, 0.2)",
                             "border-color": "#58a6ff",
                             "border-width": 3,
                             "color": "#ffffff",
@@ -909,20 +992,28 @@
                         },
                     },
                     {
+                        selector: "node[kind='function'].focus",
+                        style: {
+                            "background-color": "rgba(176, 136, 0, 0.2)",
+                            "border-color": "#e3b341",
+                            "border-width": 3,
+                            "color": "#ffffff",
+                        },
+                    },
+                    // ── NEIGHBOR ──
+                    {
                         selector: "node.neighbor",
                         style: {
                             "background-color": "#2d333b",
-                            "border-color": "#444c56",
                             "border-width": 1.5,
                             "color": "#e6edf3",
                             "opacity": 1,
                         },
                     },
+                    // ── HIDDEN ──
                     {
                         selector: "node.hidden",
-                        style: {
-                            "display": "none",
-                        },
+                        style: { "display": "none" },
                     },
                     // ── EDGES ──
                     {
@@ -974,6 +1065,8 @@
                 minZoom: 0.05,
                 maxZoom: 8,
             });
+            // TEMP DEBUG TIMING: remove after renderer performance investigation.
+            console.timeEnd("cytoscape init");
 
             // ── LAYOUT (run once, positions never change) ──
             // layout is chosen by Python at generation time based on graph shape
@@ -1010,7 +1103,14 @@
             }
 
             cy.ready(() => {
-                cy.layout(buildLayout()).run();
+                // TEMP DEBUG TIMING: remove after renderer performance investigation.
+                console.time("layout");
+                const layout = cy.layout(buildLayout());
+                layout.one("layoutstop", () => {
+                    // TEMP DEBUG TIMING: remove after renderer performance investigation.
+                    console.timeEnd("layout");
+                });
+                layout.run();
                 cy.fit(undefined, 60);
 
                 const loading = document.getElementById("loading");
@@ -1021,9 +1121,8 @@
             });
 
             // ── MODE STATE ──
-            // "overview" | "exploration"
             let appMode = "overview";
-            let focusHistory = []; // array of node ids — navigation history
+            let focusHistory = []; // array of {id, kind, viewType, moduleId?}
 
             // ── DOM REFS ──
             const navBack        = document.getElementById("nav-back");
@@ -1054,30 +1153,50 @@
             }
 
             // ── OVERVIEW MODE ──
+            // store original elements for restoration
+            const originalElements = graph.nodes.map(n => ({
+                data: {
+                    id: n.id, label: n.label || n.id,
+                    kind: n.kind || "module", language: n.language,
+                    file_path: n.file_path || null, module_id: n.module_id || null,
+                }
+            })).concat(graph.edges.map(e => ({
+                data: {
+                    source: e.source, target: e.target,
+                    kind: e.kind || "calls", label: e.label || "",
+                    resolution_kind: e.resolution_kind || "unknown",
+                }
+            })));
+
             function enterOverview(animate = true) {
                 appMode = "overview";
                 focusHistory = [];
 
                 if (animate) {
-                    // step 1: fade out current subgraph view
                     graphEl.style.transition = "opacity 0.18s ease";
                     graphEl.style.opacity = "0";
 
                     setTimeout(() => {
-                        // step 2: restore all elements (still invisible)
-                        cy.elements().removeClass("focus neighbor hidden focus-edge hovered search-dim search-match");
+                        // restore original elements if we drilled into functions
+                        const currentIds = new Set(cy.nodes().map(n => n.id()));
+                        const originalIds = new Set(graph.nodes.map(n => n.id));
+                        const needsRestore = ![...originalIds].every(id => currentIds.has(id));
 
-                        // step 3: animate camera zoom-out to full graph
+                        if (needsRestore) {
+                            cy.elements().remove();
+                            cy.add(originalElements);
+                            cy.layout(buildLayout()).run();
+                        } else {
+                            cy.elements().removeClass("focus neighbor hidden focus-edge hovered search-dim search-match");
+                        }
+
                         cy.animate({
                             fit: { eles: cy.elements(), padding: 60 },
                             duration: 350,
                             easing: "ease-in-out-cubic",
                             complete: () => {
-                                // step 4: fade back in on the full graph
                                 graphEl.style.opacity = "1";
-                                setTimeout(() => {
-                                    graphEl.style.transition = "";
-                                }, 200);
+                                setTimeout(() => { graphEl.style.transition = ""; }, 200);
                             }
                         });
                     }, 180);
@@ -1086,22 +1205,18 @@
                     cy.fit(undefined, 60);
                 }
 
-                // update header
                 navBack.classList.remove("visible");
                 navCrumbs.innerHTML = `
                     <span class="nav-title">{{title}}</span>
                     <span class="nav-subtitle">{{subtitle}}</span>
                 `;
                 modeIndicator.textContent = "overview";
-
-                // update sidebar
                 sidebarModeTag.textContent = "overview";
                 sidebarModeTag.classList.remove("exploration");
                 sidebarEmpty.style.display = "flex";
                 sidebarContent.classList.remove("visible");
             }
 
-            // ── EXPLORATION MODE ──
             function enterExploration(nodeId, addToHistory = true) {
                 const node = cy.getElementById(nodeId);
                 if (!node || node.length === 0) return;
@@ -1110,62 +1225,49 @@
                 appMode = "exploration";
 
                 if (addToHistory) {
-                    focusHistory.push(nodeId);
+                    focusHistory.push({
+                        id: nodeId,
+                        kind: node.data("kind") || "module",
+                        viewType: "node",
+                    });
                 }
 
-                // compute direct neighbors
                 const neighbors = node.neighborhood().nodes();
                 const focusEdges = node.connectedEdges();
 
                 if (wasOverview) {
-                    // overview → exploration
-                    // step 1: fade out everything except the clicked node
                     graphEl.style.transition = "opacity 0.18s ease";
                     graphEl.style.opacity = "0";
-
                     setTimeout(() => {
-                        // step 2: apply classes while invisible
                         cy.nodes().removeClass("focus neighbor hidden hovered search-dim search-match");
                         cy.edges().removeClass("focus-edge hidden search-dim");
-
                         node.addClass("focus");
                         neighbors.addClass("neighbor");
                         cy.nodes().not(node).not(neighbors).addClass("hidden");
                         cy.edges().not(focusEdges).addClass("hidden");
                         focusEdges.addClass("focus-edge");
-
-                        // step 3: animate camera zoom-in to subgraph
                         const subgraph = node.add(neighbors);
                         cy.animate({
                             fit: { eles: subgraph, padding: 80 },
                             duration: 350,
                             easing: "ease-in-out-cubic",
                             complete: () => {
-                                // step 4: fade back in on focused subgraph
                                 graphEl.style.opacity = "1";
-                                setTimeout(() => {
-                                    graphEl.style.transition = "";
-                                }, 200);
+                                setTimeout(() => { graphEl.style.transition = ""; }, 200);
                             }
                         });
                     }, 180);
-
                 } else {
-                    // exploration → exploration (navigating between nodes)
-                    // lighter transition — just a quick fade and refit
                     graphEl.style.transition = "opacity 0.12s ease";
                     graphEl.style.opacity = "0";
-
                     setTimeout(() => {
                         cy.nodes().removeClass("focus neighbor hidden hovered");
                         cy.edges().removeClass("focus-edge hidden");
-
                         node.addClass("focus");
                         neighbors.addClass("neighbor");
                         cy.nodes().not(node).not(neighbors).addClass("hidden");
                         cy.edges().not(focusEdges).addClass("hidden");
                         focusEdges.addClass("focus-edge");
-
                         const subgraph = node.add(neighbors);
                         cy.animate({
                             fit: { eles: subgraph, padding: 80 },
@@ -1173,31 +1275,33 @@
                             easing: "ease-in-out-cubic",
                             complete: () => {
                                 graphEl.style.opacity = "1";
-                                setTimeout(() => {
-                                    graphEl.style.transition = "";
-                                }, 150);
+                                setTimeout(() => { graphEl.style.transition = ""; }, 150);
                             }
                         });
                     }, 120);
                 }
 
-                // update header breadcrumb immediately
                 navBack.classList.add("visible");
                 updateBreadcrumb();
                 modeIndicator.textContent = "exploring";
-
-                // update sidebar immediately
                 sidebarModeTag.textContent = "exploring";
                 sidebarModeTag.classList.add("exploration");
                 showSidebar(node);
             }
 
+            function kindIcon(kind) {
+                if (kind === "module") return `<span class="crumb-icon-module">{}</span>`;
+                if (kind === "function") return `<span class="crumb-icon-function">ƒ</span>`;
+                return "◈";
+            }
+
             function updateBreadcrumb() {
                 navCrumbs.innerHTML = "";
 
-                focusHistory.forEach((id, i) => {
-                    const node = cy.getElementById(id);
-                    const label = node.data("label") || id;
+                focusHistory.forEach((entry, i) => {
+                    const node = cy.getElementById(entry.id);
+                    const label = node.data("label") || entry.id;
+                    const kind = node.data("kind") || entry.kind || "module";
                     const isCurrent = i === focusHistory.length - 1;
 
                     if (i > 0) {
@@ -1209,14 +1313,17 @@
 
                     const crumb = document.createElement("span");
                     crumb.className = "nav-crumb" + (isCurrent ? " current" : "");
-                    crumb.textContent = label;
-                    crumb.title = id;
+                    crumb.title = entry.id;
+                    crumb.innerHTML = `${kindIcon(kind)} ${label}`;
 
                     if (!isCurrent) {
                         crumb.addEventListener("click", () => {
-                            // navigate back to this point in history
                             focusHistory = focusHistory.slice(0, i + 1);
-                            enterExploration(id, false);
+                            if (entry.viewType === "module-functions") {
+                                exploreFunctions(entry.moduleId, false);
+                            } else {
+                                enterExploration(entry.id, false);
+                            }
                         });
                     }
 
@@ -1224,21 +1331,142 @@
                 });
             }
 
+            // ── DOM REFS (additional) ──
+            const sectionExplore = document.getElementById("section-explore");
+            const exploreBtn     = document.getElementById("explore-btn");
+
+            exploreBtn.addEventListener("click", () => {
+                const moduleId = exploreBtn.dataset.moduleId;
+                if (moduleId) exploreFunctions(moduleId);
+            });
+
+            // ── EXPLORE FUNCTIONS ──
+            function exploreFunctions(moduleId, addToHistory = true) {
+                if (!fullBundle || !fullBundle.nodes) return;
+
+                const fnNodes = fullBundle.nodes.filter(
+                    n => n.kind === "function" && n.module_id === moduleId
+                );
+                const fnIds = new Set(fnNodes.map(n => n.id));
+                const fnEdges = fullBundle.edges.filter(
+                    e => e.kind === "calls" && fnIds.has(e.source) && fnIds.has(e.target)
+                );
+
+                if (fnNodes.length === 0) {
+                    nodeMeta.textContent = "no functions found in bundle";
+                    return;
+                }
+
+                appMode = "exploration";
+
+                if (addToHistory) {
+                    focusHistory.push({
+                        id: moduleId,
+                        kind: "module",
+                        viewType: "module-functions",
+                        moduleId: moduleId,
+                    });
+                }
+
+                const newElements = [
+                    ...fnNodes.map(n => ({
+                        data: {
+                            id: n.id,
+                            label: n.label || n.id,
+                            kind: n.kind,
+                            language: n.language,
+                            file_path: n.file_path || null,
+                            module_id: n.module_id || null,
+                        }
+                    })),
+                    ...fnEdges.map(e => ({
+                        data: {
+                            source: e.source,
+                            target: e.target,
+                            kind: e.kind,
+                            label: e.label || "",
+                            resolution_kind: e.resolution_kind || "unknown",
+                        }
+                    })),
+                ];
+
+                graphEl.style.transition = "opacity 0.18s ease";
+                graphEl.style.opacity = "0";
+
+                setTimeout(() => {
+                    cy.elements().remove();
+                    cy.add(newElements);
+                    cy.layout({
+                        name: "dagre",
+                        rankDir: "LR",
+                        rankSep: 70,
+                        nodeSep: 35,
+                        edgeSep: 10,
+                        animate: false,
+                        fit: true,
+                        padding: 60,
+                    }).run();
+                    cy.fit(undefined, 60);
+                    graphEl.style.opacity = "1";
+                    setTimeout(() => { graphEl.style.transition = ""; }, 200);
+
+                    navBack.classList.add("visible");
+                    updateBreadcrumb();
+                    modeIndicator.textContent = "exploring";
+                    sidebarModeTag.textContent = "exploring";
+                    sidebarModeTag.classList.add("exploration");
+                    sidebarEmpty.style.display = "none";
+                    sidebarContent.classList.add("visible");
+                    nodeName.textContent = moduleId.split(".").pop();
+                    nodeName.style.color = "#79b8ff";
+                    nodeMeta.textContent = `{} module · ${fnNodes.length} functions`;
+                    nodeFilepath.style.display = "none";
+                    sectionExplore.style.display = "none";
+                    sectionCalls.style.display = "none";
+                    sectionCallers.style.display = "none";
+                }, 180);
+            }
+
             // ── SIDEBAR ──
             function showSidebar(node) {
                 const data = node.data();
+                const kind = data.kind || "module";
+                const isModule = kind === "module";
 
                 sidebarEmpty.style.display = "none";
                 sidebarContent.classList.add("visible");
 
                 nodeName.textContent = data.label || data.id;
-                nodeMeta.textContent = data.kind || "";
+                nodeName.style.color = isModule ? "#79b8ff" : "#e3b341";
+
+                if (!isModule && data.module_id) {
+                    nodeMeta.textContent = `ƒ function · ${data.module_id}`;
+                } else if (isModule) {
+                    nodeMeta.textContent = `{} module`;
+                } else {
+                    nodeMeta.textContent = kind;
+                }
 
                 if (data.file_path) {
                     nodeFilepath.textContent = data.file_path;
                     nodeFilepath.style.display = "block";
                 } else {
                     nodeFilepath.style.display = "none";
+                }
+
+                // explore functions button for module nodes
+                if (isModule && fullBundle && fullBundle.nodes) {
+                    const hasFunctions = fullBundle.nodes.some(
+                        n => n.kind === "function" && n.module_id === data.id
+                    );
+                    if (hasFunctions) {
+                        exploreBtn.dataset.moduleId = data.id;
+                        sectionExplore.style.display = "block";
+                    } else {
+                        sectionExplore.style.display = "none";
+                    }
+                } else {
+                    sectionExplore.style.display = "none";
                 }
 
                 // outgoing edges
@@ -1252,9 +1480,7 @@
                         const div = document.createElement("div");
                         div.className = "edge-item";
                         div.innerHTML = `<span class="edge-arrow">→</span><span style="flex:1">${label}</span>${resTag(e.data("resolution_kind"))}`;
-                        div.addEventListener("click", () => {
-                            enterExploration(e.data("target"));
-                        });
+                        div.addEventListener("click", () => enterExploration(e.data("target")));
                         callsList.appendChild(div);
                     });
                     sectionCalls.style.display = "flex";
@@ -1274,9 +1500,7 @@
                         const div = document.createElement("div");
                         div.className = "edge-item";
                         div.innerHTML = `<span class="edge-arrow">←</span><span style="flex:1">${label}</span>${resTag(e.data("resolution_kind"))}`;
-                        div.addEventListener("click", () => {
-                            enterExploration(e.data("source"));
-                        });
+                        div.addEventListener("click", () => enterExploration(e.data("source")));
                         callersList.appendChild(div);
                     });
                     sectionCallers.style.display = "flex";
@@ -1285,6 +1509,58 @@
                     sectionCallers.style.display = "none";
                 }
             }
+
+            // ── RIGHT-CLICK CONTEXT MENU ──
+            cy.cxtmenu({
+                selector: "node[kind='module']",
+                commands: [
+                    {
+                        content: "Explore functions",
+                        select: (node) => exploreFunctions(node.data("id")),
+                    },
+                    {
+                        content: "Copy ID",
+                        select: (node) => navigator.clipboard.writeText(node.data("id")),
+                    },
+                ],
+                fillColor: "#161b22",
+                activeFillColor: "rgba(88, 166, 255, 0.15)",
+                activePadding: 10,
+                indicatorSize: 24,
+                separatorWidth: 3,
+                spotlightPadding: 4,
+                adaptativeNodeSpotlightRadius: true,
+                openMenuEvents: "cxttap",
+            });
+
+            cy.cxtmenu({
+                selector: "node[kind='function']",
+                commands: [
+                    {
+                        content: "Explore callees",
+                        select: (node) => enterExploration(node.data("id")),
+                    },
+                    {
+                        content: "Explore callers",
+                        select: (node) => {
+                            // enter exploration centered on this node
+                            enterExploration(node.data("id"));
+                        },
+                    },
+                    {
+                        content: "Copy ID",
+                        select: (node) => navigator.clipboard.writeText(node.data("id")),
+                    },
+                ],
+                fillColor: "#161b22",
+                activeFillColor: "rgba(227, 179, 65, 0.15)",
+                activePadding: 10,
+                indicatorSize: 24,
+                separatorWidth: 3,
+                spotlightPadding: 4,
+                adaptativeNodeSpotlightRadius: true,
+                openMenuEvents: "cxttap",
+            });
 
             // ── NODE INTERACTIONS ──
             cy.on("mouseover", "node", (e) => {
@@ -1446,7 +1722,6 @@
                 const node = currentResults[idx];
                 if (!node) return;
                 closeSearch();
-                // search always enters exploration mode
                 focusHistory = [];
                 enterExploration(node.data("id"));
             }

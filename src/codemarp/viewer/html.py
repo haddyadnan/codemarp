@@ -89,6 +89,7 @@ def wrap_cytoscape_html(
     language: str = "",
     node_count: int = 0,
     edge_count: int = 0,
+    full_bundle_json: dict | None = None,
 ) -> str:
     template = _cytoscape_template_path().read_text(encoding="utf-8")
     layout = compute_cytoscape_layout_params(node_count, edge_count, mode)
@@ -107,6 +108,7 @@ def wrap_cytoscape_html(
         .replace("{{layout}}", layout["layout"])
         .replace("{{rank_sep}}", str(layout["rank_sep"]))
         .replace("{{node_sep}}", str(layout["node_sep"]))
+        .replace("{{full_bundle_json}}", json.dumps(full_bundle_json or {}))
     )
 
 
