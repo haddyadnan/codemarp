@@ -5,6 +5,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{{title}} · codemarp</title>
         <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+        <script src="https://unpkg.com/dagre/dist/dagre.min.js"></script>
+        <script src="https://unpkg.com/cytoscape-dagre/cytoscape-dagre.js"></script>
         <style>
             @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap");
 
@@ -838,6 +840,9 @@
         <script>
             const graph = {{graph_json}};
 
+            // register dagre layout extension
+            cytoscape.use(cytoscapeDagre);
+
             // ── CYTOSCAPE INIT ──
             const cy = cytoscape({
                 container: document.getElementById("graph"),
@@ -971,22 +976,41 @@
             });
 
             // ── LAYOUT (run once, positions never change) ──
-            cy.ready(() => {
-                cy.layout({
-                    name: "cose",
-                    animate: false,
-                    fit: true,
-                    padding: 60,
-                    nodeRepulsion: () => {{node_repulsion}},
-                    edgeElasticity: () => 32,
-                    idealEdgeLength: () => {{ideal_edge_length}},
-                    gravity: 0.25,
-                    numIter: {{num_iter}},
-                    initialTemp: 200,
-                    coolingFactor: 0.95,
-                    minTemp: 1.0,
-                }).run();
+            // layout is chosen by Python at generation time based on graph shape
+            const LAYOUT_NAME = "{{layout}}"; // "dagre" | "cose"
 
+            function buildLayout() {
+                if (LAYOUT_NAME === "dagre") {
+                    return {
+                        name: "dagre",
+                        rankDir: "LR",        // left-to-right — sources left, leaves right
+                        rankSep: {{rank_sep}},  // horizontal space between ranks
+                        nodeSep: {{node_sep}},  // vertical space between nodes in same rank
+                        edgeSep: 10,
+                        animate: false,
+                        fit: true,
+                        padding: 60,
+                    };
+                } else {
+                    return {
+                        name: "cose",
+                        animate: false,
+                        fit: true,
+                        padding: 60,
+                        nodeRepulsion: () => {{node_repulsion}},
+                        edgeElasticity: () => 32,
+                        idealEdgeLength: () => {{ideal_edge_length}},
+                        gravity: 0.25,
+                        numIter: {{num_iter}},
+                        initialTemp: 200,
+                        coolingFactor: 0.95,
+                        minTemp: 1.0,
+                    };
+                }
+            }
+
+            cy.ready(() => {
+                cy.layout(buildLayout()).run();
                 cy.fit(undefined, 60);
 
                 const loading = document.getElementById("loading");

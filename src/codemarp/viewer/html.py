@@ -12,7 +12,28 @@ def _cytoscape_template_path() -> Path:
     return Path(__file__).parent / "templates" / "cytoscape.html"
 
 
-def compute_cytoscape_layout_params(node_count: int, edge_count: int) -> dict:
+def compute_cytoscape_layout_params(
+    node_count: int, edge_count: int, graph_mode: str
+) -> dict:
+
+    edge_ratio = edge_count / max(node_count, 1)
+
+    # Direction matters most for trace/reverse/full.
+    # Fall back to CoSE only for dense module/mid-level style graphs.
+    use_dagre = graph_mode in {"full", "trace", "reverse"} or edge_ratio < 2.5
+
+    if use_dagre:
+        rank_sep = max(60, min(150, 40 + node_count * 1.5))
+        node_sep = max(30, min(80, 20 + node_count * 0.5))
+
+        return {
+            "layout": "dagre",
+            "rank_sep": int(rank_sep),
+            "node_sep": int(node_sep),
+            "node_repulsion": 8000,
+            "ideal_edge_length": 80,
+            "num_iter": 2500,
+        }
 
     density = edge_count / max(node_count, 1)
 
@@ -26,9 +47,12 @@ def compute_cytoscape_layout_params(node_count: int, edge_count: int) -> dict:
     num_iter = max(1000, min(5000, node_count * 30))
 
     return {
+        "layout": "cose",
         "node_repulsion": int(node_repulsion),
         "ideal_edge_length": int(ideal_edge_length),
         "num_iter": int(num_iter),
+        "rank_sep": 80,
+        "node_sep": 40,
     }
 
 
@@ -67,7 +91,7 @@ def wrap_cytoscape_html(
     edge_count: int = 0,
 ) -> str:
     template = _cytoscape_template_path().read_text(encoding="utf-8")
-    layout = compute_cytoscape_layout_params(node_count, edge_count)
+    layout = compute_cytoscape_layout_params(node_count, edge_count, mode)
 
     return (
         template.replace("{{title}}", title)
@@ -80,6 +104,9 @@ def wrap_cytoscape_html(
         .replace("{{node_repulsion}}", str(layout["node_repulsion"]))
         .replace("{{ideal_edge_length}}", str(layout["ideal_edge_length"]))
         .replace("{{num_iter}}", str(layout["num_iter"]))
+        .replace("{{layout}}", layout["layout"])
+        .replace("{{rank_sep}}", str(layout["rank_sep"]))
+        .replace("{{node_sep}}", str(layout["node_sep"]))
     )
 
 
