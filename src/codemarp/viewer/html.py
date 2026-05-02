@@ -112,7 +112,7 @@ def wrap_cytoscape_html(
     )
 
 
-def open_mermaid_view(html: str, output_path: Path | None = None) -> Path:
+def open_html_view(html: str, output_path: Path | None = None) -> Path:
     if output_path is None:
         tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".html")
         path = Path(tmp.name)

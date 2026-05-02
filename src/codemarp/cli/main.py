@@ -147,7 +147,7 @@ def view_command(
         stats_for_mode,
     )
     from codemarp.viewer import (
-        open_mermaid_view,
+        open_html_view,
         wrap_cytoscape_html,
         wrap_mermaid_html,
     )
@@ -180,8 +180,21 @@ def view_command(
         low_mode=low_mode,
     )
 
-    title = f"Codemarp - {mode.value}"
-    subtitle = f"mode: {mode.value}"
+    resolved = root.resolve()
+    pkg_name = resolved.name or str(resolved)
+    title = f"{pkg_name} - {mode.value}"
+
+    if mode is ModeType.TRACE:
+        subtitle = f"trace from {focus}"
+    elif mode is ModeType.MODULE:
+        subtitle = f"module: {module}"
+    elif mode is ModeType.REVERSE:
+        subtitle = f"reverse from {focus}"
+    elif mode is ModeType.LOW:
+        subtitle = f"low-level: {focus}"
+    else:
+        subtitle = "full architecture"
+
     t1 = perf_counter()
     if renderer == "cytoscape":
         graph_json = render_mode_to_json(
@@ -224,11 +237,16 @@ def view_command(
         print(f"html/render prep: {perf_counter() - t1:.2f}s")
 
     if out is not None:
+        if out.suffix.lower() not in {".html", ".htm"}:
+            print(
+                f"Warning: viewer output is HTML, but the file extension is "
+                f"'{out.suffix or '(none)'}'. Consider using .html for browser viewing."
+            )
         out = out.resolve()
         out.write_text(html, encoding="utf-8")
-        open_mermaid_view(html, output_path=out)
+        open_html_view(html, output_path=out)
     else:
-        out = open_mermaid_view(html)
+        out = open_html_view(html)
 
     print(f"Parsed {len(build_result.parsed_modules)} modules")
     print(f"Discovered {len(build_result.bundle.functions)} functions")
