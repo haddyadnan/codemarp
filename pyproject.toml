@@ -30,3 +30,6 @@ codemarp = ["viewer/templates/*.html"]
 
 [project.scripts]
 codemarp = "codemarp.cli.main:main"
+
+[tool.uv]
+exclude-newer = "P7D"

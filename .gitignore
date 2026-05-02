@@ -215,3 +215,4 @@ scripts/
 PHILOSOPHY.md
 backlog.md
 sample_trace.py
+.DS_Store
