@@ -7,7 +7,7 @@
         <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
         <script src="https://unpkg.com/dagre/dist/dagre.min.js"></script>
         <script src="https://unpkg.com/cytoscape-dagre/cytoscape-dagre.js"></script>
-        <script src="https://unpkg.com/cytoscape-cxtmenu/cytoscape-cxtmenu.js"></script>
+
         <style>
             @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap");
 
@@ -70,7 +70,6 @@
                 flex-shrink: 0;
             }
 
-            /* nav breadcrumb — shows path in exploration mode */
             .nav-breadcrumb {
                 display: flex;
                 align-items: center;
@@ -102,7 +101,6 @@
                 color: var(--text-hi);
                 border-color: var(--border-hi);
             }
-
             .nav-back.visible {
                 display: flex;
             }
@@ -147,13 +145,11 @@
                 flex-shrink: 0;
             }
 
-            /* overview title (shown in overview mode) */
             .nav-title {
                 font-size: 12px;
                 color: var(--text-md);
                 font-weight: 600;
             }
-
             .nav-subtitle {
                 font-size: 12px;
                 color: var(--text-lo);
@@ -177,12 +173,6 @@
                 border-radius: 3px;
                 border: 1px solid var(--border-hi);
                 color: var(--text-lo);
-            }
-
-            .badge-blue {
-                border-color: var(--accent);
-                color: var(--accent);
-                background: rgba(31, 111, 235, 0.13);
             }
 
             .badge-green {
@@ -280,7 +270,6 @@
                 font-size: 28px;
                 opacity: 0.4;
             }
-
             .sidebar-empty-hint {
                 font-size: 11px;
                 color: var(--text-dim);
@@ -460,7 +449,6 @@
             .zoom-btn.reset {
                 font-size: 10px;
                 letter-spacing: 0.05em;
-                color: var(--text-lo);
             }
 
             /* ── FOOTER ── */
@@ -481,12 +469,10 @@
                 align-items: center;
                 gap: 5px;
             }
-
             .footer-stat-value {
                 color: #c9d1d9;
                 font-weight: 600;
             }
-
             .footer-hint {
                 margin-left: auto;
                 color: #8b949e;
@@ -530,7 +516,6 @@
                 }
             }
 
-            /* scrollbar */
             ::-webkit-scrollbar {
                 width: 4px;
             }
@@ -727,31 +712,131 @@
                 flex-shrink: 0;
             }
 
-            /* ── NODE KIND ICONS in breadcrumb ── */
             .crumb-icon-module {
                 color: #79b8ff;
             }
             .crumb-icon-function {
                 color: #e3b341;
             }
+
+            /* ── CONTEXT DROPDOWN ── */
+            .ctx-menu {
+                display: none;
+                position: fixed;
+                z-index: 200;
+                background: #1c2128;
+                border: 1px solid var(--border-hi);
+                border-radius: 7px;
+                overflow: hidden;
+                box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+                min-width: 160px;
+            }
+
+            .ctx-menu.open {
+                display: block;
+            }
+
+            .ctx-item {
+                padding: 9px 14px;
+                font-size: 12px;
+                color: var(--text-md);
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                transition:
+                    background 0.1s,
+                    color 0.1s;
+                user-select: none;
+                white-space: nowrap;
+            }
+
+            .ctx-item:hover {
+                background: var(--border);
+                color: var(--text-hi);
+            }
+
+            .ctx-item-icon {
+                font-size: 13px;
+                flex-shrink: 0;
+                color: var(--text-lo);
+            }
+
+            .ctx-sep {
+                height: 1px;
+                background: var(--border);
+                margin: 2px 0;
+            }
+
+            /* ── PAN CONTROLS ── */
+            .nav-controls {
+                position: absolute;
+                bottom: 20px;
+                right: 64px;
+                display: grid;
+                grid-template-columns: 36px 36px 36px;
+                grid-template-rows: 36px 36px 36px;
+                gap: 2px;
+                z-index: 10;
+            }
+
+            .pan-btn {
+                width: 36px;
+                height: 36px;
+                background: var(--surface);
+                border: 1px solid var(--border-hi);
+                border-radius: 6px;
+                color: var(--text-lo);
+                font-size: 14px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition:
+                    background 0.1s,
+                    color 0.1s;
+                user-select: none;
+            }
+
+            .pan-btn:hover {
+                background: var(--border);
+                color: var(--text-hi);
+            }
+            .pan-btn:active {
+                background: var(--border-hi);
+            }
+            /* grid positions: up=top-center, left=mid-left, right=mid-right, down=bot-center */
+            .pan-up {
+                grid-column: 2;
+                grid-row: 1;
+            }
+            .pan-left {
+                grid-column: 1;
+                grid-row: 2;
+            }
+            .pan-right {
+                grid-column: 3;
+                grid-row: 2;
+            }
+            .pan-down {
+                grid-column: 2;
+                grid-row: 3;
+            }
         </style>
     </head>
     <body>
         <header>
             <span class="logo">codemarp</span>
-
             <div class="nav-breadcrumb">
                 <div class="nav-back" id="nav-back">
                     <span>←</span>
                     <span>overview</span>
                 </div>
                 <div class="nav-crumbs" id="nav-crumbs">
-                    <!-- overview mode shows title -->
                     <span class="nav-title">{{title}}</span>
                     <span class="nav-subtitle">{{subtitle}}</span>
                 </div>
             </div>
-
             <div class="header-right">
                 <span class="mode-indicator" id="mode-indicator">overview</span>
                 <span class="badge badge-green">{{mode}}</span>
@@ -764,7 +849,6 @@
                 <span>laying out graph</span>
             </div>
 
-            <!-- LEFT SIDEBAR -->
             <aside class="sidebar">
                 <div class="sidebar-header">
                     <span>inspector</span>
@@ -787,7 +871,6 @@
                         id="node-filepath"
                         style="display: none"
                     ></div>
-                    <!-- explore functions button — shown for module nodes only -->
                     <div id="section-explore" style="display: none">
                         <button class="explore-btn" id="explore-btn">
                             <span class="explore-btn-icon">ƒ</span>
@@ -825,10 +908,8 @@
                 </div>
             </aside>
 
-            <!-- GRAPH -->
             <div id="graph"></div>
 
-            <!-- SEARCH OVERLAY -->
             <div class="search-overlay" id="search-overlay">
                 <div class="search-input-row">
                     <span class="search-icon">⌕</span>
@@ -850,7 +931,6 @@
                 </div>
             </div>
 
-            <!-- ZOOM -->
             <div class="zoom-controls">
                 <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
                 <button class="zoom-btn reset" id="zoom-reset" title="Fit">
@@ -860,45 +940,60 @@
                     −
                 </button>
             </div>
+
+            <!-- PAN CONTROLS -->
+            <div class="nav-controls">
+                <button class="pan-btn pan-up" id="pan-up" title="Pan up">
+                    ↑
+                </button>
+                <button class="pan-btn pan-left" id="pan-left" title="Pan left">
+                    ←
+                </button>
+                <button
+                    class="pan-btn pan-right"
+                    id="pan-right"
+                    title="Pan right"
+                >
+                    →
+                </button>
+                <button class="pan-btn pan-down" id="pan-down" title="Pan down">
+                    ↓
+                </button>
+            </div>
+
+            <!-- CONTEXT MENU DROPDOWN -->
+            <div class="ctx-menu" id="ctx-menu"></div>
         </div>
 
         <footer>
-            <span class="footer-stat">
-                <span>mode</span>
-                <span class="footer-stat-value">{{mode}}</span>
-            </span>
-            <span class="footer-stat">
-                <span>lang</span>
-                <span class="footer-stat-value">{{language}}</span>
-            </span>
-            <span class="footer-stat">
-                <span>nodes</span>
-                <span class="footer-stat-value">{{node_count}}</span>
-            </span>
-            <span class="footer-stat">
-                <span>edges</span>
-                <span class="footer-stat-value">{{edge_count}}</span>
-            </span>
+            <span class="footer-stat"
+                ><span>mode</span
+                ><span class="footer-stat-value">{{mode}}</span></span
+            >
+            <span class="footer-stat"
+                ><span>lang</span
+                ><span class="footer-stat-value">{{language}}</span></span
+            >
+            <span class="footer-stat"
+                ><span>nodes</span
+                ><span class="footer-stat-value">{{node_count}}</span></span
+            >
+            <span class="footer-stat"
+                ><span>edges</span
+                ><span class="footer-stat-value">{{edge_count}}</span></span
+            >
             <span class="footer-hint"
-                >⌘K search · click node to explore · double-click canvas to zoom
-                out</span
+                >⌘K search · click node to explore · double-click canvas to go
+                back</span
             >
         </footer>
 
         <script>
-            const graph = {{graph_json}};
-            const fullBundle = {{full_bundle_json}}; // all nodes+edges for drill-down
+            const graph      = {{graph_json}};
+            const fullBundle = {{full_bundle_json}};
 
-            // TEMP DEBUG TIMING: remove after renderer performance investigation.
-            console.log("nodes", graph.nodes.length, "edges", graph.edges.length);
-
-            // register layout and menu extensions
             cytoscape.use(cytoscapeDagre);
-            cytoscape.use(cytoscapeCxtmenu);
 
-            // ── CYTOSCAPE INIT ──
-            // TEMP DEBUG TIMING: remove after renderer performance investigation.
-            console.time("cytoscape init");
             const cy = cytoscape({
                 container: document.getElementById("graph"),
                 elements: [
@@ -923,7 +1018,6 @@
                     })),
                 ],
                 style: [
-                    // ── BASE NODE (fallback) ──
                     {
                         selector: "node",
                         style: {
@@ -943,7 +1037,6 @@
                             "text-max-width": "220px",
                         },
                     },
-                    // ── MODULE NODE ──
                     {
                         selector: "node[kind='module']",
                         style: {
@@ -957,7 +1050,6 @@
                             "padding": "12px",
                         },
                     },
-                    // ── FUNCTION NODE ──
                     {
                         selector: "node[kind='function']",
                         style: {
@@ -971,16 +1063,10 @@
                             "padding": "10px",
                         },
                     },
-                    // ── HOVER ──
                     {
                         selector: "node.hovered",
-                        style: {
-                            "background-color": "#2d333b",
-                            "border-width": 2.5,
-                            "color": "#ffffff",
-                        },
+                        style: { "background-color": "#2d333b", "border-width": 2.5, "color": "#ffffff" },
                     },
-                    // ── FOCUS (selected in exploration) ──
                     {
                         selector: "node.focus",
                         style: {
@@ -1000,22 +1086,11 @@
                             "color": "#ffffff",
                         },
                     },
-                    // ── NEIGHBOR ──
                     {
                         selector: "node.neighbor",
-                        style: {
-                            "background-color": "#2d333b",
-                            "border-width": 1.5,
-                            "color": "#e6edf3",
-                            "opacity": 1,
-                        },
+                        style: { "background-color": "#2d333b", "border-width": 1.5, "color": "#e6edf3", "opacity": 1 },
                     },
-                    // ── HIDDEN ──
-                    {
-                        selector: "node.hidden",
-                        style: { "display": "none" },
-                    },
-                    // ── EDGES ──
+                    { selector: "node.hidden", style: { "display": "none" } },
                     {
                         selector: "edge",
                         style: {
@@ -1029,56 +1104,32 @@
                     },
                     {
                         selector: "edge.focus-edge",
-                        style: {
-                            "line-color": "#58a6ff",
-                            "target-arrow-color": "#58a6ff",
-                            "width": 2,
-                            "opacity": 1,
-                        },
+                        style: { "line-color": "#58a6ff", "target-arrow-color": "#58a6ff", "width": 2, "opacity": 1 },
                     },
-                    {
-                        selector: "edge.hidden",
-                        style: {
-                            "display": "none",
-                        },
-                    },
-                    // ── SEARCH STATES ──
-                    {
-                        selector: "node.search-dim",
-                        style: { "opacity": 0.15 },
-                    },
+                    { selector: "edge.hidden", style: { "display": "none" } },
+                    { selector: "node.search-dim", style: { "opacity": 0.15 } },
                     {
                         selector: "node.search-match",
-                        style: {
-                            "border-color": "#58a6ff",
-                            "border-width": 2,
-                            "opacity": 1,
-                        },
+                        style: { "border-color": "#58a6ff", "border-width": 2, "opacity": 1 },
                     },
-                    {
-                        selector: "edge.search-dim",
-                        style: { "opacity": 0.05 },
-                    },
+                    { selector: "edge.search-dim", style: { "opacity": 0.05 } },
                 ],
                 userZoomingEnabled: true,
                 userPanningEnabled: true,
                 minZoom: 0.05,
                 maxZoom: 8,
             });
-            // TEMP DEBUG TIMING: remove after renderer performance investigation.
-            console.timeEnd("cytoscape init");
 
-            // ── LAYOUT (run once, positions never change) ──
-            // layout is chosen by Python at generation time based on graph shape
-            const LAYOUT_NAME = "{{layout}}"; // "dagre" | "cose"
+            // ── LAYOUT ──
+            const LAYOUT_NAME = "{{layout}}";
 
             function buildLayout() {
                 if (LAYOUT_NAME === "dagre") {
                     return {
                         name: "dagre",
-                        rankDir: "LR",        // left-to-right — sources left, leaves right
-                        rankSep: {{rank_sep}},  // horizontal space between ranks
-                        nodeSep: {{node_sep}},  // vertical space between nodes in same rank
+                        rankDir: "LR",
+                        rankSep: {{rank_sep}},
+                        nodeSep: {{node_sep}},
                         edgeSep: 10,
                         animate: false,
                         fit: true,
@@ -1102,17 +1153,22 @@
                 }
             }
 
-            cy.ready(() => {
-                // TEMP DEBUG TIMING: remove after renderer performance investigation.
-                console.time("layout");
-                const layout = cy.layout(buildLayout());
-                layout.one("layoutstop", () => {
-                    // TEMP DEBUG TIMING: remove after renderer performance investigation.
-                    console.timeEnd("layout");
-                });
-                layout.run();
-                cy.fit(undefined, 60);
+            function buildFunctionLayout() {
+                return {
+                    name: "dagre",
+                    rankDir: "LR",
+                    rankSep: 70,
+                    nodeSep: 35,
+                    edgeSep: 10,
+                    animate: false,
+                    fit: true,
+                    padding: 60,
+                };
+            }
 
+            cy.ready(() => {
+                cy.layout(buildLayout()).run();
+                cy.fit(undefined, 60);
                 const loading = document.getElementById("loading");
                 if (loading) {
                     loading.style.opacity = "0";
@@ -1120,7 +1176,7 @@
                 }
             });
 
-            // ── MODE STATE ──
+            // ── STATE ──
             let appMode = "overview";
             let focusHistory = []; // array of {id, kind, viewType, moduleId?}
 
@@ -1141,6 +1197,8 @@
             const callsCount     = document.getElementById("calls-count");
             const callersCount   = document.getElementById("callers-count");
             const graphEl        = document.getElementById("graph");
+            const sectionExplore = document.getElementById("section-explore");
+            const exploreBtn     = document.getElementById("explore-btn");
 
             // ── HELPERS ──
             function resTag(kind) {
@@ -1149,11 +1207,16 @@
             }
 
             function nodeIcon(kind) {
-                return kind === "function" ? "ƒ" : "◻";
+                return kind === "function" ? "ƒ" : "{}";
             }
 
-            // ── OVERVIEW MODE ──
-            // store original elements for restoration
+            function kindIcon(kind) {
+                if (kind === "module")   return `<span class="crumb-icon-module">{}</span>`;
+                if (kind === "function") return `<span class="crumb-icon-function">ƒ</span>`;
+                return "◈";
+            }
+
+            // ── SAVED ELEMENTS for overview restoration ──
             const originalElements = graph.nodes.map(n => ({
                 data: {
                     id: n.id, label: n.label || n.id,
@@ -1168,6 +1231,7 @@
                 }
             })));
 
+            // ── ENTER OVERVIEW ──
             function enterOverview(animate = true) {
                 appMode = "overview";
                 focusHistory = [];
@@ -1175,10 +1239,8 @@
                 if (animate) {
                     graphEl.style.transition = "opacity 0.18s ease";
                     graphEl.style.opacity = "0";
-
                     setTimeout(() => {
-                        // restore original elements if we drilled into functions
-                        const currentIds = new Set(cy.nodes().map(n => n.id()));
+                        const currentIds  = new Set(cy.nodes().map(n => n.id()));
                         const originalIds = new Set(graph.nodes.map(n => n.id));
                         const needsRestore = ![...originalIds].every(id => currentIds.has(id));
 
@@ -1217,6 +1279,7 @@
                 sidebarContent.classList.remove("visible");
             }
 
+            // ── ENTER EXPLORATION ──
             function enterExploration(nodeId, addToHistory = true) {
                 const node = cy.getElementById(nodeId);
                 if (!node || node.length === 0) return;
@@ -1232,54 +1295,33 @@
                     });
                 }
 
-                const neighbors = node.neighborhood().nodes();
+                const neighbors  = node.neighborhood().nodes();
                 const focusEdges = node.connectedEdges();
 
-                if (wasOverview) {
-                    graphEl.style.transition = "opacity 0.18s ease";
-                    graphEl.style.opacity = "0";
-                    setTimeout(() => {
-                        cy.nodes().removeClass("focus neighbor hidden hovered search-dim search-match");
-                        cy.edges().removeClass("focus-edge hidden search-dim");
-                        node.addClass("focus");
-                        neighbors.addClass("neighbor");
-                        cy.nodes().not(node).not(neighbors).addClass("hidden");
-                        cy.edges().not(focusEdges).addClass("hidden");
-                        focusEdges.addClass("focus-edge");
-                        const subgraph = node.add(neighbors);
-                        cy.animate({
-                            fit: { eles: subgraph, padding: 80 },
-                            duration: 350,
-                            easing: "ease-in-out-cubic",
-                            complete: () => {
-                                graphEl.style.opacity = "1";
-                                setTimeout(() => { graphEl.style.transition = ""; }, 200);
-                            }
-                        });
-                    }, 180);
-                } else {
-                    graphEl.style.transition = "opacity 0.12s ease";
-                    graphEl.style.opacity = "0";
-                    setTimeout(() => {
-                        cy.nodes().removeClass("focus neighbor hidden hovered");
-                        cy.edges().removeClass("focus-edge hidden");
-                        node.addClass("focus");
-                        neighbors.addClass("neighbor");
-                        cy.nodes().not(node).not(neighbors).addClass("hidden");
-                        cy.edges().not(focusEdges).addClass("hidden");
-                        focusEdges.addClass("focus-edge");
-                        const subgraph = node.add(neighbors);
-                        cy.animate({
-                            fit: { eles: subgraph, padding: 80 },
-                            duration: 250,
-                            easing: "ease-in-out-cubic",
-                            complete: () => {
-                                graphEl.style.opacity = "1";
-                                setTimeout(() => { graphEl.style.transition = ""; }, 150);
-                            }
-                        });
-                    }, 120);
-                }
+                const fadeDuration  = wasOverview ? 180 : 120;
+                const zoomDuration  = wasOverview ? 350 : 250;
+
+                graphEl.style.transition = `opacity ${fadeDuration}ms ease`;
+                graphEl.style.opacity = "0";
+                setTimeout(() => {
+                    cy.nodes().removeClass("focus neighbor hidden hovered search-dim search-match");
+                    cy.edges().removeClass("focus-edge hidden search-dim");
+                    node.addClass("focus");
+                    neighbors.addClass("neighbor");
+                    cy.nodes().not(node).not(neighbors).addClass("hidden");
+                    cy.edges().not(focusEdges).addClass("hidden");
+                    focusEdges.addClass("focus-edge");
+                    const subgraph = node.add(neighbors);
+                    cy.animate({
+                        fit: { eles: subgraph, padding: 80 },
+                        duration: zoomDuration,
+                        easing: "ease-in-out-cubic",
+                        complete: () => {
+                            graphEl.style.opacity = "1";
+                            setTimeout(() => { graphEl.style.transition = ""; }, zoomDuration);
+                        }
+                    });
+                }, fadeDuration);
 
                 navBack.classList.add("visible");
                 updateBreadcrumb();
@@ -1289,19 +1331,13 @@
                 showSidebar(node);
             }
 
-            function kindIcon(kind) {
-                if (kind === "module") return `<span class="crumb-icon-module">{}</span>`;
-                if (kind === "function") return `<span class="crumb-icon-function">ƒ</span>`;
-                return "◈";
-            }
-
+            // ── BREADCRUMB ──
             function updateBreadcrumb() {
                 navCrumbs.innerHTML = "";
-
                 focusHistory.forEach((entry, i) => {
-                    const node = cy.getElementById(entry.id);
-                    const label = node.data("label") || entry.id;
-                    const kind = node.data("kind") || entry.kind || "module";
+                    const node     = cy.getElementById(entry.id);
+                    const label    = node.data("label") || entry.id;
+                    const kind     = node.data("kind") || entry.kind || "module";
                     const isCurrent = i === focusHistory.length - 1;
 
                     if (i > 0) {
@@ -1326,14 +1362,9 @@
                             }
                         });
                     }
-
                     navCrumbs.appendChild(crumb);
                 });
             }
-
-            // ── DOM REFS (additional) ──
-            const sectionExplore = document.getElementById("section-explore");
-            const exploreBtn     = document.getElementById("explore-btn");
 
             exploreBtn.addEventListener("click", () => {
                 const moduleId = exploreBtn.dataset.moduleId;
@@ -1341,50 +1372,62 @@
             });
 
             // ── EXPLORE FUNCTIONS ──
+            // belongs() handles submodule cases e.g. module "v4.classic" also
+            // captures functions with module_id "v4.classic.schemas"
+            function belongs(fn, moduleId) {
+                return fn.module_id === moduleId ||
+                       fn.module_id?.startsWith(moduleId + ".") ||
+                       fn.module_id?.startsWith(moduleId + "/");
+            }
+
             function exploreFunctions(moduleId, addToHistory = true) {
                 if (!fullBundle || !fullBundle.nodes) return;
 
                 const fnNodes = fullBundle.nodes.filter(
-                    n => n.kind === "function" && n.module_id === moduleId
+                    n => n.kind === "function" && belongs(n, moduleId)
                 );
-                const fnIds = new Set(fnNodes.map(n => n.id));
+                const fnIds   = new Set(fnNodes.map(n => n.id));
                 const fnEdges = fullBundle.edges.filter(
                     e => e.kind === "calls" && fnIds.has(e.source) && fnIds.has(e.target)
                 );
 
                 if (fnNodes.length === 0) {
-                    nodeMeta.textContent = "no functions found in bundle";
+                    sidebarEmpty.style.display = "none";
+                    sidebarContent.classList.add("visible");
+                    nodeName.textContent = moduleId.split(".").pop();
+                    nodeName.style.color = "#79b8ff";
+                    nodeMeta.textContent = "No functions detected for this module";
+                    nodeFilepath.style.display = "none";
+                    sectionExplore.style.display = "none";
+                    sectionCalls.style.display = "none";
+                    sectionCallers.style.display = "none";
+                    // add a soft hint below
+                    const hint = document.createElement("div");
+                    hint.style.cssText = "font-size:11px;color:var(--text-dim);line-height:1.6;margin-top:-8px;";
+                    hint.textContent = "This module may use object composition or indirect exports.";
+                    sidebarContent.appendChild(hint);
+                    setTimeout(() => hint.remove(), 4000);
                     return;
                 }
 
                 appMode = "exploration";
 
                 if (addToHistory) {
-                    focusHistory.push({
-                        id: moduleId,
-                        kind: "module",
-                        viewType: "module-functions",
-                        moduleId: moduleId,
-                    });
+                    focusHistory.push({ id: moduleId, kind: "module", viewType: "module-functions", moduleId });
                 }
 
                 const newElements = [
                     ...fnNodes.map(n => ({
                         data: {
-                            id: n.id,
-                            label: n.label || n.id,
-                            kind: n.kind,
-                            language: n.language,
-                            file_path: n.file_path || null,
-                            module_id: n.module_id || null,
+                            id: n.id, label: n.label || n.id,
+                            kind: n.kind, language: n.language,
+                            file_path: n.file_path || null, module_id: n.module_id || null,
                         }
                     })),
                     ...fnEdges.map(e => ({
                         data: {
-                            source: e.source,
-                            target: e.target,
-                            kind: e.kind,
-                            label: e.label || "",
+                            source: e.source, target: e.target,
+                            kind: e.kind, label: e.label || "",
                             resolution_kind: e.resolution_kind || "unknown",
                         }
                     })),
@@ -1396,16 +1439,7 @@
                 setTimeout(() => {
                     cy.elements().remove();
                     cy.add(newElements);
-                    cy.layout({
-                        name: "dagre",
-                        rankDir: "LR",
-                        rankSep: 70,
-                        nodeSep: 35,
-                        edgeSep: 10,
-                        animate: false,
-                        fit: true,
-                        padding: 60,
-                    }).run();
+                    cy.layout(buildFunctionLayout()).run();
                     cy.fit(undefined, 60);
                     graphEl.style.opacity = "1";
                     setTimeout(() => { graphEl.style.transition = ""; }, 200);
@@ -1429,8 +1463,8 @@
 
             // ── SIDEBAR ──
             function showSidebar(node) {
-                const data = node.data();
-                const kind = data.kind || "module";
+                const data     = node.data();
+                const kind     = data.kind || "module";
                 const isModule = kind === "module";
 
                 sidebarEmpty.style.display = "none";
@@ -1439,13 +1473,9 @@
                 nodeName.textContent = data.label || data.id;
                 nodeName.style.color = isModule ? "#79b8ff" : "#e3b341";
 
-                if (!isModule && data.module_id) {
-                    nodeMeta.textContent = `ƒ function · ${data.module_id}`;
-                } else if (isModule) {
-                    nodeMeta.textContent = `{} module`;
-                } else {
-                    nodeMeta.textContent = kind;
-                }
+                nodeMeta.textContent = !isModule && data.module_id
+                    ? `ƒ function · ${data.module_id}`
+                    : isModule ? `{} module` : kind;
 
                 if (data.file_path) {
                     nodeFilepath.textContent = data.file_path;
@@ -1454,10 +1484,9 @@
                     nodeFilepath.style.display = "none";
                 }
 
-                // explore functions button for module nodes
                 if (isModule && fullBundle && fullBundle.nodes) {
                     const hasFunctions = fullBundle.nodes.some(
-                        n => n.kind === "function" && n.module_id === data.id
+                        n => n.kind === "function" && belongs(n, data.id)
                     );
                     if (hasFunctions) {
                         exploreBtn.dataset.moduleId = data.id;
@@ -1469,14 +1498,12 @@
                     sectionExplore.style.display = "none";
                 }
 
-                // outgoing edges
                 const outEdges = node.connectedEdges().filter(e => e.data("source") === data.id);
                 if (outEdges.length > 0) {
                     callsList.innerHTML = "";
                     callsCount.textContent = outEdges.length;
                     outEdges.forEach((e) => {
-                        const targetNode = cy.getElementById(e.data("target"));
-                        const label = targetNode.data("label") || e.data("target");
+                        const label = cy.getElementById(e.data("target")).data("label") || e.data("target");
                         const div = document.createElement("div");
                         div.className = "edge-item";
                         div.innerHTML = `<span class="edge-arrow">→</span><span style="flex:1">${label}</span>${resTag(e.data("resolution_kind"))}`;
@@ -1489,14 +1516,12 @@
                     sectionCalls.style.display = "none";
                 }
 
-                // incoming edges
                 const inEdges = node.connectedEdges().filter(e => e.data("target") === data.id);
                 if (inEdges.length > 0) {
                     callersList.innerHTML = "";
                     callersCount.textContent = inEdges.length;
                     inEdges.forEach((e) => {
-                        const sourceNode = cy.getElementById(e.data("source"));
-                        const label = sourceNode.data("label") || e.data("source");
+                        const label = cy.getElementById(e.data("source")).data("label") || e.data("source");
                         const div = document.createElement("div");
                         div.className = "edge-item";
                         div.innerHTML = `<span class="edge-arrow">←</span><span style="flex:1">${label}</span>${resTag(e.data("resolution_kind"))}`;
@@ -1510,128 +1535,178 @@
                 }
             }
 
-            // ── RIGHT-CLICK CONTEXT MENU ──
-            cy.cxtmenu({
-                selector: "node[kind='module']",
-                commands: [
-                    {
-                        content: "Explore functions",
-                        select: (node) => exploreFunctions(node.data("id")),
-                    },
-                    {
-                        content: "Copy ID",
-                        select: (node) => navigator.clipboard.writeText(node.data("id")),
-                    },
-                ],
-                fillColor: "#161b22",
-                activeFillColor: "rgba(88, 166, 255, 0.15)",
-                activePadding: 10,
-                indicatorSize: 24,
-                separatorWidth: 3,
-                spotlightPadding: 4,
-                adaptativeNodeSpotlightRadius: true,
-                openMenuEvents: "cxttap",
-            });
+            // ── CONTEXT MENU (custom dropdown — zoom-independent) ──
+            const ctxMenu = document.getElementById("ctx-menu");
+            let ctxTarget = null;
 
-            cy.cxtmenu({
-                selector: "node[kind='function']",
-                commands: [
-                    {
-                        content: "Explore callees",
-                        select: (node) => enterExploration(node.data("id")),
-                    },
-                    {
-                        content: "Explore callers",
-                        select: (node) => {
-                            // enter exploration centered on this node
-                            enterExploration(node.data("id"));
-                        },
-                    },
-                    {
-                        content: "Copy ID",
-                        select: (node) => navigator.clipboard.writeText(node.data("id")),
-                    },
-                ],
-                fillColor: "#161b22",
-                activeFillColor: "rgba(227, 179, 65, 0.15)",
-                activePadding: 10,
-                indicatorSize: 24,
-                separatorWidth: 3,
-                spotlightPadding: 4,
-                adaptativeNodeSpotlightRadius: true,
-                openMenuEvents: "cxttap",
-            });
-
-            // ── NODE INTERACTIONS ──
-            cy.on("mouseover", "node", (e) => {
-                if (!e.target.hasClass("focus")) {
-                    e.target.addClass("hovered");
+            function buildCtxItems(node) {
+                const kind = node.data("kind") || "module";
+                const items = [];
+                if (kind === "module") {
+                    const hasFn = fullBundle && fullBundle.nodes &&
+                        fullBundle.nodes.some(n => n.kind === "function" && belongs(n, node.data("id")));
+                    if (hasFn) {
+                        items.push({ icon: "ƒ", label: "Explore functions", action: () => exploreFunctions(node.data("id")) });
+                        items.push({ sep: true });
+                    }
                 }
-            });
+                items.push({ icon: "⎘", label: "Copy reference", action: () => navigator.clipboard.writeText(node.data("id")) });
+                return items;
+            }
 
-            cy.on("mouseout", "node", (e) => {
-                e.target.removeClass("hovered");
-            });
-
-            // clicking any node enters exploration mode for that node
-            cy.on("tap", "node", (e) => {
-                const node = e.target;
-                const id = node.data("id");
-
-                if (appMode === "exploration" && node.hasClass("focus")) {
-                    // clicking the focus node again does nothing
-                    return;
-                }
-
-                enterExploration(id);
-            });
-
-            // clicking canvas background — nothing on single click
-            // double-click background — zoom out to overview
-            cy.on("tap", (e) => {
-                if (e.target === cy) {
-                    // single tap on background: do nothing
-                    // user navigates back explicitly via button, Escape, or double-click
-                }
-            });
-
-            cy.on("dblclick", (e) => {
-                if (e.target === cy && appMode === "exploration") {
-                    enterOverview(true);
-                }
-            });
-
-            // ── BACK TO OVERVIEW ──
-            navBack.addEventListener("click", () => {
-                enterOverview(true);
-            });
-
-            // keyboard: Escape in exploration returns to overview
-            document.addEventListener("keydown", (e) => {
-                if (e.key === "Escape") {
-                    if (searchOverlay.classList.contains("open")) {
-                        closeSearch();
+            function openCtxMenu(node, x, y) {
+                ctxTarget = node;
+                ctxMenu.innerHTML = "";
+                const items = buildCtxItems(node);
+                items.forEach(item => {
+                    if (item.sep) {
+                        const sep = document.createElement("div");
+                        sep.className = "ctx-sep";
+                        ctxMenu.appendChild(sep);
                         return;
                     }
-                    if (appMode === "exploration") {
-                        enterOverview(true);
+                    const el = document.createElement("div");
+                    el.className = "ctx-item";
+                    el.innerHTML = `<span class="ctx-item-icon">${item.icon}</span>${item.label}`;
+                    el.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        closeCtxMenu();
+                        item.action();
+                    });
+                    ctxMenu.appendChild(el);
+                });
+
+                // position: keep within viewport
+                ctxMenu.style.left = "0px";
+                ctxMenu.style.top  = "0px";
+                ctxMenu.classList.add("open");
+                const rect = ctxMenu.getBoundingClientRect();
+                const vw = window.innerWidth, vh = window.innerHeight;
+                const cx = x + rect.width  > vw ? x - rect.width  : x;
+                const cy_ = y + rect.height > vh ? y - rect.height : y;
+                ctxMenu.style.left = `${cx}px`;
+                ctxMenu.style.top  = `${cy_}px`;
+            }
+
+            function closeCtxMenu() {
+                ctxMenu.classList.remove("open");
+                ctxTarget = null;
+            }
+
+            cy.on("cxttap", "node", (e) => {
+                e.originalEvent.preventDefault();
+                const pos = e.originalEvent;
+                openCtxMenu(e.target, pos.clientX, pos.clientY);
+            });
+
+            // also support plain right-click via contextmenu event on the canvas container
+            document.getElementById("graph").addEventListener("contextmenu", (e) => {
+                // cxttap already fired; just prevent default so no browser menu appears
+                e.preventDefault();
+            });
+
+            document.addEventListener("click",   (e) => { if (!ctxMenu.contains(e.target)) closeCtxMenu(); });
+            document.addEventListener("keydown",  (e) => { if (e.key === "Escape") closeCtxMenu(); });
+            document.addEventListener("wheel",    ()  => closeCtxMenu(), { passive: true });
+
+            // ── PAN CONTROLS ──
+            const PAN_STEP = 120; // pixels per click
+            let   panInterval = null;
+
+            function panBy(dx, dy) {
+                const p = cy.pan();
+                cy.pan({ x: p.x + dx, y: p.y + dy });
+            }
+
+            function startPan(dx, dy) {
+                panBy(dx, dy);
+                panInterval = setInterval(() => panBy(dx, dy), 80);
+            }
+
+            function stopPan() {
+                clearInterval(panInterval);
+                panInterval = null;
+            }
+
+            function bindPan(id, dx, dy) {
+                const btn = document.getElementById(id);
+                btn.addEventListener("mousedown",  () => startPan(dx, dy));
+                btn.addEventListener("touchstart", () => startPan(dx, dy), { passive: true });
+                btn.addEventListener("mouseup",    stopPan);
+                btn.addEventListener("mouseleave", stopPan);
+                btn.addEventListener("touchend",   stopPan);
+            }
+
+            bindPan("pan-up",    0,          PAN_STEP);
+            bindPan("pan-down",  0,         -PAN_STEP);
+            bindPan("pan-left",  PAN_STEP,   0);
+            bindPan("pan-right", -PAN_STEP,  0);
+
+            // ── NODE EVENTS ──
+            cy.on("mouseover", "node", (e) => {
+                if (!e.target.hasClass("focus")) e.target.addClass("hovered");
+            });
+            cy.on("mouseout", "node", (e) => { e.target.removeClass("hovered"); });
+
+            cy.on("tap", "node", (e) => {
+                const node = e.target;
+                if (appMode === "exploration" && node.hasClass("focus")) return;
+                enterExploration(node.data("id"));
+            });
+
+            // Double-tap detection on canvas background (dblclick unreliable in Cytoscape)
+            let lastTapTime = 0;
+            let lastTapTarget = null;
+            cy.on("tap", (e) => {
+                if (e.target !== cy) return; // only canvas background
+                const now = Date.now();
+                const isDoubleTap = (now - lastTapTime < 350) && (lastTapTarget === cy);
+                lastTapTime   = now;
+                lastTapTarget = e.target;
+                if (!isDoubleTap || appMode !== "exploration") return;
+                if (focusHistory.length <= 1) {
+                    enterOverview(true);
+                } else {
+                    focusHistory.pop();
+                    const prev = focusHistory[focusHistory.length - 1];
+                    if (prev.viewType === "module-functions") {
+                        exploreFunctions(prev.moduleId, false);
+                    } else {
+                        enterExploration(prev.id, false);
                     }
                 }
+            });
 
+            navBack.addEventListener("click", () => enterOverview(true));
+
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") {
+                    if (searchOverlay.classList.contains("open")) { closeSearch(); return; }
+                    if (appMode === "exploration") {
+                        // Escape: same behaviour as double-click — pop one level
+                        if (focusHistory.length <= 1) {
+                            enterOverview(true);
+                        } else {
+                            focusHistory.pop();
+                            const prev = focusHistory[focusHistory.length - 1];
+                            if (prev.viewType === "module-functions") {
+                                exploreFunctions(prev.moduleId, false);
+                            } else {
+                                enterExploration(prev.id, false);
+                            }
+                        }
+                    }
+                }
                 if ((e.metaKey || e.ctrlKey) && e.key === "k") {
                     e.preventDefault();
-                    if (searchOverlay.classList.contains("open")) {
-                        closeSearch();
-                    } else {
-                        openSearch();
-                    }
+                    searchOverlay.classList.contains("open") ? closeSearch() : openSearch();
                 }
             });
 
             // ── SEARCH ──
-            const searchOverlay  = document.getElementById("search-overlay");
-            const searchInput    = document.getElementById("search-input");
-            const searchResults  = document.getElementById("search-results");
+            const searchOverlay = document.getElementById("search-overlay");
+            const searchInput   = document.getElementById("search-input");
+            const searchResults = document.getElementById("search-results");
 
             let activeResultIdx = -1;
             let currentResults  = [];
@@ -1641,11 +1716,9 @@
                 if (!query) return text;
                 const idx = text.toLowerCase().indexOf(query.toLowerCase());
                 if (idx === -1) return text;
-                return (
-                    text.slice(0, idx) +
+                return text.slice(0, idx) +
                     "<mark>" + text.slice(idx, idx + query.length) + "</mark>" +
-                    text.slice(idx + query.length)
-                );
+                    text.slice(idx + query.length);
             }
 
             function runSearch(query) {
@@ -1659,23 +1732,14 @@
                     return;
                 }
 
-                // search all nodes regardless of current mode
-                // temporarily show all for search
-                const allNodes = cy.nodes();
                 const matches = [];
-
-                allNodes.forEach((node) => {
+                cy.nodes().forEach((node) => {
                     const d = node.data();
-                    const haystack = [
-                        d.label || "", d.id || "",
-                        d.file_path || "", d.module_id || "",
-                    ].join(" ").toLowerCase();
+                    const haystack = [d.label || "", d.id || "", d.file_path || "", d.module_id || ""].join(" ").toLowerCase();
                     if (haystack.includes(q)) matches.push(node);
                 });
 
                 currentResults = matches.slice(0, 8);
-
-                // show all nodes temporarily for search highlighting
                 cy.elements().removeClass("hidden focus neighbor focus-edge search-dim search-match");
                 if (matches.length > 0) {
                     cy.nodes().not(cy.collection(matches)).addClass("search-dim");
@@ -1690,11 +1754,10 @@
 
                 searchResults.innerHTML = "";
                 currentResults.forEach((node, i) => {
-                    const d = node.data();
+                    const d   = node.data();
                     const sub = d.file_path
                         ? d.file_path.split("/").slice(-2).join("/")
                         : d.module_id || d.id;
-
                     const div = document.createElement("div");
                     div.className = "search-result";
                     div.innerHTML = `
@@ -1705,7 +1768,7 @@
                         </div>
                         <span class="search-result-kind">${d.kind || "node"}</span>
                     `;
-                    div.addEventListener("click", () => selectSearchResult(i));
+                    div.addEventListener("click",     () => selectSearchResult(i));
                     div.addEventListener("mouseover", () => setActive(i));
                     searchResults.appendChild(div);
                 });
@@ -1742,17 +1805,19 @@
                 currentResults = [];
                 activeResultIdx = -1;
 
-                // restore canvas state
                 if (preSearchState) {
                     if (preSearchState.mode === "overview") {
                         cy.elements().removeClass("search-dim search-match hidden focus neighbor focus-edge");
                     } else {
-                        // restore exploration state
                         cy.elements().removeClass("search-dim search-match");
-                        const lastId = preSearchState.history[preSearchState.history.length - 1];
-                        if (lastId) {
+                        const lastEntry = preSearchState.history[preSearchState.history.length - 1];
+                        if (lastEntry) {
                             focusHistory = preSearchState.history;
-                            enterExploration(lastId, false);
+                            if (lastEntry.viewType === "module-functions") {
+                                exploreFunctions(lastEntry.moduleId, false);
+                            } else {
+                                enterExploration(lastEntry.id, false);
+                            }
                         }
                     }
                     preSearchState = null;
@@ -1760,24 +1825,11 @@
             }
 
             searchInput.addEventListener("input", (e) => runSearch(e.target.value));
-
             searchInput.addEventListener("keydown", (e) => {
-                if (e.key === "Escape") { closeSearch(); return; }
-                if (e.key === "ArrowDown") {
-                    e.preventDefault();
-                    setActive(Math.min(activeResultIdx + 1, currentResults.length - 1));
-                    return;
-                }
-                if (e.key === "ArrowUp") {
-                    e.preventDefault();
-                    setActive(Math.max(activeResultIdx - 1, 0));
-                    return;
-                }
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    selectSearchResult(activeResultIdx >= 0 ? activeResultIdx : 0);
-                    return;
-                }
+                if (e.key === "Escape")    { closeSearch(); return; }
+                if (e.key === "ArrowDown") { e.preventDefault(); setActive(Math.min(activeResultIdx + 1, currentResults.length - 1)); return; }
+                if (e.key === "ArrowUp")   { e.preventDefault(); setActive(Math.max(activeResultIdx - 1, 0)); return; }
+                if (e.key === "Enter")     { e.preventDefault(); selectSearchResult(activeResultIdx >= 0 ? activeResultIdx : 0); return; }
             });
 
             document.addEventListener("click", (e) => {
@@ -1795,8 +1847,8 @@
             });
             document.getElementById("zoom-reset").addEventListener("click", () => {
                 if (appMode === "exploration" && focusHistory.length > 0) {
-                    const id = focusHistory[focusHistory.length - 1];
-                    const node = cy.getElementById(id);
+                    const entry     = focusHistory[focusHistory.length - 1];
+                    const node      = cy.getElementById(entry.id);
                     const neighbors = node.neighborhood().nodes();
                     cy.fit(node.add(neighbors), 80);
                 } else {
