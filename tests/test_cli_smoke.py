@@ -207,5 +207,7 @@ def test_cli_smoke_debug_resolution_prints_reasons(tmp_path: Path, capsys) -> No
 
     captured = capsys.readouterr()
 
-    assert "app.main:run -> app.worker:work" in captured.out
+    assert "=== Resolution Debug ===" in captured.out
+    assert "app.main:" in captured.out
+    assert "run -> app.worker:work" in captured.out
     assert "[imported_symbol]" in captured.out

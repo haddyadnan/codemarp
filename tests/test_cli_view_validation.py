@@ -9,7 +9,7 @@ from codemarp.pipeline.apply_mode import ModeType
 def test_view_command_runs(monkeypatch, tmp_path) -> None:
 
     monkeypatch.setattr(
-        "codemarp.viewer.open_mermaid_view",
+        "codemarp.viewer.open_html_view",
         lambda *args, **kwargs: tmp_path / "codemarp_view.html",
     )
     monkeypatch.setattr(
@@ -47,8 +47,10 @@ def test_view_calls_render_and_open(monkeypatch, tmp_path):
     def fake_open(*args, **kwargs):
         called["open"] = True
 
-    monkeypatch.setattr("codemarp.pipeline.render_mode.render_mode_to_mermaid", fake_render)
-    monkeypatch.setattr("codemarp.viewer.open_mermaid_view", fake_open)
+    monkeypatch.setattr(
+        "codemarp.pipeline.render_mode.render_mode_to_mermaid", fake_render
+    )
+    monkeypatch.setattr("codemarp.viewer.open_html_view", fake_open)
 
     view_command(
         root=tmp_path,
@@ -82,7 +84,7 @@ def test_view_low_uses_low_mode(monkeypatch, tmp_path):
         lambda *a, **k: "flowchart LR",
     )
     monkeypatch.setattr(
-        "codemarp.viewer.open_mermaid_view",
+        "codemarp.viewer.open_html_view",
         lambda *a, **k: None,
     )
 
@@ -99,7 +101,7 @@ def test_view_writes_output_file(tmp_path, monkeypatch):
     out = tmp_path / "graph.html"
 
     monkeypatch.setattr(
-        "codemarp.viewer.open_mermaid_view",
+        "codemarp.viewer.open_html_view",
         lambda html, output_path=None: None,
     )
 
@@ -122,7 +124,7 @@ def test_view_opens_browser_when_no_out(monkeypatch):
         called["value"] = True
 
     monkeypatch.setattr(
-        "codemarp.viewer.open_mermaid_view",
+        "codemarp.viewer.open_html_view",
         fake_open,
     )
 
