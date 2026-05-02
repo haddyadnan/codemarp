@@ -3,20 +3,12 @@ from collections import defaultdict
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from time import perf_counter
+from typing import TYPE_CHECKING
 
-from codemarp.analyzers.low_level import build_low_level_mode
-from codemarp.errors import codemarpError
-from codemarp.exporters.json_exporter import bundle_to_json_dict
-from codemarp.pipeline.apply_mode import ModeType, apply_mode
-from codemarp.pipeline.build_bundle import build_bundle
-from codemarp.pipeline.export_all import export_all, export_low_level
-from codemarp.pipeline.render_mode import (
-    language_summary,
-    render_mode_to_json,
-    render_mode_to_mermaid,
-    stats_for_mode,
-)
-from codemarp.viewer import open_mermaid_view, wrap_cytoscape_html, wrap_mermaid_html
+MODE_CHOICES = ("full", "trace", "module", "reverse", "low")
+
+if TYPE_CHECKING:
+    from codemarp.pipeline.apply_mode import ModeType
 
 
 def package_version() -> str:
@@ -31,20 +23,24 @@ def _build_low_mode(
     *,
     focus: str,
 ):
+    from codemarp.analyzers.low_level import build_low_level_mode
+
     return build_low_level_mode(root, focus)
 
 
 def _build_graph_mode(
     build_result,
     *,
-    mode: ModeType,
+    mode: "ModeType",
     focus: str | None = None,
     module: str | None = None,
     max_depth: int | None = None,
 ):
+    from codemarp.pipeline.apply_mode import ModeType, apply_mode
+
     return apply_mode(
         build_result.bundle,
-        mode=mode,
+        mode=ModeType(mode),
         focus=focus,
         module=module,
         max_depth=max_depth,
@@ -55,13 +51,18 @@ def analyze_command(
     root: Path,
     out: Path,
     *,
-    mode: ModeType,
+    mode: str,
     focus: str | None = None,
     module: str | None = None,
     max_depth: int | None = None,
     debug_resolution: bool = False,
     parser_engine: str = "tree-sitter",
 ) -> None:
+    from codemarp.pipeline.apply_mode import ModeType
+    from codemarp.pipeline.build_bundle import build_bundle
+    from codemarp.pipeline.export_all import export_all, export_low_level
+
+    mode = ModeType(mode)
     build_result = build_bundle(root, engine=parser_engine)
 
     if debug_resolution:
@@ -69,16 +70,17 @@ def analyze_command(
         for edge in build_result.bundle.edges:
             if edge.kind != "calls" or edge.reason is None:
                 continue
-            print(f"{edge.source} -> {edge.target}  [{edge.reason.value}]")
+            source_module = edge.source.split(":", 1)[0]
+            grouped[source_module].append(edge)
 
-            print("\n=== Resolution Debug ===\n")
+        print("\n=== Resolution Debug ===\n")
 
-            for module, edges in sorted(grouped.items()):
-                print(f"{module}:")
-                for edge in edges:
-                    src_fn = edge.source.split(":")[1]
-                    print(f"  {src_fn} -> {edge.target}  [{edge.reason.value}]")
-                print()
+        for source_module, edges in sorted(grouped.items()):
+            print(f"{source_module}:")
+            for edge in edges:
+                src_fn = edge.source.split(":", 1)[1]
+                print(f"  {src_fn} -> {edge.target}  [{edge.reason.value}]")
+            print()
 
     if mode is ModeType.LOW:
         assert focus is not None
@@ -107,7 +109,7 @@ def analyze_command(
 
     print(f"Parsed {len(build_result.parsed_modules)} modules")
     print(f"Discovered {len(build_result.bundle.functions)} functions")
-    print(f"mode type: {mode.value}")
+    print(f"Mode type: {mode.value}")
     if mode is ModeType.TRACE:
         print(f"Focused trace from {focus}")
         print(f"Trace contains {len(graph_mode.functions)} functions")
@@ -126,17 +128,35 @@ def analyze_command(
 def view_command(
     root: Path,
     *,
-    mode: ModeType,
+    mode: str,
     focus: str | None = None,
     module: str | None = None,
     max_depth: int | None = None,
     parser_engine: str = "tree-sitter",
     renderer: str = "mermaid",
     out: Path | None = None,
+    debug_timing: bool = False,
 ) -> None:
+    from codemarp.exporters.json_exporter import bundle_to_json_dict
+    from codemarp.pipeline.apply_mode import ModeType
+    from codemarp.pipeline.build_bundle import build_bundle
+    from codemarp.pipeline.render_mode import (
+        language_summary,
+        render_mode_to_json,
+        render_mode_to_mermaid,
+        stats_for_mode,
+    )
+    from codemarp.viewer import (
+        open_mermaid_view,
+        wrap_cytoscape_html,
+        wrap_mermaid_html,
+    )
+
+    mode = ModeType(mode)
     t0 = perf_counter()
     build_result = build_bundle(root, engine=parser_engine)
-    print(f"build_bundle: {perf_counter() - t0:.2f}s")
+    if debug_timing:
+        print(f"build_bundle: {perf_counter() - t0:.2f}s")
     language = language_summary(build_result.parsed_modules)
 
     graph_mode, low_mode = None, None
@@ -200,7 +220,8 @@ def view_command(
             node_count=stats.node_count,
             edge_count=stats.edge_count,
         )
-    print(f"html/render prep: {perf_counter() - t1:.2f}s")
+    if debug_timing:
+        print(f"html/render prep: {perf_counter() - t1:.2f}s")
 
     if out is not None:
         out = out.resolve()
@@ -211,7 +232,7 @@ def view_command(
 
     print(f"Parsed {len(build_result.parsed_modules)} modules")
     print(f"Discovered {len(build_result.bundle.functions)} functions")
-    print(f"mode type: {mode.value}")
+    print(f"Mode type: {mode.value}")
     print(f"Opened viewer: {out}")
 
 
@@ -229,12 +250,17 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     analyze = subparsers.add_parser("analyze", help="Analyze a Python codebase")
-    analyze.add_argument("root", help="Path to the repository root")
-    analyze.add_argument("--out", default="./codemarp_out", help="Output directory")
+    analyze.add_argument("root", type=Path, help="Path to the repository root")
+    analyze.add_argument(
+        "--out",
+        type=Path,
+        default=Path("./codemarp_out"),
+        help="Output directory",
+    )
     analyze.add_argument(
         "--mode",
-        choices=[mode.value for mode in ModeType],
-        default=ModeType.FULL.value,
+        choices=MODE_CHOICES,
+        default="full",
         help="Graph mode to export",
     )
     analyze.add_argument(
@@ -268,11 +294,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     view = subparsers.add_parser("view", help="Open a graph in the browser")
-    view.add_argument("root", help="Path to the repository root")
+    view.add_argument("root", type=Path, help="Path to the repository root")
     view.add_argument(
         "--mode",
-        choices=[mode.value for mode in ModeType],
-        default=ModeType.FULL.value,
+        choices=MODE_CHOICES,
+        default="full",
         help="Graph mode to render",
     )
     view.add_argument(
@@ -311,6 +337,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Output file path for the generated HTML",
     )
+    view.add_argument(
+        "--debug-timing",
+        action="store_true",
+        help="Print viewer timing for bundle build and render preparation.",
+    )
 
     return parser
 
@@ -318,9 +349,9 @@ def build_parser() -> argparse.ArgumentParser:
 def _validate_mode_args(
     args: argparse.Namespace, parser: argparse.ArgumentParser
 ) -> None:
-    mode = ModeType(args.mode)
+    mode = args.mode
 
-    if mode is ModeType.FULL:
+    if mode == "full":
         if args.focus is not None:
             parser.error("--focus cannot be used with --mode full")
         if args.module is not None:
@@ -328,13 +359,13 @@ def _validate_mode_args(
         if args.max_depth is not None:
             parser.error("--max-depth cannot be used with --mode full")
 
-    if mode is ModeType.TRACE:
+    if mode == "trace":
         if not args.focus:
             parser.error("--focus is required with --mode trace")
         if args.module is not None:
             parser.error("--module cannot be used with --mode trace")
 
-    if mode is ModeType.MODULE:
+    if mode == "module":
         if not args.module:
             parser.error("--module is required with --mode module")
         if args.focus is not None:
@@ -342,13 +373,13 @@ def _validate_mode_args(
         if args.max_depth is not None:
             parser.error("--max-depth cannot be used with --mode module")
 
-    if mode is ModeType.REVERSE:
+    if mode == "reverse":
         if not args.focus:
             parser.error("--focus is required with --mode reverse")
         if args.module is not None:
             parser.error("--module cannot be used with --mode reverse")
 
-    if mode is ModeType.LOW:
+    if mode == "low":
         if not args.focus:
             parser.error("--focus is required with --mode low")
         if args.module is not None:
@@ -363,11 +394,13 @@ def main() -> None:
 
     if args.command == "analyze":
         _validate_mode_args(args, parser)
+        from codemarp.errors import codemarpError
+
         try:
             analyze_command(
                 args.root,
                 args.out,
-                mode=ModeType(args.mode),
+                mode=args.mode,
                 focus=args.focus,
                 module=args.module,
                 max_depth=args.max_depth,
@@ -380,16 +413,19 @@ def main() -> None:
 
     elif args.command == "view":
         _validate_mode_args(args, parser)
+        from codemarp.errors import codemarpError
+
         try:
             view_command(
                 args.root,
-                mode=ModeType(args.mode),
+                mode=args.mode,
                 focus=args.focus,
                 module=args.module,
                 max_depth=args.max_depth,
                 parser_engine=args.parser_engine,
                 renderer=args.renderer,
                 out=args.out,
+                debug_timing=args.debug_timing,
             )
         except codemarpError as exc:
             raise SystemExit(str(exc)) from exc
