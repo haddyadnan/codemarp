@@ -5,6 +5,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{{title}} · codemarp</title>
         <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+        <script src="https://unpkg.com/dagre/dist/dagre.min.js"></script>
+        <script src="https://unpkg.com/cytoscape-dagre/cytoscape-dagre.js"></script>
+
         <style>
             @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap");
 
@@ -46,12 +49,13 @@
             header {
                 flex-shrink: 0;
                 height: 44px;
-                padding: 0 20px;
+                padding: 0 16px;
                 background: var(--surface);
                 border-bottom: 1px solid var(--border);
                 display: flex;
                 align-items: center;
                 gap: 0;
+                z-index: 20;
             }
 
             .logo {
@@ -63,28 +67,93 @@
                 padding-right: 12px;
                 border-right: 1px solid var(--border-hi);
                 margin-right: 12px;
+                flex-shrink: 0;
             }
 
-            .breadcrumb {
+            .nav-breadcrumb {
                 display: flex;
                 align-items: center;
-                gap: 6px;
-                font-size: 12px;
+                gap: 0;
+                flex: 1;
+                min-width: 0;
+                overflow: hidden;
             }
 
-            .breadcrumb-item {
+            .nav-back {
+                display: none;
+                align-items: center;
+                gap: 6px;
+                font-size: 11px;
+                color: var(--text-lo);
+                cursor: pointer;
+                padding: 4px 10px 4px 6px;
+                border-radius: 5px;
+                border: 1px solid var(--border);
+                margin-right: 10px;
+                flex-shrink: 0;
+                transition:
+                    color 0.1s,
+                    border-color 0.1s;
+                user-select: none;
+            }
+
+            .nav-back:hover {
+                color: var(--text-hi);
+                border-color: var(--border-hi);
+            }
+            .nav-back.visible {
+                display: flex;
+            }
+
+            .nav-crumbs {
+                display: flex;
+                align-items: center;
+                gap: 0;
+                overflow: hidden;
+                flex: 1;
+            }
+
+            .nav-crumb {
+                font-size: 12px;
+                color: var(--text-lo);
+                cursor: pointer;
+                white-space: nowrap;
+                max-width: 160px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                padding: 2px 4px;
+                border-radius: 3px;
+                transition: color 0.1s;
+                flex-shrink: 1;
+            }
+
+            .nav-crumb:hover {
+                color: var(--text-hi);
+            }
+
+            .nav-crumb.current {
+                color: var(--text-hi);
+                font-weight: 600;
+                cursor: default;
+                flex-shrink: 0;
+            }
+
+            .nav-crumb-sep {
+                color: var(--border-hi);
+                font-size: 14px;
+                padding: 0 2px;
+                flex-shrink: 0;
+            }
+
+            .nav-title {
+                font-size: 12px;
                 color: var(--text-md);
                 font-weight: 600;
             }
-
-            .breadcrumb-sep {
-                color: var(--border-hi);
-                font-size: 14px;
-            }
-
-            .breadcrumb-sub {
+            .nav-subtitle {
+                font-size: 12px;
                 color: var(--text-lo);
-                font-weight: 400;
+                margin-left: 8px;
             }
 
             .header-right {
@@ -92,6 +161,7 @@
                 display: flex;
                 align-items: center;
                 gap: 8px;
+                flex-shrink: 0;
             }
 
             .badge {
@@ -105,16 +175,17 @@
                 color: var(--text-lo);
             }
 
-            .badge-blue {
-                border-color: var(--accent);
-                color: var(--accent);
-                background: rgba(31, 111, 235, 0.13);
-            }
-
             .badge-green {
                 border-color: var(--green);
                 color: var(--green);
                 background: rgba(63, 185, 80, 0.07);
+            }
+
+            .mode-indicator {
+                font-size: 10px;
+                color: var(--text-dim);
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
             }
 
             /* ── LAYOUT ── */
@@ -125,7 +196,6 @@
                 position: relative;
             }
 
-            /* subtle grid */
             .workspace::before {
                 content: "";
                 position: absolute;
@@ -139,7 +209,7 @@
                 z-index: 0;
             }
 
-            /* ── SIDEBAR (LEFT) ── */
+            /* ── SIDEBAR ── */
             .sidebar {
                 width: 280px;
                 flex-shrink: 0;
@@ -155,11 +225,31 @@
             .sidebar-header {
                 padding: 12px 16px;
                 border-bottom: 1px solid var(--border);
-                font-size: 10px;
+                font-size: 11px;
                 font-weight: 700;
                 letter-spacing: 0.12em;
                 text-transform: uppercase;
+                color: var(--text-lo);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .sidebar-mode-tag {
+                font-size: 9px;
+                padding: 2px 6px;
+                border-radius: 3px;
+                border: 1px solid var(--border-hi);
                 color: var(--text-dim);
+                letter-spacing: 0.08em;
+                font-weight: 700;
+                text-transform: uppercase;
+            }
+
+            .sidebar-mode-tag.exploration {
+                border-color: var(--accent);
+                color: var(--accent);
+                background: rgba(88, 166, 255, 0.08);
             }
 
             .sidebar-empty {
@@ -168,16 +258,22 @@
                 align-items: center;
                 justify-content: center;
                 flex-direction: column;
-                gap: 8px;
-                color: var(--text-dim);
-                font-size: 11px;
+                gap: 10px;
+                color: var(--text-lo);
+                font-size: 12px;
                 text-align: center;
                 padding: 24px;
+                line-height: 1.6;
             }
 
             .sidebar-empty-icon {
-                font-size: 24px;
-                opacity: 0.3;
+                font-size: 28px;
+                opacity: 0.4;
+            }
+            .sidebar-empty-hint {
+                font-size: 11px;
+                color: var(--text-dim);
+                margin-top: 4px;
             }
 
             .sidebar-content {
@@ -194,7 +290,7 @@
             }
 
             .node-name {
-                font-size: 12px;
+                font-size: 14px;
                 font-weight: 700;
                 color: var(--text-hi);
                 word-break: break-all;
@@ -202,8 +298,8 @@
             }
 
             .node-meta {
-                font-size: 10px;
-                color: var(--text-lo);
+                font-size: 12px;
+                color: var(--text-md);
                 margin-top: 4px;
             }
 
@@ -214,82 +310,95 @@
             }
 
             .sidebar-section-title {
-                font-size: 9px;
+                font-size: 10px;
                 font-weight: 700;
                 letter-spacing: 0.12em;
                 text-transform: uppercase;
-                color: var(--text-dim);
+                color: var(--text-lo);
                 padding-bottom: 4px;
                 border-bottom: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .sidebar-section-count {
+                font-size: 9px;
+                color: var(--text-dim);
+                font-weight: 400;
+                letter-spacing: 0;
+                text-transform: none;
             }
 
             .edge-item {
-                font-size: 10px;
-                color: var(--text-lo);
-                padding: 4px 8px;
+                font-size: 11px;
+                color: var(--text-md);
+                padding: 6px 8px;
                 border-radius: 4px;
                 background: var(--bg);
-                border: 1px solid var(--border);
+                border: 1px solid var(--border-hi);
                 display: flex;
                 align-items: center;
                 gap: 6px;
                 cursor: pointer;
                 transition:
                     border-color 0.1s,
-                    color 0.1s;
+                    color 0.1s,
+                    background 0.1s;
                 word-break: break-all;
             }
 
             .edge-item:hover {
                 border-color: var(--accent);
-                color: var(--text-md);
+                color: var(--text-hi);
+                background: rgba(88, 166, 255, 0.05);
             }
 
             .edge-arrow {
                 color: var(--accent);
                 flex-shrink: 0;
-                font-size: 9px;
+                font-size: 10px;
             }
 
             .resolution-tag {
                 font-size: 9px;
-                padding: 1px 5px;
+                padding: 2px 6px;
                 border-radius: 2px;
-                font-weight: 600;
+                font-weight: 700;
                 letter-spacing: 0.05em;
                 flex-shrink: 0;
                 margin-left: auto;
             }
 
             .res-same_module {
-                background: rgba(63, 185, 80, 0.12);
-                color: var(--green);
+                background: rgba(63, 185, 80, 0.15);
+                color: #5dd879;
             }
             .res-imported_symbol {
-                background: rgba(88, 166, 255, 0.12);
-                color: var(--accent);
+                background: rgba(88, 166, 255, 0.15);
+                color: #79b8ff;
             }
             .res-unique_global {
-                background: rgba(210, 153, 34, 0.12);
-                color: var(--orange);
+                background: rgba(210, 153, 34, 0.15);
+                color: #e3b341;
             }
             .res-unknown {
-                background: rgba(72, 79, 88, 0.2);
-                color: var(--text-dim);
+                background: rgba(139, 148, 158, 0.15);
+                color: var(--text-lo);
             }
 
             .filepath {
-                font-size: 10px;
-                color: var(--text-dim);
+                font-size: 11px;
+                color: var(--text-lo);
                 background: var(--bg);
-                border: 1px solid var(--border);
+                border: 1px solid var(--border-hi);
                 border-radius: 4px;
-                padding: 6px 8px;
+                padding: 7px 10px;
                 word-break: break-all;
-                line-height: 1.6;
+                line-height: 1.7;
             }
 
-            /* ── GRAPH ── */
+            /* ── GRAPH CONTAINER ── */
             #graph {
                 flex: 1;
                 min-height: 0;
@@ -304,7 +413,6 @@
                 right: 20px;
                 display: flex;
                 flex-direction: column;
-                gap: 0;
                 z-index: 10;
                 background: var(--surface);
                 border: 1px solid var(--border-hi);
@@ -339,9 +447,8 @@
                 color: var(--text-hi);
             }
             .zoom-btn.reset {
-                font-size: 9px;
+                font-size: 10px;
                 letter-spacing: 0.05em;
-                color: var(--text-dim);
             }
 
             /* ── FOOTER ── */
@@ -362,15 +469,14 @@
                 align-items: center;
                 gap: 5px;
             }
-
             .footer-stat-value {
                 color: #c9d1d9;
                 font-weight: 600;
             }
-
             .footer-hint {
                 margin-left: auto;
                 color: #8b949e;
+                font-size: 11px;
             }
 
             /* ── LOADING ── */
@@ -410,7 +516,6 @@
                 }
             }
 
-            /* scrollbar */
             ::-webkit-scrollbar {
                 width: 4px;
             }
@@ -421,18 +526,319 @@
                 background: var(--border-hi);
                 border-radius: 2px;
             }
+
+            /* ── SEARCH ── */
+            .search-overlay {
+                display: none;
+                position: absolute;
+                top: 56px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 500px;
+                z-index: 50;
+                flex-direction: column;
+                border: 1px solid var(--border-hi);
+                border-radius: 10px;
+                overflow: hidden;
+                background: #1c2128;
+                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+            }
+
+            .search-overlay.open {
+                display: flex;
+            }
+
+            .search-input-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 12px 16px;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .search-icon {
+                color: var(--text-lo);
+                font-size: 16px;
+                flex-shrink: 0;
+            }
+
+            .search-input {
+                flex: 1;
+                background: transparent;
+                border: none;
+                outline: none;
+                font-family: var(--mono);
+                font-size: 14px;
+                color: var(--text-hi);
+                caret-color: var(--accent);
+            }
+
+            .search-input::placeholder {
+                color: var(--text-lo);
+            }
+
+            .search-kbd {
+                font-size: 11px;
+                color: var(--text-lo);
+                background: var(--border-hi);
+                border-radius: 3px;
+                padding: 2px 7px;
+                flex-shrink: 0;
+            }
+
+            .search-results {
+                max-height: 340px;
+                overflow-y: auto;
+            }
+
+            .search-empty {
+                padding: 20px 16px;
+                font-size: 12px;
+                color: var(--text-lo);
+                text-align: center;
+            }
+
+            .search-result {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px 16px;
+                cursor: pointer;
+                border-left: 2px solid transparent;
+                transition: background 0.1s;
+            }
+
+            .search-result:hover,
+            .search-result.active {
+                background: var(--border);
+                border-left-color: var(--accent);
+            }
+
+            .search-result-icon {
+                font-size: 12px;
+                color: var(--text-lo);
+                flex-shrink: 0;
+                width: 16px;
+                text-align: center;
+            }
+
+            .search-result-body {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .search-result-label {
+                font-size: 13px;
+                color: var(--text-hi);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .search-result-label mark {
+                background: transparent;
+                color: var(--accent);
+                font-weight: 700;
+            }
+
+            .search-result-sub {
+                font-size: 11px;
+                color: var(--text-lo);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                margin-top: 2px;
+            }
+
+            .search-result-kind {
+                font-size: 10px;
+                color: var(--text-lo);
+                background: var(--border-hi);
+                border-radius: 2px;
+                padding: 2px 6px;
+                flex-shrink: 0;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                font-weight: 600;
+            }
+
+            .search-hint-bar {
+                padding: 8px 16px;
+                border-top: 1px solid var(--border);
+                display: flex;
+                gap: 16px;
+                font-size: 11px;
+                color: var(--text-lo);
+            }
+
+            .search-hint-bar kbd {
+                background: var(--border-hi);
+                border-radius: 3px;
+                padding: 1px 5px;
+                font-family: var(--mono);
+                font-size: 10px;
+                color: var(--text-md);
+            }
+
+            /* ── EXPLORE BUTTON ── */
+            .explore-btn {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                width: 100%;
+                padding: 8px 12px;
+                background: rgba(56, 139, 253, 0.1);
+                border: 1px solid rgba(56, 139, 253, 0.3);
+                border-radius: 6px;
+                color: #79b8ff;
+                font-family: var(--mono);
+                font-size: 11px;
+                font-weight: 600;
+                cursor: pointer;
+                transition:
+                    background 0.15s,
+                    border-color 0.15s;
+                text-align: left;
+            }
+
+            .explore-btn:hover {
+                background: rgba(56, 139, 253, 0.2);
+                border-color: rgba(56, 139, 253, 0.6);
+                color: #a8d1ff;
+            }
+
+            .explore-btn-icon {
+                font-size: 13px;
+                flex-shrink: 0;
+            }
+
+            .crumb-icon-module {
+                color: #79b8ff;
+            }
+            .crumb-icon-function {
+                color: #e3b341;
+            }
+
+            /* ── CONTEXT DROPDOWN ── */
+            .ctx-menu {
+                display: none;
+                position: fixed;
+                z-index: 200;
+                background: #1c2128;
+                border: 1px solid var(--border-hi);
+                border-radius: 7px;
+                overflow: hidden;
+                box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+                min-width: 160px;
+            }
+
+            .ctx-menu.open {
+                display: block;
+            }
+
+            .ctx-item {
+                padding: 9px 14px;
+                font-size: 12px;
+                color: var(--text-md);
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                transition:
+                    background 0.1s,
+                    color 0.1s;
+                user-select: none;
+                white-space: nowrap;
+            }
+
+            .ctx-item:hover {
+                background: var(--border);
+                color: var(--text-hi);
+            }
+
+            .ctx-item-icon {
+                font-size: 13px;
+                flex-shrink: 0;
+                color: var(--text-lo);
+            }
+
+            .ctx-sep {
+                height: 1px;
+                background: var(--border);
+                margin: 2px 0;
+            }
+
+            /* ── PAN CONTROLS ── */
+            .nav-controls {
+                position: absolute;
+                bottom: 20px;
+                right: 64px;
+                display: grid;
+                grid-template-columns: 36px 36px 36px;
+                grid-template-rows: 36px 36px 36px;
+                gap: 2px;
+                z-index: 10;
+            }
+
+            .pan-btn {
+                width: 36px;
+                height: 36px;
+                background: var(--surface);
+                border: 1px solid var(--border-hi);
+                border-radius: 6px;
+                color: var(--text-lo);
+                font-size: 14px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition:
+                    background 0.1s,
+                    color 0.1s;
+                user-select: none;
+            }
+
+            .pan-btn:hover {
+                background: var(--border);
+                color: var(--text-hi);
+            }
+            .pan-btn:active {
+                background: var(--border-hi);
+            }
+            /* grid positions: up=top-center, left=mid-left, right=mid-right, down=bot-center */
+            .pan-up {
+                grid-column: 2;
+                grid-row: 1;
+            }
+            .pan-left {
+                grid-column: 1;
+                grid-row: 2;
+            }
+            .pan-right {
+                grid-column: 3;
+                grid-row: 2;
+            }
+            .pan-down {
+                grid-column: 2;
+                grid-row: 3;
+            }
         </style>
     </head>
     <body>
         <header>
             <span class="logo">codemarp</span>
-            <div class="breadcrumb">
-                <span class="breadcrumb-item">{{title}}</span>
-                <span class="breadcrumb-sep">·</span>
-                <span class="breadcrumb-sub">{{subtitle}}</span>
+            <div class="nav-breadcrumb">
+                <div class="nav-back" id="nav-back">
+                    <span>←</span>
+                    <span>overview</span>
+                </div>
+                <div class="nav-crumbs" id="nav-crumbs">
+                    <span class="nav-title">{{title}}</span>
+                    <span class="nav-subtitle">{{subtitle}}</span>
+                </div>
             </div>
             <div class="header-right">
-                <span class="badge badge-blue">cytoscape</span>
+                <span class="mode-indicator" id="mode-indicator">overview</span>
                 <span class="badge badge-green">{{mode}}</span>
             </div>
         </header>
@@ -443,12 +849,17 @@
                 <span>laying out graph</span>
             </div>
 
-            <!-- LEFT SIDEBAR -->
             <aside class="sidebar">
-                <div class="sidebar-header">inspector</div>
+                <div class="sidebar-header">
+                    <span>inspector</span>
+                    <span class="sidebar-mode-tag" id="sidebar-mode-tag"
+                        >overview</span
+                    >
+                </div>
                 <div class="sidebar-empty" id="sidebar-empty">
                     <span class="sidebar-empty-icon">◈</span>
-                    <span>click a node<br />to inspect it</span>
+                    <span>click any node to<br />enter exploration mode</span>
+                    <span class="sidebar-empty-hint">or use ⌘K to search</span>
                 </div>
                 <div class="sidebar-content" id="sidebar-content">
                     <div>
@@ -460,12 +871,24 @@
                         id="node-filepath"
                         style="display: none"
                     ></div>
+                    <div id="section-explore" style="display: none">
+                        <button class="explore-btn" id="explore-btn">
+                            <span class="explore-btn-icon">ƒ</span>
+                            <span>Explore functions →</span>
+                        </button>
+                    </div>
                     <div
                         class="sidebar-section"
                         id="section-calls"
                         style="display: none"
                     >
-                        <div class="sidebar-section-title">calls</div>
+                        <div class="sidebar-section-title">
+                            <span>calls</span>
+                            <span
+                                class="sidebar-section-count"
+                                id="calls-count"
+                            ></span>
+                        </div>
                         <div id="calls-list"></div>
                     </div>
                     <div
@@ -473,55 +896,103 @@
                         id="section-callers"
                         style="display: none"
                     >
-                        <div class="sidebar-section-title">called by</div>
+                        <div class="sidebar-section-title">
+                            <span>called by</span>
+                            <span
+                                class="sidebar-section-count"
+                                id="callers-count"
+                            ></span>
+                        </div>
                         <div id="callers-list"></div>
                     </div>
                 </div>
             </aside>
 
-            <!-- GRAPH -->
             <div id="graph"></div>
 
-            <!-- ZOOM -->
+            <div class="search-overlay" id="search-overlay">
+                <div class="search-input-row">
+                    <span class="search-icon">⌕</span>
+                    <input
+                        class="search-input"
+                        id="search-input"
+                        type="text"
+                        placeholder="search nodes..."
+                        autocomplete="off"
+                        spellcheck="false"
+                    />
+                    <span class="search-kbd">esc</span>
+                </div>
+                <div class="search-results" id="search-results"></div>
+                <div class="search-hint-bar">
+                    <span><kbd>↑↓</kbd> navigate</span>
+                    <span><kbd>↵</kbd> select</span>
+                    <span><kbd>esc</kbd> close</span>
+                </div>
+            </div>
+
             <div class="zoom-controls">
                 <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
-                <button
-                    class="zoom-btn reset"
-                    id="zoom-reset"
-                    title="Fit to screen"
-                >
+                <button class="zoom-btn reset" id="zoom-reset" title="Fit">
                     fit
                 </button>
                 <button class="zoom-btn" id="zoom-out" title="Zoom out">
                     −
                 </button>
             </div>
+
+            <!-- PAN CONTROLS -->
+            <div class="nav-controls">
+                <button class="pan-btn pan-up" id="pan-up" title="Pan up">
+                    ↑
+                </button>
+                <button class="pan-btn pan-left" id="pan-left" title="Pan left">
+                    ←
+                </button>
+                <button
+                    class="pan-btn pan-right"
+                    id="pan-right"
+                    title="Pan right"
+                >
+                    →
+                </button>
+                <button class="pan-btn pan-down" id="pan-down" title="Pan down">
+                    ↓
+                </button>
+            </div>
+
+            <!-- CONTEXT MENU DROPDOWN -->
+            <div class="ctx-menu" id="ctx-menu"></div>
         </div>
 
         <footer>
-            <span class="footer-stat">
-                <span>mode</span>
-                <span class="footer-stat-value">{{mode}}</span>
-            </span>
-            <span class="footer-stat">
-                <span>lang</span>
-                <span class="footer-stat-value">{{language}}</span>
-            </span>
-            <span class="footer-stat">
-                <span>nodes</span>
-                <span class="footer-stat-value">{{node_count}}</span>
-            </span>
-            <span class="footer-stat">
-                <span>edges</span>
-                <span class="footer-stat-value">{{edge_count}}</span>
-            </span>
+            <span class="footer-stat"
+                ><span>mode</span
+                ><span class="footer-stat-value">{{mode}}</span></span
+            >
+            <span class="footer-stat"
+                ><span>lang</span
+                ><span class="footer-stat-value">{{language}}</span></span
+            >
+            <span class="footer-stat"
+                ><span>nodes</span
+                ><span class="footer-stat-value">{{node_count}}</span></span
+            >
+            <span class="footer-stat"
+                ><span>edges</span
+                ><span class="footer-stat-value">{{edge_count}}</span></span
+            >
             <span class="footer-hint"
-                >click node to inspect · scroll to zoom · drag to pan</span
+                >⌘K search · click node to explore · double-click canvas to go
+                back</span
             >
         </footer>
 
         <script>
-            const graph = {{graph_json}};
+            const graph      = {{graph_json}};
+            const fullBundle = {{full_bundle_json}};
+
+            cytoscape.use(cytoscapeDagre);
 
             const cy = cytoscape({
                 container: document.getElementById("graph"),
@@ -533,6 +1004,7 @@
                             kind: n.kind || "module",
                             language: n.language,
                             file_path: n.file_path || null,
+                            module_id: n.module_id || null,
                         },
                     })),
                     ...graph.edges.map((e) => ({
@@ -549,49 +1021,76 @@
                     {
                         selector: "node",
                         style: {
-                            "background-color": "#161b22",
-                            "border-color": "#30363d",
+                            "background-color": "#1c2128",
+                            "border-color": "#444c56",
                             "border-width": 1.5,
                             "label": "data(label)",
-                            "color": "#c9d1d9",
-                            "font-size": 11,
+                            "color": "#e6edf3",
+                            "font-size": 13,
                             "text-valign": "center",
                             "text-halign": "center",
                             "width": "label",
                             "height": "label",
-                            "padding": "10px",
+                            "padding": "12px",
                             "shape": "round-rectangle",
                             "text-wrap": "wrap",
-                            "text-max-width": "200px",
+                            "text-max-width": "220px",
+                        },
+                    },
+                    {
+                        selector: "node[kind='module']",
+                        style: {
+                            "background-color": "#1c2128",
+                            "border-color": "#388bfd",
+                            "border-width": 2,
+                            "color": "#79b8ff",
+                            "font-size": 13,
+                            "width": "label",
+                            "height": "label",
+                            "padding": "12px",
+                        },
+                    },
+                    {
+                        selector: "node[kind='function']",
+                        style: {
+                            "background-color": "#1c2128",
+                            "border-color": "#b08800",
+                            "border-width": 1.5,
+                            "color": "#e3b341",
+                            "font-size": 12,
+                            "width": "label",
+                            "height": "label",
+                            "padding": "10px",
                         },
                     },
                     {
                         selector: "node.hovered",
+                        style: { "background-color": "#2d333b", "border-width": 2.5, "color": "#ffffff" },
+                    },
+                    {
+                        selector: "node.focus",
                         style: {
-                            "background-color": "#1f2937",
+                            "background-color": "rgba(31, 111, 235, 0.2)",
                             "border-color": "#58a6ff",
-                            "border-width": 2,
-                            "color": "#e6edf3",
+                            "border-width": 3,
+                            "color": "#ffffff",
+                            "font-size": 14,
                         },
                     },
                     {
-                        selector: "node.selected",
+                        selector: "node[kind='function'].focus",
                         style: {
-                            "background-color": "rgba(31, 111, 235, 0.13)",
-                            "border-color": "#58a6ff",
-                            "border-width": 2,
-                            "color": "#e6edf3",
+                            "background-color": "rgba(176, 136, 0, 0.2)",
+                            "border-color": "#e3b341",
+                            "border-width": 3,
+                            "color": "#ffffff",
                         },
                     },
                     {
-                        selector: "node.dimmed",
-                        style: {
-                            "background-color": "#161b22",
-                            "border-color": "#21262d",
-                            "color": "#6b7280",
-                            "opacity": 0.65,
-                        },
+                        selector: "node.neighbor",
+                        style: { "background-color": "#2d333b", "border-width": 1.5, "color": "#e6edf3", "opacity": 1 },
                     },
+                    { selector: "node.hidden", style: { "display": "none" } },
                     {
                         selector: "edge",
                         style: {
@@ -604,22 +1103,16 @@
                         },
                     },
                     {
-                        selector: "edge.highlighted",
-                        style: {
-                            "line-color": "#58a6ff",
-                            "target-arrow-color": "#58a6ff",
-                            "opacity": 1,
-                            "width": 2,
-                        },
+                        selector: "edge.focus-edge",
+                        style: { "line-color": "#58a6ff", "target-arrow-color": "#58a6ff", "width": 2, "opacity": 1 },
                     },
+                    { selector: "edge.hidden", style: { "display": "none" } },
+                    { selector: "node.search-dim", style: { "opacity": 0.15 } },
                     {
-                        selector: "edge.dimmed",
-                        style: {
-                            "line-color": "rgba(88, 166, 255, 0.06)",
-                            "target-arrow-color": "rgba(88, 166, 255, 0.06)",
-                            "opacity": 1,
-                        },
+                        selector: "node.search-match",
+                        style: { "border-color": "#58a6ff", "border-width": 2, "opacity": 1 },
                     },
+                    { selector: "edge.search-dim", style: { "opacity": 0.05 } },
                 ],
                 userZoomingEnabled: true,
                 userPanningEnabled: true,
@@ -627,25 +1120,55 @@
                 maxZoom: 8,
             });
 
-            // layout
-            cy.ready(() => {
-                cy.layout({
-                    name: "cose",
+            // ── LAYOUT ──
+            const LAYOUT_NAME = "{{layout}}";
+
+            function buildLayout() {
+                if (LAYOUT_NAME === "dagre") {
+                    return {
+                        name: "dagre",
+                        rankDir: "LR",
+                        rankSep: {{rank_sep}},
+                        nodeSep: {{node_sep}},
+                        edgeSep: 10,
+                        animate: false,
+                        fit: true,
+                        padding: 60,
+                    };
+                } else {
+                    return {
+                        name: "cose",
+                        animate: false,
+                        fit: true,
+                        padding: 60,
+                        nodeRepulsion: () => {{node_repulsion}},
+                        edgeElasticity: () => 32,
+                        idealEdgeLength: () => {{ideal_edge_length}},
+                        gravity: 0.25,
+                        numIter: {{num_iter}},
+                        initialTemp: 200,
+                        coolingFactor: 0.95,
+                        minTemp: 1.0,
+                    };
+                }
+            }
+
+            function buildFunctionLayout() {
+                return {
+                    name: "dagre",
+                    rankDir: "LR",
+                    rankSep: 70,
+                    nodeSep: 35,
+                    edgeSep: 10,
                     animate: false,
                     fit: true,
                     padding: 60,
-                    nodeRepulsion: () => 8000,
-                    edgeElasticity: () => 32,
-                    idealEdgeLength: () => 80,
-                    gravity: 0.25,
-                    numIter: 2500,
-                    initialTemp: 200,
-                    coolingFactor: 0.95,
-                    minTemp: 1.0,
-                }).run();
+                };
+            }
 
+            cy.ready(() => {
+                cy.layout(buildLayout()).run();
                 cy.fit(undefined, 60);
-
                 const loading = document.getElementById("loading");
                 if (loading) {
                     loading.style.opacity = "0";
@@ -653,19 +1176,17 @@
                 }
             });
 
-            // ── HOVER via events (pseudo-selectors not supported) ──
-            cy.on("mouseover", "node", (e) => {
-                if (!e.target.hasClass("selected")) {
-                    e.target.addClass("hovered");
-                }
-            });
-            cy.on("mouseout", "node", (e) => {
-                e.target.removeClass("hovered");
-            });
+            // ── STATE ──
+            let appMode = "overview";
+            let focusHistory = []; // array of {id, kind, viewType, moduleId?}
 
-            // ── SIDEBAR ──
+            // ── DOM REFS ──
+            const navBack        = document.getElementById("nav-back");
+            const navCrumbs      = document.getElementById("nav-crumbs");
+            const modeIndicator  = document.getElementById("mode-indicator");
             const sidebarEmpty   = document.getElementById("sidebar-empty");
             const sidebarContent = document.getElementById("sidebar-content");
+            const sidebarModeTag = document.getElementById("sidebar-mode-tag");
             const nodeName       = document.getElementById("node-name");
             const nodeMeta       = document.getElementById("node-meta");
             const nodeFilepath   = document.getElementById("node-filepath");
@@ -673,20 +1194,288 @@
             const callersList    = document.getElementById("callers-list");
             const sectionCalls   = document.getElementById("section-calls");
             const sectionCallers = document.getElementById("section-callers");
+            const callsCount     = document.getElementById("calls-count");
+            const callersCount   = document.getElementById("callers-count");
+            const graphEl        = document.getElementById("graph");
+            const sectionExplore = document.getElementById("section-explore");
+            const exploreBtn     = document.getElementById("explore-btn");
 
+            // ── HELPERS ──
             function resTag(kind) {
                 const label = kind || "unknown";
                 return `<span class="resolution-tag res-${label}">${label}</span>`;
             }
 
+            function nodeIcon(kind) {
+                return kind === "function" ? "ƒ" : "{}";
+            }
+
+            function kindIcon(kind) {
+                if (kind === "module")   return `<span class="crumb-icon-module">{}</span>`;
+                if (kind === "function") return `<span class="crumb-icon-function">ƒ</span>`;
+                return "◈";
+            }
+
+            // ── SAVED ELEMENTS for overview restoration ──
+            const originalElements = graph.nodes.map(n => ({
+                data: {
+                    id: n.id, label: n.label || n.id,
+                    kind: n.kind || "module", language: n.language,
+                    file_path: n.file_path || null, module_id: n.module_id || null,
+                }
+            })).concat(graph.edges.map(e => ({
+                data: {
+                    source: e.source, target: e.target,
+                    kind: e.kind || "calls", label: e.label || "",
+                    resolution_kind: e.resolution_kind || "unknown",
+                }
+            })));
+
+            // ── ENTER OVERVIEW ──
+            function enterOverview(animate = true) {
+                appMode = "overview";
+                focusHistory = [];
+
+                if (animate) {
+                    graphEl.style.transition = "opacity 0.18s ease";
+                    graphEl.style.opacity = "0";
+                    setTimeout(() => {
+                        const currentIds  = new Set(cy.nodes().map(n => n.id()));
+                        const originalIds = new Set(graph.nodes.map(n => n.id));
+                        const needsRestore = ![...originalIds].every(id => currentIds.has(id));
+
+                        if (needsRestore) {
+                            cy.elements().remove();
+                            cy.add(originalElements);
+                            cy.layout(buildLayout()).run();
+                        } else {
+                            cy.elements().removeClass("focus neighbor hidden focus-edge hovered search-dim search-match");
+                        }
+
+                        cy.animate({
+                            fit: { eles: cy.elements(), padding: 60 },
+                            duration: 350,
+                            easing: "ease-in-out-cubic",
+                            complete: () => {
+                                graphEl.style.opacity = "1";
+                                setTimeout(() => { graphEl.style.transition = ""; }, 200);
+                            }
+                        });
+                    }, 180);
+                } else {
+                    cy.elements().removeClass("focus neighbor hidden focus-edge hovered search-dim search-match");
+                    cy.fit(undefined, 60);
+                }
+
+                navBack.classList.remove("visible");
+                navCrumbs.innerHTML = `
+                    <span class="nav-title">{{title}}</span>
+                    <span class="nav-subtitle">{{subtitle}}</span>
+                `;
+                modeIndicator.textContent = "overview";
+                sidebarModeTag.textContent = "overview";
+                sidebarModeTag.classList.remove("exploration");
+                sidebarEmpty.style.display = "flex";
+                sidebarContent.classList.remove("visible");
+            }
+
+            // ── ENTER EXPLORATION ──
+            function enterExploration(nodeId, addToHistory = true) {
+                const node = cy.getElementById(nodeId);
+                if (!node || node.length === 0) return;
+
+                const wasOverview = appMode === "overview";
+                appMode = "exploration";
+
+                if (addToHistory) {
+                    focusHistory.push({
+                        id: nodeId,
+                        kind: node.data("kind") || "module",
+                        viewType: "node",
+                    });
+                }
+
+                const neighbors  = node.neighborhood().nodes();
+                const focusEdges = node.connectedEdges();
+
+                const fadeDuration  = wasOverview ? 180 : 120;
+                const zoomDuration  = wasOverview ? 350 : 250;
+
+                graphEl.style.transition = `opacity ${fadeDuration}ms ease`;
+                graphEl.style.opacity = "0";
+                setTimeout(() => {
+                    cy.nodes().removeClass("focus neighbor hidden hovered search-dim search-match");
+                    cy.edges().removeClass("focus-edge hidden search-dim");
+                    node.addClass("focus");
+                    neighbors.addClass("neighbor");
+                    cy.nodes().not(node).not(neighbors).addClass("hidden");
+                    cy.edges().not(focusEdges).addClass("hidden");
+                    focusEdges.addClass("focus-edge");
+                    const subgraph = node.add(neighbors);
+                    cy.animate({
+                        fit: { eles: subgraph, padding: 80 },
+                        duration: zoomDuration,
+                        easing: "ease-in-out-cubic",
+                        complete: () => {
+                            graphEl.style.opacity = "1";
+                            setTimeout(() => { graphEl.style.transition = ""; }, zoomDuration);
+                        }
+                    });
+                }, fadeDuration);
+
+                navBack.classList.add("visible");
+                updateBreadcrumb();
+                modeIndicator.textContent = "exploring";
+                sidebarModeTag.textContent = "exploring";
+                sidebarModeTag.classList.add("exploration");
+                showSidebar(node);
+            }
+
+            // ── BREADCRUMB ──
+            function updateBreadcrumb() {
+                navCrumbs.innerHTML = "";
+                focusHistory.forEach((entry, i) => {
+                    const node     = cy.getElementById(entry.id);
+                    const label    = node.data("label") || entry.id;
+                    const kind     = node.data("kind") || entry.kind || "module";
+                    const isCurrent = i === focusHistory.length - 1;
+
+                    if (i > 0) {
+                        const sep = document.createElement("span");
+                        sep.className = "nav-crumb-sep";
+                        sep.textContent = "→";
+                        navCrumbs.appendChild(sep);
+                    }
+
+                    const crumb = document.createElement("span");
+                    crumb.className = "nav-crumb" + (isCurrent ? " current" : "");
+                    crumb.title = entry.id;
+                    crumb.innerHTML = `${kindIcon(kind)} ${label}`;
+
+                    if (!isCurrent) {
+                        crumb.addEventListener("click", () => {
+                            focusHistory = focusHistory.slice(0, i + 1);
+                            if (entry.viewType === "module-functions") {
+                                exploreFunctions(entry.moduleId, false);
+                            } else {
+                                enterExploration(entry.id, false);
+                            }
+                        });
+                    }
+                    navCrumbs.appendChild(crumb);
+                });
+            }
+
+            exploreBtn.addEventListener("click", () => {
+                const moduleId = exploreBtn.dataset.moduleId;
+                if (moduleId) exploreFunctions(moduleId);
+            });
+
+            // ── EXPLORE FUNCTIONS ──
+            // belongs() handles submodule cases e.g. module "v4.classic" also
+            // captures functions with module_id "v4.classic.schemas"
+            function belongs(fn, moduleId) {
+                return fn.module_id === moduleId ||
+                       fn.module_id?.startsWith(moduleId + ".") ||
+                       fn.module_id?.startsWith(moduleId + "/");
+            }
+
+            function exploreFunctions(moduleId, addToHistory = true) {
+                if (!fullBundle || !fullBundle.nodes) return;
+
+                const fnNodes = fullBundle.nodes.filter(
+                    n => n.kind === "function" && belongs(n, moduleId)
+                );
+                const fnIds   = new Set(fnNodes.map(n => n.id));
+                const fnEdges = fullBundle.edges.filter(
+                    e => e.kind === "calls" && fnIds.has(e.source) && fnIds.has(e.target)
+                );
+
+                if (fnNodes.length === 0) {
+                    sidebarEmpty.style.display = "none";
+                    sidebarContent.classList.add("visible");
+                    nodeName.textContent = moduleId.split(".").pop();
+                    nodeName.style.color = "#79b8ff";
+                    nodeMeta.textContent = "No functions detected for this module";
+                    nodeFilepath.style.display = "none";
+                    sectionExplore.style.display = "none";
+                    sectionCalls.style.display = "none";
+                    sectionCallers.style.display = "none";
+                    // add a soft hint below
+                    const hint = document.createElement("div");
+                    hint.style.cssText = "font-size:11px;color:var(--text-dim);line-height:1.6;margin-top:-8px;";
+                    hint.textContent = "This module may use object composition or indirect exports.";
+                    sidebarContent.appendChild(hint);
+                    setTimeout(() => hint.remove(), 4000);
+                    return;
+                }
+
+                appMode = "exploration";
+
+                if (addToHistory) {
+                    focusHistory.push({ id: moduleId, kind: "module", viewType: "module-functions", moduleId });
+                }
+
+                const newElements = [
+                    ...fnNodes.map(n => ({
+                        data: {
+                            id: n.id, label: n.label || n.id,
+                            kind: n.kind, language: n.language,
+                            file_path: n.file_path || null, module_id: n.module_id || null,
+                        }
+                    })),
+                    ...fnEdges.map(e => ({
+                        data: {
+                            source: e.source, target: e.target,
+                            kind: e.kind, label: e.label || "",
+                            resolution_kind: e.resolution_kind || "unknown",
+                        }
+                    })),
+                ];
+
+                graphEl.style.transition = "opacity 0.18s ease";
+                graphEl.style.opacity = "0";
+
+                setTimeout(() => {
+                    cy.elements().remove();
+                    cy.add(newElements);
+                    cy.layout(buildFunctionLayout()).run();
+                    cy.fit(undefined, 60);
+                    graphEl.style.opacity = "1";
+                    setTimeout(() => { graphEl.style.transition = ""; }, 200);
+
+                    navBack.classList.add("visible");
+                    updateBreadcrumb();
+                    modeIndicator.textContent = "exploring";
+                    sidebarModeTag.textContent = "exploring";
+                    sidebarModeTag.classList.add("exploration");
+                    sidebarEmpty.style.display = "none";
+                    sidebarContent.classList.add("visible");
+                    nodeName.textContent = moduleId.split(".").pop();
+                    nodeName.style.color = "#79b8ff";
+                    nodeMeta.textContent = `{} module · ${fnNodes.length} functions`;
+                    nodeFilepath.style.display = "none";
+                    sectionExplore.style.display = "none";
+                    sectionCalls.style.display = "none";
+                    sectionCallers.style.display = "none";
+                }, 180);
+            }
+
+            // ── SIDEBAR ──
             function showSidebar(node) {
-                const data = node.data();
+                const data     = node.data();
+                const kind     = data.kind || "module";
+                const isModule = kind === "module";
 
                 sidebarEmpty.style.display = "none";
                 sidebarContent.classList.add("visible");
 
                 nodeName.textContent = data.label || data.id;
-                nodeMeta.textContent = data.kind || "";
+                nodeName.style.color = isModule ? "#79b8ff" : "#e3b341";
+
+                nodeMeta.textContent = !isModule && data.module_id
+                    ? `ƒ function · ${data.module_id}`
+                    : isModule ? `{} module` : kind;
 
                 if (data.file_path) {
                     nodeFilepath.textContent = data.file_path;
@@ -695,86 +1484,376 @@
                     nodeFilepath.style.display = "none";
                 }
 
-                // outgoing
+                if (isModule && fullBundle && fullBundle.nodes) {
+                    const hasFunctions = fullBundle.nodes.some(
+                        n => n.kind === "function" && belongs(n, data.id)
+                    );
+                    if (hasFunctions) {
+                        exploreBtn.dataset.moduleId = data.id;
+                        sectionExplore.style.display = "block";
+                    } else {
+                        sectionExplore.style.display = "none";
+                    }
+                } else {
+                    sectionExplore.style.display = "none";
+                }
+
                 const outEdges = node.connectedEdges().filter(e => e.data("source") === data.id);
                 if (outEdges.length > 0) {
                     callsList.innerHTML = "";
+                    callsCount.textContent = outEdges.length;
                     outEdges.forEach((e) => {
-                        const targetNode = cy.getElementById(e.data("target"));
-                        const label = targetNode.data("label") || e.data("target");
+                        const label = cy.getElementById(e.data("target")).data("label") || e.data("target");
                         const div = document.createElement("div");
                         div.className = "edge-item";
                         div.innerHTML = `<span class="edge-arrow">→</span><span style="flex:1">${label}</span>${resTag(e.data("resolution_kind"))}`;
-                        div.addEventListener("click", () => cy.getElementById(e.data("target")).trigger("tap"));
+                        div.addEventListener("click", () => enterExploration(e.data("target")));
                         callsList.appendChild(div);
                     });
                     sectionCalls.style.display = "flex";
                 } else {
+                    callsCount.textContent = "";
                     sectionCalls.style.display = "none";
                 }
 
-                // incoming
                 const inEdges = node.connectedEdges().filter(e => e.data("target") === data.id);
                 if (inEdges.length > 0) {
                     callersList.innerHTML = "";
+                    callersCount.textContent = inEdges.length;
                     inEdges.forEach((e) => {
-                        const sourceNode = cy.getElementById(e.data("source"));
-                        const label = sourceNode.data("label") || e.data("source");
+                        const label = cy.getElementById(e.data("source")).data("label") || e.data("source");
                         const div = document.createElement("div");
                         div.className = "edge-item";
                         div.innerHTML = `<span class="edge-arrow">←</span><span style="flex:1">${label}</span>${resTag(e.data("resolution_kind"))}`;
-                        div.addEventListener("click", () => cy.getElementById(e.data("source")).trigger("tap"));
+                        div.addEventListener("click", () => enterExploration(e.data("source")));
                         callersList.appendChild(div);
                     });
                     sectionCallers.style.display = "flex";
                 } else {
+                    callersCount.textContent = "";
                     sectionCallers.style.display = "none";
                 }
             }
 
-            function hideSidebar() {
-                sidebarEmpty.style.display = "flex";
-                sidebarContent.classList.remove("visible");
+            // ── CONTEXT MENU (custom dropdown — zoom-independent) ──
+            const ctxMenu = document.getElementById("ctx-menu");
+            let ctxTarget = null;
+
+            function buildCtxItems(node) {
+                const kind = node.data("kind") || "module";
+                const items = [];
+                if (kind === "module") {
+                    const hasFn = fullBundle && fullBundle.nodes &&
+                        fullBundle.nodes.some(n => n.kind === "function" && belongs(n, node.data("id")));
+                    if (hasFn) {
+                        items.push({ icon: "ƒ", label: "Explore functions", action: () => exploreFunctions(node.data("id")) });
+                        items.push({ sep: true });
+                    }
+                }
+                items.push({ icon: "⎘", label: "Copy reference", action: () => navigator.clipboard.writeText(node.data("id")) });
+                return items;
             }
 
-            // ── NODE TAP ──
-            cy.on("tap", "node", (e) => {
-                const node = e.target;
-                const id = node.data("id");
+            function openCtxMenu(node, x, y) {
+                ctxTarget = node;
+                ctxMenu.innerHTML = "";
+                const items = buildCtxItems(node);
+                items.forEach(item => {
+                    if (item.sep) {
+                        const sep = document.createElement("div");
+                        sep.className = "ctx-sep";
+                        ctxMenu.appendChild(sep);
+                        return;
+                    }
+                    const el = document.createElement("div");
+                    el.className = "ctx-item";
+                    el.innerHTML = `<span class="ctx-item-icon">${item.icon}</span>${item.label}`;
+                    el.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        closeCtxMenu();
+                        item.action();
+                    });
+                    ctxMenu.appendChild(el);
+                });
 
-                cy.elements().removeClass("selected dimmed highlighted hovered");
+                // position: keep within viewport
+                ctxMenu.style.left = "0px";
+                ctxMenu.style.top  = "0px";
+                ctxMenu.classList.add("open");
+                const rect = ctxMenu.getBoundingClientRect();
+                const vw = window.innerWidth, vh = window.innerHeight;
+                const cx = x + rect.width  > vw ? x - rect.width  : x;
+                const cy_ = y + rect.height > vh ? y - rect.height : y;
+                ctxMenu.style.left = `${cx}px`;
+                ctxMenu.style.top  = `${cy_}px`;
+            }
 
-                const neighborhood = node.neighborhood().add(node);
-                cy.elements().not(neighborhood).addClass("dimmed");
-                node.addClass("selected");
-                node.connectedEdges().addClass("highlighted");
+            function closeCtxMenu() {
+                ctxMenu.classList.remove("open");
+                ctxTarget = null;
+            }
 
-                showSidebar(node);
+            cy.on("cxttap", "node", (e) => {
+                e.originalEvent.preventDefault();
+                const pos = e.originalEvent;
+                openCtxMenu(e.target, pos.clientX, pos.clientY);
             });
 
-            // tap on background — reset
+            // also support plain right-click via contextmenu event on the canvas container
+            document.getElementById("graph").addEventListener("contextmenu", (e) => {
+                // cxttap already fired; just prevent default so no browser menu appears
+                e.preventDefault();
+            });
+
+            document.addEventListener("click",   (e) => { if (!ctxMenu.contains(e.target)) closeCtxMenu(); });
+            document.addEventListener("keydown",  (e) => { if (e.key === "Escape") closeCtxMenu(); });
+            document.addEventListener("wheel",    ()  => closeCtxMenu(), { passive: true });
+
+            // ── PAN CONTROLS ──
+            const PAN_STEP = 120; // pixels per click
+            let   panInterval = null;
+
+            function panBy(dx, dy) {
+                const p = cy.pan();
+                cy.pan({ x: p.x + dx, y: p.y + dy });
+            }
+
+            function startPan(dx, dy) {
+                panBy(dx, dy);
+                panInterval = setInterval(() => panBy(dx, dy), 80);
+            }
+
+            function stopPan() {
+                clearInterval(panInterval);
+                panInterval = null;
+            }
+
+            function bindPan(id, dx, dy) {
+                const btn = document.getElementById(id);
+                btn.addEventListener("mousedown",  () => startPan(dx, dy));
+                btn.addEventListener("touchstart", () => startPan(dx, dy), { passive: true });
+                btn.addEventListener("mouseup",    stopPan);
+                btn.addEventListener("mouseleave", stopPan);
+                btn.addEventListener("touchend",   stopPan);
+            }
+
+            bindPan("pan-up",    0,          PAN_STEP);
+            bindPan("pan-down",  0,         -PAN_STEP);
+            bindPan("pan-left",  PAN_STEP,   0);
+            bindPan("pan-right", -PAN_STEP,  0);
+
+            // ── NODE EVENTS ──
+            cy.on("mouseover", "node", (e) => {
+                if (!e.target.hasClass("focus")) e.target.addClass("hovered");
+            });
+            cy.on("mouseout", "node", (e) => { e.target.removeClass("hovered"); });
+
+            cy.on("tap", "node", (e) => {
+                const node = e.target;
+                if (appMode === "exploration" && node.hasClass("focus")) return;
+                enterExploration(node.data("id"));
+            });
+
+            // Double-tap detection on canvas background (dblclick unreliable in Cytoscape)
+            let lastTapTime = 0;
+            let lastTapTarget = null;
             cy.on("tap", (e) => {
-                if (e.target === cy) {
-                    cy.elements().removeClass("selected dimmed highlighted hovered");
-                    hideSidebar();
+                if (e.target !== cy) return; // only canvas background
+                const now = Date.now();
+                const isDoubleTap = (now - lastTapTime < 350) && (lastTapTarget === cy);
+                lastTapTime   = now;
+                lastTapTarget = e.target;
+                if (!isDoubleTap || appMode !== "exploration") return;
+                if (focusHistory.length <= 1) {
+                    enterOverview(true);
+                } else {
+                    focusHistory.pop();
+                    const prev = focusHistory[focusHistory.length - 1];
+                    if (prev.viewType === "module-functions") {
+                        exploreFunctions(prev.moduleId, false);
+                    } else {
+                        enterExploration(prev.id, false);
+                    }
                 }
             });
 
-            // ── ZOOM BUTTONS ──
-            document.getElementById("zoom-in").addEventListener("click", () => {
-                cy.zoom({
-                    level: cy.zoom() * 1.3,
-                    renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 },
+            navBack.addEventListener("click", () => enterOverview(true));
+
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") {
+                    if (searchOverlay.classList.contains("open")) { closeSearch(); return; }
+                    if (appMode === "exploration") {
+                        // Escape: same behaviour as double-click — pop one level
+                        if (focusHistory.length <= 1) {
+                            enterOverview(true);
+                        } else {
+                            focusHistory.pop();
+                            const prev = focusHistory[focusHistory.length - 1];
+                            if (prev.viewType === "module-functions") {
+                                exploreFunctions(prev.moduleId, false);
+                            } else {
+                                enterExploration(prev.id, false);
+                            }
+                        }
+                    }
+                }
+                if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+                    e.preventDefault();
+                    searchOverlay.classList.contains("open") ? closeSearch() : openSearch();
+                }
+            });
+
+            // ── SEARCH ──
+            const searchOverlay = document.getElementById("search-overlay");
+            const searchInput   = document.getElementById("search-input");
+            const searchResults = document.getElementById("search-results");
+
+            let activeResultIdx = -1;
+            let currentResults  = [];
+            let preSearchState  = null;
+
+            function highlightMatch(text, query) {
+                if (!query) return text;
+                const idx = text.toLowerCase().indexOf(query.toLowerCase());
+                if (idx === -1) return text;
+                return text.slice(0, idx) +
+                    "<mark>" + text.slice(idx, idx + query.length) + "</mark>" +
+                    text.slice(idx + query.length);
+            }
+
+            function runSearch(query) {
+                activeResultIdx = -1;
+                const q = query.trim().toLowerCase();
+
+                if (!q) {
+                    searchResults.innerHTML = "";
+                    currentResults = [];
+                    cy.elements().removeClass("search-dim search-match");
+                    return;
+                }
+
+                const matches = [];
+                cy.nodes().forEach((node) => {
+                    const d = node.data();
+                    const haystack = [d.label || "", d.id || "", d.file_path || "", d.module_id || ""].join(" ").toLowerCase();
+                    if (haystack.includes(q)) matches.push(node);
                 });
+
+                currentResults = matches.slice(0, 8);
+                cy.elements().removeClass("hidden focus neighbor focus-edge search-dim search-match");
+                if (matches.length > 0) {
+                    cy.nodes().not(cy.collection(matches)).addClass("search-dim");
+                    cy.collection(matches).addClass("search-match");
+                    cy.edges().addClass("search-dim");
+                }
+
+                if (currentResults.length === 0) {
+                    searchResults.innerHTML = `<div class="search-empty">no nodes matching "${query}"</div>`;
+                    return;
+                }
+
+                searchResults.innerHTML = "";
+                currentResults.forEach((node, i) => {
+                    const d   = node.data();
+                    const sub = d.file_path
+                        ? d.file_path.split("/").slice(-2).join("/")
+                        : d.module_id || d.id;
+                    const div = document.createElement("div");
+                    div.className = "search-result";
+                    div.innerHTML = `
+                        <span class="search-result-icon">${nodeIcon(d.kind)}</span>
+                        <div class="search-result-body">
+                            <div class="search-result-label">${highlightMatch(d.label || d.id, query)}</div>
+                            <div class="search-result-sub">${sub}</div>
+                        </div>
+                        <span class="search-result-kind">${d.kind || "node"}</span>
+                    `;
+                    div.addEventListener("click",     () => selectSearchResult(i));
+                    div.addEventListener("mouseover", () => setActive(i));
+                    searchResults.appendChild(div);
+                });
+            }
+
+            function setActive(idx) {
+                activeResultIdx = idx;
+                searchResults.querySelectorAll(".search-result").forEach((el, i) => {
+                    el.classList.toggle("active", i === idx);
+                });
+            }
+
+            function selectSearchResult(idx) {
+                const node = currentResults[idx];
+                if (!node) return;
+                closeSearch();
+                focusHistory = [];
+                enterExploration(node.data("id"));
+            }
+
+            function openSearch() {
+                preSearchState = { mode: appMode, history: [...focusHistory] };
+                searchOverlay.classList.add("open");
+                searchInput.value = "";
+                searchInput.focus();
+                searchResults.innerHTML = "";
+                currentResults = [];
+                activeResultIdx = -1;
+            }
+
+            function closeSearch() {
+                searchOverlay.classList.remove("open");
+                searchInput.value = "";
+                currentResults = [];
+                activeResultIdx = -1;
+
+                if (preSearchState) {
+                    if (preSearchState.mode === "overview") {
+                        cy.elements().removeClass("search-dim search-match hidden focus neighbor focus-edge");
+                    } else {
+                        cy.elements().removeClass("search-dim search-match");
+                        const lastEntry = preSearchState.history[preSearchState.history.length - 1];
+                        if (lastEntry) {
+                            focusHistory = preSearchState.history;
+                            if (lastEntry.viewType === "module-functions") {
+                                exploreFunctions(lastEntry.moduleId, false);
+                            } else {
+                                enterExploration(lastEntry.id, false);
+                            }
+                        }
+                    }
+                    preSearchState = null;
+                }
+            }
+
+            searchInput.addEventListener("input", (e) => runSearch(e.target.value));
+            searchInput.addEventListener("keydown", (e) => {
+                if (e.key === "Escape")    { closeSearch(); return; }
+                if (e.key === "ArrowDown") { e.preventDefault(); setActive(Math.min(activeResultIdx + 1, currentResults.length - 1)); return; }
+                if (e.key === "ArrowUp")   { e.preventDefault(); setActive(Math.max(activeResultIdx - 1, 0)); return; }
+                if (e.key === "Enter")     { e.preventDefault(); selectSearchResult(activeResultIdx >= 0 ? activeResultIdx : 0); return; }
+            });
+
+            document.addEventListener("click", (e) => {
+                if (searchOverlay.classList.contains("open") && !searchOverlay.contains(e.target)) {
+                    closeSearch();
+                }
+            });
+
+            // ── ZOOM ──
+            document.getElementById("zoom-in").addEventListener("click", () => {
+                cy.zoom({ level: cy.zoom() * 1.3, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } });
             });
             document.getElementById("zoom-out").addEventListener("click", () => {
-                cy.zoom({
-                    level: cy.zoom() * 0.75,
-                    renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 },
-                });
+                cy.zoom({ level: cy.zoom() * 0.75, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } });
             });
             document.getElementById("zoom-reset").addEventListener("click", () => {
-                cy.fit(undefined, 60);
+                if (appMode === "exploration" && focusHistory.length > 0) {
+                    const entry     = focusHistory[focusHistory.length - 1];
+                    const node      = cy.getElementById(entry.id);
+                    const neighbors = node.neighborhood().nodes();
+                    cy.fit(node.add(neighbors), 80);
+                } else {
+                    cy.fit(undefined, 60);
+                }
             });
         </script>
     </body>

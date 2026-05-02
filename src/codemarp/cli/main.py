@@ -2,9 +2,11 @@ import argparse
 from collections import defaultdict
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
+from time import perf_counter
 
 from codemarp.analyzers.low_level import build_low_level_mode
 from codemarp.errors import codemarpError
+from codemarp.exporters.json_exporter import bundle_to_json_dict
 from codemarp.pipeline.apply_mode import ModeType, apply_mode
 from codemarp.pipeline.build_bundle import build_bundle
 from codemarp.pipeline.export_all import export_all, export_low_level
@@ -132,7 +134,9 @@ def view_command(
     renderer: str = "mermaid",
     out: Path | None = None,
 ) -> None:
+    t0 = perf_counter()
     build_result = build_bundle(root, engine=parser_engine)
+    print(f"build_bundle: {perf_counter() - t0:.2f}s")
     language = language_summary(build_result.parsed_modules)
 
     graph_mode, low_mode = None, None
@@ -158,6 +162,7 @@ def view_command(
 
     title = f"Codemarp - {mode.value}"
     subtitle = f"mode: {mode.value}"
+    t1 = perf_counter()
     if renderer == "cytoscape":
         graph_json = render_mode_to_json(
             build_result,
@@ -165,6 +170,9 @@ def view_command(
             graph_mode=graph_mode,
             low_mode=low_mode,
         )
+
+        full_bundle_json = bundle_to_json_dict(build_result.bundle)
+
         html = wrap_cytoscape_html(
             graph_json,
             title=title,
@@ -173,6 +181,7 @@ def view_command(
             language=language,
             node_count=stats.node_count,
             edge_count=stats.edge_count,
+            full_bundle_json=full_bundle_json,
         )
     else:
         mermaid = render_mode_to_mermaid(
@@ -191,6 +200,7 @@ def view_command(
             node_count=stats.node_count,
             edge_count=stats.edge_count,
         )
+    print(f"html/render prep: {perf_counter() - t1:.2f}s")
 
     if out is not None:
         out = out.resolve()
