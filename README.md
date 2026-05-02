@@ -161,7 +161,7 @@ uv tool install git+https://github.com/haddyadnan/codemarp.git
 For a specific release tag:
 
 ```bash
-uv tool install git+https://github.com/haddyadnan/codemarp.git@v0.4.0
+uv tool install git+https://github.com/haddyadnan/codemarp.git@v0.5.0
 ```
 
 ---
@@ -268,14 +268,26 @@ Use `view` to render a graph directly in the browser instead of writing Mermaid 
 codemarp view src --mode trace --focus codemarp.cli.main:analyze_command
 ```
 
+Choose a renderer explicitly:
+
+```bash
+codemarp view src --mode full --renderer mermaid
+codemarp view src --mode full --renderer cytoscape
+```
+
+`mermaid` is the lightweight diagram renderer. `cytoscape` adds an interactive graph viewer for exploration.
+
 To keep the generated HTML:
 
 ```bash
 codemarp view src \
   --mode trace \
   --focus codemarp.cli.main:analyze_command \
+  --renderer cytoscape \
   --out codemarp_trace.html
 ```
+
+`view --out` writes standalone HTML. Use a `.html` extension for browser viewing.
 
 ### Debug call resolution
 
@@ -478,7 +490,7 @@ CodeMarp is static analysis — it reads your code without running it.
 | Relative imports may produce sparse high-level graphs | Use `--mode module` or `--mode trace` instead |
 | Method calls (`self.method()`) are conservatively handled | Some valid edges may be missing, but false positives are reduced |
 | Dynamic dispatch is not tracked | Results reflect static structure only |
-| TypeScript support is first-pass | Function/import/call facts are extracted, but some language forms are still omitted |
+| TypeScript support is conservative | Common function/import/call facts are extracted, but some language forms are still omitted |
 | Low-level CFG is Python-only | Use high, mid, trace, reverse, or module modes for TypeScript |
 | Large full graphs can be hard to read | Use focused modes — `trace`, `module`, `reverse` |
 
@@ -493,7 +505,7 @@ These are honest limitations, not bugs. Focused modes exist precisely because fu
 - JavaScript support through tree-sitter
 - Broader TypeScript coverage
 - Language-neutral low-level CFG
-- Interactive web UI
+- Deeper interactive viewer workflows
 
 ---
 
@@ -516,7 +528,8 @@ No runtime instrumentation. No code execution. Analysis runs anywhere.
 - Tree-sitter default parser
 - Python AST fallback available with `--parser-engine ast`
 - CLI-first
-- v0.4.x — early but usable on real codebases
+- Mermaid and Cytoscape browser renderers
+- v0.5.x — early but usable on real codebases
 
 ---
 

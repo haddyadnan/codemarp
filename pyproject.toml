@@ -1,6 +1,6 @@
 [project]
 name = "codemarp"
-version = "0.4.2"
+version = "0.5.0"
 description = "CLI for generating multi-level code architecture graphs"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -33,3 +33,4 @@ codemarp = "codemarp.cli.main:main"
 
 [tool.uv]
 exclude-newer = "P7D"
+exclude-newer-package = { codemarp = false }
