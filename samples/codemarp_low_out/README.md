@@ -1,0 +1,67 @@
+# CodeMarp Low-Level Sample
+
+Generated with:
+
+```bash
+codemarp analyze src --mode low --focus codemarp.parser.python.low_level:find_function_node --out samples/codemarp_low_out
+```
+
+Files:
+
+- [high_level.mmd](high_level.mmd)
+- [low_level.mmd](low_level.mmd)
+- [low_level.json](low_level.json)
+- [graph.json](graph.json)
+
+## Low-level control flow
+
+```mermaid
+flowchart TD
+    n1(["Start"]):::terminal
+    n2["'Resolve a low-level f...'"]:::statement
+    n3["(module_id, target_name) = parse_..."]:::statement
+    n4["For"]:::statement
+    n5["Loop Body"]:::statement
+    n6["current_module_id = module_id_fro..."]:::statement
+    n7{"current_module_id != module_id"}:::decision
+    n8["continue"]:::statement
+    n9["Merge"]:::merge
+    n10["code = file_path.read_text(...)"]:::statement
+    n11["tree = ast.parse(...)"]:::statement
+    n12["node = _find_function_in_tree(...)"]:::statement
+    n13{"node is None"}:::decision
+    n14(["Raise"]):::terminal
+    n15["Merge"]:::merge
+    n16["normalized_function_id = f'{modul..."]:::statement
+    n17(["Return"]):::terminal
+    n18["After Loop"]:::merge
+    n19(["Raise"]):::terminal
+    n20(["End"]):::terminal
+    n1 --> n2
+    n2 --> n3
+    n3 --> n4
+    n4 -->|Iterate| n5
+    n5 --> n6
+    n6 --> n7
+    n7 -->|True| n8
+    n8 --> n9
+    n7 -->|False| n9
+    n9 --> n10
+    n10 --> n11
+    n11 --> n12
+    n12 --> n13
+    n13 -->|True| n14
+    n13 -->|False| n15
+    n15 --> n16
+    n16 --> n17
+    n17 -->|Next| n4
+    n4 -->|Exit| n18
+    n18 --> n19
+    n19 --> n20
+
+    classDef decision fill:#fff3cd,stroke:#d4a017,color:#000;
+    classDef statement fill:#f0f0f0,stroke:#aaa,color:#333;
+    classDef terminal fill:#fde8e8,stroke:#c0392b,color:#000;
+    classDef merge fill:#eef2ff,stroke:#7c8fdb,color:#000;
+    classDef start fill:#e8f5e9,stroke:#2e7d32,color:#000;
+```

@@ -33,7 +33,7 @@ IGNORE_FILE_NAMES = {
 }
 
 
-SUPPORTED_SUFFIXES = {".py", ".ts", ".tsx"}
+SUPPORTED_SUFFIXES = {".py", ".ts", ".tsx", ".js"}
 
 
 def discover_source_files(root: Path) -> list[Path]:

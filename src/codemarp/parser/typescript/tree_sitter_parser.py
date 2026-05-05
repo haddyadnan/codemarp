@@ -11,6 +11,7 @@
 
 from pathlib import Path
 
+import tree_sitter_javascript as tsjavascript
 import tree_sitter_typescript as tstypescript
 from tree_sitter import Language, Node, Parser
 
@@ -18,9 +19,18 @@ from codemarp.parser.contracts import CallFact, FunctionFact, ImportFact, Parsed
 
 
 class TreeSitterTypeScriptParser:
-    def __init__(self, module_id: str) -> None:
+    def __init__(self, module_id: str, language: str = "typescript") -> None:
         self.module_id = module_id
-        self._parser = Parser(Language(tstypescript.language_typescript()))
+        self.language = language
+
+        if language == "typescript":
+            grammar = tstypescript.language_typescript()
+        elif language == "javascript":
+            grammar = tsjavascript.language()
+        else:
+            raise ValueError(f"Unsupported TypeScript-family language: {language}")
+
+        self._parser = Parser(Language(grammar))
 
     def parse_file(self, root: Path, path: Path) -> ParsedModule:
         code = path.read_text(encoding="utf-8")
@@ -38,7 +48,7 @@ class TreeSitterTypeScriptParser:
         return ParsedModule(
             module_id=self.module_id,
             file_path=Path(filepath),
-            language="typescript",
+            language=self.language,
             imports=self._extract_imports(root_node, code),
             functions=self._extract_functions(root_node, code),
             calls=self._extract_calls(root_node, code),

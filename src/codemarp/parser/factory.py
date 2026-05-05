@@ -14,9 +14,11 @@ def get_parser(
             return PythonParser(module_id)
         raise ValueError(f"Unsupported parser engine: {engine}")
 
-    if language == "typescript":
+    if language in {"typescript", "javascript"}:
         if engine != "tree-sitter":
-            raise ValueError("TypeScript supports only the tree-sitter parser engine")
-        return TreeSitterTypeScriptParser(module_id)
+            raise ValueError(
+                "TypeScript/Javascript support only the tree-sitter parser engine"
+            )
+        return TreeSitterTypeScriptParser(module_id, language=language)
 
     raise ValueError(f"Unsupported language: {language}")

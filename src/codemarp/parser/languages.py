@@ -10,4 +10,7 @@ def detect_language(path: Path) -> str:
     if suffix in [".ts", ".tsx"]:
         return "typescript"
 
+    if suffix == ".js":
+        return "javascript"
+
     raise ValueError(f"Unsupported file type: {path}")
