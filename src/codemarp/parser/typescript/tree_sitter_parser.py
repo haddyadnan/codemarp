@@ -105,6 +105,11 @@ class TreeSitterTypeScriptParser:
                         if fn is not None:
                             functions.append(fn)
 
+            elif target.type == "expression_statement":
+                fn = self._extract_property_assigned_function(target, code)
+                if fn is not None:
+                    functions.append(fn)
+
         return functions
 
     def _make_function_fact(
@@ -428,6 +433,11 @@ class TreeSitterTypeScriptParser:
                         )
                         calls.extend(call_facts)
 
+            elif target.type == "expression_statement":
+                calls.extend(
+                    self._extract_calls_for_property_assigned_function(target, code)
+                )
+
         return calls
 
     def _extract_calls_for_function(
@@ -749,3 +759,99 @@ class TreeSitterTypeScriptParser:
             relative_level=0,
             lineno=node.start_point[0] + 1,
         )
+
+    def _static_member_label(self, node: Node, code: str) -> str | None:
+        if node.type == "identifier":
+            return self._node_text(node, code)
+
+        if node.type != "member_expression":
+            return None
+
+        object_node = node.child_by_field_name("object")
+        property_node = node.child_by_field_name("property")
+
+        if object_node is None or property_node is None:
+            return None
+
+        # Skip computed/dynamic property access: obj[name]
+        if property_node.type not in {"property_identifier", "identifier"}:
+            return None
+
+        object_label = self._static_member_label(object_node, code)
+        property_label = self._node_text(property_node, code)
+
+        if object_label is None or property_label is None:
+            return None
+
+        label = f"{object_label}.{property_label}"
+
+        # Normalize module.exports.foo -> exports.foo
+        if label.startswith("module.exports."):
+            label = "exports." + label.removeprefix("module.exports.")
+
+        return label
+
+    def _extract_property_assigned_function(
+        self,
+        node: Node,
+        code: str,
+    ) -> FunctionFact | None:
+        if node.type != "expression_statement":
+            return None
+
+        expr = node.children[0] if node.children else None
+        if expr is None or expr.type != "assignment_expression":
+            return None
+
+        left = expr.child_by_field_name("left")
+        right = expr.child_by_field_name("right")
+
+        if left is None or right is None:
+            return None
+
+        if right.type not in {"arrow_function", "function_expression"}:
+            return None
+
+        label = self._static_member_label(left, code)
+        if label is None:
+            return None
+
+        return self._make_function_fact(
+            right,
+            code,
+            class_name=None,
+            override_name=label,
+        )
+
+    def _extract_calls_for_property_assigned_function(
+        self,
+        node: Node,
+        code: str,
+    ) -> list[CallFact]:
+        if node.type != "expression_statement":
+            return []
+
+        expr = node.children[0] if node.children else None
+        if expr is None or expr.type != "assignment_expression":
+            return []
+
+        left = expr.child_by_field_name("left")
+        right = expr.child_by_field_name("right")
+
+        if left is None or right is None:
+            return []
+
+        if right.type not in {"arrow_function", "function_expression"}:
+            return []
+
+        label = self._static_member_label(left, code)
+        if label is None:
+            return []
+
+        body = right.child_by_field_name("body")
+        if body is None:
+            return []
+
+        caller_id = f"{self.module_id}:{label}"
+
+        return self._collect_calls(caller_id=caller_id, body=body, code=code)
